@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Store Portal — Generic ID Manager</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --blue:#185FA5;--blue-lt:#E6F1FB;--blue-dk:#0C447C;
+  --green:#3B6D11;--green-lt:#EAF3DE;--green-bd:rgba(59,109,17,.3);
+  --red:#A32D2D;--red-lt:#FCEBEB;--red-bd:rgba(163,45,45,.3);
+  --amber:#854F0B;--amber-lt:#FAEEDA;--amber-bd:rgba(133,79,11,.3);
+  --purple:#3C3489;--purple-lt:#EEEDFE;--purple-bd:rgba(60,52,137,.3);
+  --gray:#5F5E5A;--gray-lt:#F1EFE8;
+  --text:#1C1C1E;--muted:#5F5E5A;--hint:#B4B2A9;
+  --bg:#F5F4F0;--surface:#FFFFFF;--surface2:#F8F7F5;
+  --border:rgba(0,0,0,0.09);--border2:rgba(0,0,0,0.05);
+  --radius:10px;--radius-lg:14px;--shadow:0 1px 8px rgba(0,0,0,0.06);
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --text:#F2F2F7;--muted:#AEAEB2;--hint:#636366;
+    --bg:#1C1C1E;--surface:#2C2C2E;--surface2:#3A3A3C;
+    --border:rgba(255,255,255,0.09);--border2:rgba(255,255,255,0.05);
+    --blue-lt:rgba(24,95,165,.2);--green-lt:rgba(59,109,17,.2);
+    --red-lt:rgba(163,45,45,.2);--amber-lt:rgba(133,79,11,.2);--purple-lt:rgba(60,52,137,.2);
+    --green-bd:rgba(59,109,17,.4);--red-bd:rgba(163,45,45,.4);--amber-bd:rgba(133,79,11,.4);--purple-bd:rgba(60,52,137,.4);
+  }
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* NAV */
+nav{background:var(--surface);border-bottom:0.5px solid var(--border);padding:0 20px;display:flex;align-items:center;justify-content:space-between;height:54px;position:sticky;top:0;z-index:200}
+.nav-logo{width:30px;height:30px;border-radius:7px;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.nav-left{display:flex;align-items:center;gap:10px}
+.nav-title{font-size:15px;font-weight:600;color:var(--text)}
+.nav-sub{font-size:11px;color:var(--muted)}
+.nav-right{display:flex;align-items:center;gap:6px}
+.btn-nav{padding:5px 12px;border-radius:var(--radius);border:0.5px solid var(--border);background:transparent;color:var(--text);font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap}
+.btn-nav:hover{background:var(--surface2)}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--green);flex-shrink:0;transition:background .3s}
+.sync-dot.syncing{background:var(--amber);animation:pulse .8s ease-in-out infinite}
+.sync-dot.error{background:var(--red)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* LAYOUT */
+.page{max-width:1100px;margin:0 auto;padding:20px 16px}
+
+/* STORE SELECTOR */
+.store-bar{display:flex;align-items:center;gap:10px;margin-bottom:20px;flex-wrap:wrap}
+.store-bar select{padding:7px 12px;border-radius:var(--radius);border:0.5px solid var(--border);background:var(--surface);color:var(--text);font-size:14px;font-family:inherit;outline:none;cursor:pointer}
+.store-bar select:focus{border-color:var(--blue)}
+.bu-badge{font-size:12px;font-weight:500;padding:4px 10px;border-radius:999px;background:var(--blue-lt);color:var(--blue-dk);border:0.5px solid rgba(24,95,165,.2)}
+
+/* METRICS */
+.metrics{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-bottom:20px}
+.metric{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:12px 14px}
+.metric-label{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}
+.metric-value{font-size:22px;font-weight:600;color:var(--text)}
+.metric-value.green{color:var(--green)}.metric-value.red{color:var(--red)}.metric-value.amber{color:var(--amber)}
+
+/* ALERT */
+.alert{padding:11px 14px;border-radius:var(--radius);font-size:13px;margin-bottom:14px;display:flex;align-items:flex-start;gap:10px;line-height:1.6}
+.alert-warn{background:var(--amber-lt);border:0.5px solid var(--amber-bd);color:var(--amber)}
+.alert-danger{background:var(--red-lt);border:0.5px solid var(--red-bd);color:var(--red)}
+.alert-icon{font-size:15px;flex-shrink:0;margin-top:1px}
+
+/* APP TABS */
+.app-tabs{display:flex;gap:3px;background:var(--surface2);border-radius:10px;padding:3px;margin-bottom:16px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.app-tab{display:flex;align-items:center;gap:7px;padding:7px 14px;border-radius:7px;border:none;cursor:pointer;font-family:inherit;font-size:13px;color:var(--muted);background:transparent;white-space:nowrap;transition:all .15s}
+.app-tab.active{background:var(--surface);color:var(--text);font-weight:500;box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.app-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+
+/* CARD */
+.card{background:var(--surface);border-radius:var(--radius-lg);border:0.5px solid var(--border);box-shadow:var(--shadow);overflow:hidden;margin-bottom:16px}
+.card-header{padding:13px 16px;border-bottom:0.5px solid var(--border2);display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.card-title{font-size:14px;font-weight:600;color:var(--text)}
+
+/* BUTTONS */
+.btn{padding:8px 16px;border-radius:var(--radius);border:none;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;transition:opacity .15s}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-primary{background:var(--blue);color:#fff}.btn-primary:hover:not(:disabled){opacity:.88}
+.btn-success{background:var(--green);color:#fff}.btn-success:hover:not(:disabled){opacity:.88}
+.btn-danger{background:var(--red);color:#fff}.btn-danger:hover:not(:disabled){opacity:.88}
+.btn-ghost{background:transparent;border:0.5px solid var(--border);color:var(--text)}.btn-ghost:hover{background:var(--surface2)}
+.btn-sm{padding:4px 10px;font-size:12px}
+
+/* BADGES */
+.badge{display:inline-block;font-size:11px;font-weight:500;padding:2px 8px;border-radius:999px}
+.b-active{background:var(--green-lt);color:var(--green);border:0.5px solid var(--green-bd)}
+.b-idle{background:var(--gray-lt);color:var(--gray);border:0.5px solid rgba(95,94,90,.2)}
+.b-disabled{background:var(--red-lt);color:var(--red);border:0.5px solid var(--red-bd)}
+.b-atrisk{background:var(--amber-lt);color:var(--amber);border:0.5px solid var(--amber-bd)}
+.b-orphan{background:var(--red-lt);color:var(--red);border:0.5px solid var(--red-bd)}
+.b-ok{background:var(--green-lt);color:var(--green);border:0.5px solid var(--green-bd)}
+.b-warn{background:var(--amber-lt);color:var(--amber);border:0.5px solid var(--amber-bd)}
+.b-overdue{background:var(--red-lt);color:var(--red);border:0.5px solid var(--red-bd)}
+.b-info{background:var(--blue-lt);color:var(--blue-dk);border:0.5px solid rgba(24,95,165,.2)}
+
+/* TABLE */
+.tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;padding:8px 12px;color:var(--muted);font-weight:500;font-size:11px;text-transform:uppercase;letter-spacing:.05em;border-bottom:0.5px solid var(--border);white-space:nowrap}
+td{padding:10px 12px;border-bottom:0.5px solid var(--border2);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr.trow:hover{background:var(--surface2);cursor:pointer}
+
+/* AVATAR */
+.avatar{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;background:var(--blue-lt);color:var(--blue-dk)}
+
+/* MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal{background:var(--surface);border-radius:var(--radius-lg);width:100%;max-width:480px;max-height:90vh;overflow-y:auto;box-shadow:0 8px 40px rgba(0,0,0,.18)}
+.modal-header{padding:16px 20px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:16px;font-weight:600}
+.modal-close{width:28px;height:28px;border-radius:50%;border:none;background:var(--surface2);color:var(--muted);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
+.modal-body{padding:20px}
+.modal-footer{padding:14px 20px;border-top:0.5px solid var(--border);display:flex;gap:8px;justify-content:flex-end}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em}
+.field input,.field select,.field textarea{width:100%;padding:9px 12px;border-radius:var(--radius);border:0.5px solid var(--border);background:var(--bg);color:var(--text);font-size:14px;font-family:inherit;outline:none}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-lt)}
+.field textarea{resize:vertical;min-height:70px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* EMPLOYEE PROFILE PANEL */
+.profile-panel{background:var(--surface);border-radius:var(--radius-lg);border:0.5px solid var(--border);padding:16px;margin-bottom:12px}
+.profile-avatar{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;background:var(--blue-lt);color:var(--blue-dk);flex-shrink:0}
+.profile-photo{width:56px;height:56px;border-radius:50%;object-fit:cover;flex-shrink:0}
+
+/* PW AGE BAR */
+.pw-bar{height:4px;border-radius:2px;background:var(--surface2);overflow:hidden;margin-top:4px;width:60px}
+.pw-fill{height:100%;border-radius:2px;transition:width .3s}
+
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:6px}
+.spinner-dark{border-color:rgba(0,0,0,.15);border-top-color:var(--blue)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.hidden{display:none!important}
+.empty{text-align:center;padding:32px 16px;color:var(--hint);font-size:13px}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-left">
+    <div class="nav-logo">GID</div>
+    <div>
+      <div class="nav-title" id="nav-title">Store Portal</div>
+      <div class="nav-sub" id="nav-sub">Loading…</div>
+    </div>
+  </div>
+  <div class="nav-right">
+    <span class="sync-dot" id="sync-dot" title="Realtime sync status"></span>
+    <span style="font-size:11px;color:var(--hint)" id="sync-label">connecting…</span>
+    <button class="btn-nav" onclick="location.href='hr-upload.html'">HR Upload</button>
+    <button class="btn-nav" onclick="location.href='bu.html'">BU View</button>
+    <button class="btn-nav" onclick="doSignOut()">Sign out</button>
+  </div>
+</nav>
+
+<div class="page">
+
+  <!-- Store selector -->
+  <div class="store-bar">
+    <span class="bu-badge" id="bu-badge">BU: —</span>
+    <select id="store-select" onchange="onStoreChange()" style="min-width:180px">
+      <option value="">Loading stores…</option>
+    </select>
+    <button class="btn btn-primary btn-sm" onclick="openGrantModal()">+ Grant access</button>
+    <button class="btn btn-ghost btn-sm" onclick="loadAll()">↻ Refresh</button>
+  </div>
+
+  <!-- Alerts -->
+  <div id="alerts-container"></div>
+
+  <!-- Metrics -->
+  <div class="metrics">
+    <div class="metric"><div class="metric-label">Total IDs</div><div class="metric-value" id="m-total">—</div></div>
+    <div class="metric"><div class="metric-label">Active</div><div class="metric-value green" id="m-active">—</div></div>
+    <div class="metric"><div class="metric-label">Unassigned</div><div class="metric-value" id="m-idle">—</div></div>
+    <div class="metric"><div class="metric-label">Pw overdue</div><div class="metric-value amber" id="m-pw">—</div></div>
+    <div class="metric"><div class="metric-label">Risk alerts</div><div class="metric-value red" id="m-risk">—</div></div>
+  </div>
+
+  <!-- App tabs -->
+  <div class="app-tabs" id="app-tabs"></div>
+
+  <!-- Assignment table -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title" id="table-title">Assignments</span>
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+        <input type="text" id="search-input" placeholder="Search name or ID…"
+          style="padding:5px 10px;border-radius:var(--radius);border:0.5px solid var(--border);background:var(--bg);color:var(--text);font-size:12px;width:160px;outline:none;font-family:inherit"
+          oninput="renderTable()">
+        <select id="status-filter" onchange="renderTable()"
+          style="padding:5px 10px;border-radius:var(--radius);border:0.5px solid var(--border);background:var(--bg);color:var(--text);font-size:12px;font-family:inherit;outline:none">
+          <option value="">All status</option>
+          <option value="active">Active</option>
+          <option value="idle">Idle</option>
+          <option value="at_risk">At risk</option>
+          <option value="disabled">Disabled</option>
+          <option value="orphan">Orphan</option>
+        </select>
+      </div>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="padding-left:16px">Generic ID</th>
+            <th>Assigned to</th>
+            <th>Emp ID</th>
+            <th>Supervisor</th>
+            <th>Pw age</th>
+            <th>Last login</th>
+            <th>Status</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="assign-tbody">
+          <tr><td colspan="8" class="empty">Select a store to view assignments</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Audit log -->
+  <div class="card">
+    <div class="card-header">
+      <span class="card-title">Recent activity</span>
+      <span style="font-size:12px;color:var(--hint)" id="audit-count"></span>
+    </div>
+    <div class="tbl-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="padding-left:16px">Time</th>
+            <th>Event</th>
+            <th>Generic ID</th>
+            <th>Employee</th>
+            <th>By</th>
+          </tr>
+        </thead>
+        <tbody id="audit-tbody">
+          <tr><td colspan="5" class="empty">No activity yet</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div><!-- /page -->
+
+<!-- GRANT MODAL -->
+<div class="modal-bg hidden" id="grant-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Grant generic ID access</span>
+      <button class="modal-close" onclick="closeModal('grant-modal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="two-col">
+        <div class="field">
+          <label>App</label>
+          <select id="grant-app" onchange="refreshGenericIds()">
+            <option value="">Select app…</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Generic ID</label>
+          <select id="grant-gid">
+            <option value="">Select app first…</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Employee (search by name or EMP code)</label>
+        <input type="text" id="grant-emp-search" placeholder="Type to search…" oninput="searchEmployees()">
+        <div id="emp-results" style="margin-top:6px;max-height:160px;overflow-y:auto;border:0.5px solid var(--border);border-radius:var(--radius);display:none"></div>
+        <input type="hidden" id="grant-emp-id">
+        <div id="grant-emp-selected" style="margin-top:6px;font-size:13px;color:var(--green);font-weight:500"></div>
+      </div>
+      <div class="field">
+        <label>Supervisor (auto-filled from employee record)</label>
+        <input type="text" id="grant-sup" placeholder="Auto-filled" readonly style="opacity:.7">
+        <input type="hidden" id="grant-sup-id">
+      </div>
+      <div class="field">
+        <label>Notes (optional)</label>
+        <textarea id="grant-notes" placeholder="Reason for grant, shift, etc."></textarea>
+      </div>
+      <div id="grant-error" style="color:var(--red);font-size:13px;margin-top:4px;display:none"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('grant-modal')">Cancel</button>
+      <button class="btn btn-success" id="grant-submit-btn" onclick="submitGrant()">Grant access</button>
+    </div>
+  </div>
+</div>
+
+<!-- MANAGE MODAL -->
+<div class="modal-bg hidden" id="manage-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="manage-title">Manage assignment</span>
+      <button class="modal-close" onclick="closeModal('manage-modal')">✕</button>
+    </div>
+    <div class="modal-body" id="manage-body"></div>
+    <div class="modal-footer" id="manage-footer"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+// ── CONFIG ──────────────────────────────────────────────────────
+const SUPABASE_URL  = 'https://hnvytilmxoiaqceseooh.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhudnl0aWxteG9pYXFjZXNlb29oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MTc0ODIsImV4cCI6MjA4OTQ5MzQ4Mn0.x7WCLXRZEoorxEIuk5dwHG8EpasBGGB7peBysWUdElw';
+// ────────────────────────────────────────────────────────────────
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+// App colors
+const APP_COLORS = { POS:'#185FA5', GR:'#1D9E75', ST:'#BA7517', FP:'#993C1D', default:'#5F5E5A' };
+
+let SESSION=null, USER_ROLE=null, BU_ID=null;
+let STORES=[], APPS=[], ASSIGNMENTS=[], EMPLOYEES=[];
+let CURRENT_STORE_ID=null, CURRENT_APP_CODE=null;
+let realtimeChannel=null;
+
+// ── INIT ─────────────────────────────────────────────────────────
+async function init() {
+  const { data:{ session } } = await sb.auth.getSession();
+  if (!session) { window.location.href='index.html'; return; }
+  SESSION = session;
+
+  const { data:roles } = await sb.from('user_roles').select('*').eq('user_id', session.user.id).limit(1);
+  if (!roles||!roles.length) { window.location.href='index.html'; return; }
+  USER_ROLE = roles[0];
+  BU_ID = roles[0].bu_id;
+
+  const { data:bu } = await sb.from('business_units').select('name').eq('id', BU_ID).single();
+  document.getElementById('bu-badge').textContent = 'BU: ' + (bu?.name||'Unknown');
+  document.getElementById('nav-sub').textContent = session.user.email;
+
+  await loadStores();
+  await loadApps();
+  await loadEmployees();
+  setupRealtime();
+}
+
+async function loadStores() {
+  const { data } = await sb.from('stores').select('*').eq('bu_id', BU_ID).eq('active', true).order('code');
+  STORES = data || [];
+  const sel = document.getElementById('store-select');
+  sel.innerHTML = STORES.length
+    ? STORES.map(s => `<option value="${s.id}">${s.name}</option>`).join('')
+    : '<option value="">No stores found</option>';
+  if (STORES.length) { CURRENT_STORE_ID = STORES[0].id; await loadAll(); }
+}
+
+async function loadApps() {
+  const { data } = await sb.from('apps').select('*').eq('bu_id', BU_ID).eq('active', true).order('code');
+  APPS = data || [];
+  renderAppTabs();
+  // Populate grant modal app dropdown
+  const sel = document.getElementById('grant-app');
+  sel.innerHTML = '<option value="">Select app…</option>' +
+    APPS.map(a => `<option value="${a.id}" data-code="${a.code}" data-prefix="${a.id_prefix}" data-days="${a.pw_rotation_days}">${a.name}</option>`).join('');
+}
+
+async function loadEmployees() {
+  const { data } = await sb.from('employees').select('*').eq('bu_id', BU_ID).eq('status', 'active').order('full_name');
+  EMPLOYEES = data || [];
+}
+
+async function loadAll() {
+  if (!CURRENT_STORE_ID) return;
+  setSyncState('syncing');
+  const storeId = CURRENT_STORE_ID;
+
+  const { data, error } = await sb.from('generic_id_assignments')
+    .select(`*, employee:employee_id(id,emp_code,full_name,mobile,photo_url,supervisor_emp_code,status),
+             supervisor:supervisor_id(id,emp_code,full_name,mobile),
+             app:app_id(id,code,name,id_prefix,pw_rotation_days)`)
+    .eq('store_id', storeId)
+    .order('generic_id');
+
+  if (error) { setSyncState('error'); return; }
+  ASSIGNMENTS = data || [];
+
+  await loadAuditLog(storeId);
+  updateMetrics();
+  renderAppTabs();
+  renderTable();
+  renderAlerts();
+  setSyncState('ok');
+}
+
+async function loadAuditLog(storeId) {
+  const { data } = await sb.from('audit_log')
+    .select('*').eq('store_id', storeId)
+    .order('created_at', { ascending:false }).limit(20);
+  renderAuditLog(data||[]);
+}
+
+// ── STORE CHANGE ──────────────────────────────────────────────────
+async function onStoreChange() {
+  CURRENT_STORE_ID = document.getElementById('store-select').value;
+  const store = STORES.find(s=>s.id===CURRENT_STORE_ID);
+  document.getElementById('nav-title').textContent = store ? store.name : 'Store Portal';
+  CURRENT_APP_CODE = null;
+  setupRealtime();
+  await loadAll();
+}
+
+// ── REALTIME ──────────────────────────────────────────────────────
+function setupRealtime() {
+  if (realtimeChannel) sb.removeChannel(realtimeChannel);
+  if (!CURRENT_STORE_ID) return;
+  setSyncState('syncing');
+  realtimeChannel = sb.channel('store_' + CURRENT_STORE_ID)
+    .on('postgres_changes', { event:'*', schema:'public', table:'generic_id_assignments',
+        filter:`store_id=eq.${CURRENT_STORE_ID}` }, () => loadAll())
+    .on('postgres_changes', { event:'*', schema:'public', table:'audit_log',
+        filter:`store_id=eq.${CURRENT_STORE_ID}` }, () => loadAuditLog(CURRENT_STORE_ID))
+    .on('postgres_changes', { event:'*', schema:'public', table:'employees' }, () => loadEmployees())
+    .subscribe(status => {
+      if (status==='SUBSCRIBED') setSyncState('ok');
+      else if (status==='CHANNEL_ERROR') setSyncState('error');
+    });
+}
+
+function setSyncState(state) {
+  const dot = document.getElementById('sync-dot');
+  const lbl = document.getElementById('sync-label');
+  dot.className = 'sync-dot' + (state==='syncing'?' syncing': state==='error'?' error':'');
+  lbl.textContent = state==='ok'?'Live':state==='syncing'?'Syncing…':'Offline';
+}
+
+// ── METRICS ───────────────────────────────────────────────────────
+function updateMetrics() {
+  const all = CURRENT_APP_CODE ? ASSIGNMENTS.filter(a=>a.app?.code===CURRENT_APP_CODE) : ASSIGNMENTS;
+  const pwRotDays = a => a.app?.pw_rotation_days || 30;
+  const pwAge = a => a.pw_last_rotated ? Math.floor((Date.now()-new Date(a.pw_last_rotated))/(864e5)) : 999;
+
+  document.getElementById('m-total').textContent  = all.length;
+  document.getElementById('m-active').textContent = all.filter(a=>a.status==='active').length;
+  document.getElementById('m-idle').textContent   = all.filter(a=>a.status==='idle').length;
+  document.getElementById('m-pw').textContent     = all.filter(a=>a.status==='active'&&pwAge(a)>=pwRotDays(a)).length;
+  document.getElementById('m-risk').textContent   = all.filter(a=>['at_risk','orphan','disabled'].includes(a.status)&&a.employee_id).length;
+}
+
+// ── APP TABS ──────────────────────────────────────────────────────
+function renderAppTabs() {
+  const counts = {};
+  ASSIGNMENTS.forEach(a => { const c=a.app?.code||'?'; counts[c]=(counts[c]||0)+1; });
+  const all = ASSIGNMENTS.length;
+
+  const tabs = [{ code:null, name:'All apps', count:all }]
+    .concat(APPS.map(a=>({ code:a.code, name:a.name, count:counts[a.code]||0 })));
+
+  document.getElementById('app-tabs').innerHTML = tabs.map(t => `
+    <button class="app-tab${CURRENT_APP_CODE===t.code?' active':''}" onclick="switchApp(${t.code?`'${t.code}'`:null})">
+      ${t.code?`<span class="app-dot" style="background:${APP_COLORS[t.code]||APP_COLORS.default}"></span>`:''}
+      ${t.name}
+      <span style="font-size:11px;opacity:.6;margin-left:2px">${t.count}</span>
+    </button>`).join('');
+}
+
+function switchApp(code) {
+  CURRENT_APP_CODE = code;
+  const app = APPS.find(a=>a.code===code);
+  document.getElementById('table-title').textContent = app ? app.name + ' — Assignments' : 'All Assignments';
+  updateMetrics();
+  renderAppTabs();
+  renderTable();
+}
+
+// ── ASSIGNMENT TABLE ──────────────────────────────────────────────
+function renderTable() {
+  const search  = document.getElementById('search-input').value.toLowerCase();
+  const statFil = document.getElementById('status-filter').value;
+
+  let rows = CURRENT_APP_CODE ? ASSIGNMENTS.filter(a=>a.app?.code===CURRENT_APP_CODE) : ASSIGNMENTS;
+  if (statFil) rows = rows.filter(a=>a.status===statFil);
+  if (search)  rows = rows.filter(a=>
+    (a.generic_id||'').toLowerCase().includes(search)||
+    (a.employee?.full_name||'').toLowerCase().includes(search)||
+    (a.employee?.emp_code||'').toLowerCase().includes(search));
+
+  const pwAge = a => a.pw_last_rotated ? Math.floor((Date.now()-new Date(a.pw_last_rotated))/(864e5)) : null;
+
+  document.getElementById('assign-tbody').innerHTML = rows.length ? rows.map(a => {
+    const emp   = a.employee;
+    const sup   = a.supervisor;
+    const age   = pwAge(a);
+    const rotDays = a.app?.pw_rotation_days||30;
+    const pwPct = age!==null ? Math.min(100,Math.round(age/rotDays*100)) : 0;
+    const pwColor = age===null?'var(--hint)':age>=rotDays?'var(--red)':age>=rotDays*.7?'var(--amber)':'var(--green)';
+    const initials = emp ? emp.full_name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase() : '—';
+    const supRisk  = emp?.supervisor_emp_code && sup && (sup.status==='resigned'||a.status==='at_risk');
+
+    return `<tr class="trow" onclick="openManageModal('${a.id}')">
+      <td style="padding-left:16px">
+        <span style="font-family:monospace;font-size:12px;font-weight:600">${a.generic_id}</span>
+        ${a.app?`<span style="font-size:10px;margin-left:6px;padding:1px 6px;border-radius:4px;background:${APP_COLORS[a.app.code]||'#888'}22;color:${APP_COLORS[a.app.code]||'var(--muted)'}">${a.app.code}</span>`:''}
+      </td>
+      <td>
+        ${emp ? `<div style="display:flex;align-items:center;gap:7px">
+          ${emp.photo_url
+            ? `<img src="${emp.photo_url}" class="profile-photo" style="width:30px;height:30px">`
+            : `<div class="avatar">${initials}</div>`}
+          <div>
+            <div style="font-size:13px;font-weight:500">${emp.full_name}</div>
+            <div style="font-size:11px;color:var(--muted)">${emp.mobile||''}</div>
+          </div>
+        </div>`
+        : `<span style="color:var(--hint);font-size:13px">${a.status==='orphan'?'Unknown — orphan':'Unassigned'}</span>`}
+      </td>
+      <td style="font-family:monospace;font-size:11px;color:var(--muted)">${emp?.emp_code||'—'}</td>
+      <td style="font-size:12px;${supRisk?'color:var(--red);font-weight:500':''}">${sup?sup.full_name+(supRisk?' ⚠':''):'—'}</td>
+      <td>
+        ${age!==null?`<div style="font-size:12px;color:${pwColor};font-weight:${age>=rotDays?'600':'400'}">${age}d</div>
+          <div class="pw-bar"><div class="pw-fill" style="width:${pwPct}%;background:${pwColor}"></div></div>`
+        :'<span style="color:var(--hint);font-size:12px">—</span>'}
+      </td>
+      <td style="font-size:12px;color:var(--muted)">${a.granted_at?new Date(a.granted_at).toLocaleDateString():'—'}</td>
+      <td>${statusBadge(a.status)}</td>
+      <td><button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();openManageModal('${a.id}')">Manage</button></td>
+    </tr>`;
+  }).join('')
+  : `<tr><td colspan="8" class="empty">${search||statFil?'No matching assignments':'No assignments yet — click + Grant access'}</td></tr>`;
+}
+
+function statusBadge(s) {
+  const map = { active:'b-active', idle:'b-idle', disabled:'b-disabled', at_risk:'b-atrisk', orphan:'b-orphan' };
+  const labels = { active:'Active', idle:'Idle', disabled:'Disabled', at_risk:'At risk', orphan:'Orphan' };
+  return `<span class="badge ${map[s]||'b-idle'}">${labels[s]||s}</span>`;
+}
+
+// ── ALERTS ────────────────────────────────────────────────────────
+function renderAlerts() {
+  const atRisk    = ASSIGNMENTS.filter(a=>a.status==='at_risk');
+  const orphans   = ASSIGNMENTS.filter(a=>a.status==='orphan');
+  const pwOverdue = ASSIGNMENTS.filter(a=>a.status==='active'&&isPwOverdue(a));
+  let html='';
+  if (atRisk.length)
+    html+=`<div class="alert alert-warn"><span class="alert-icon">⚠</span>
+      <div><strong>${atRisk.length} ID(s) at risk</strong> — supervisor has resigned. Reassign or disable:
+      <strong>${atRisk.map(a=>a.generic_id).join(', ')}</strong></div>
+      <button class="btn btn-ghost btn-sm" style="margin-left:auto;white-space:nowrap" onclick="filterByStatus('at_risk')">View</button></div>`;
+  if (orphans.length)
+    html+=`<div class="alert alert-danger"><span class="alert-icon">⛔</span>
+      <div><strong>${orphans.length} orphan session(s)</strong> — login detected with no active assignment: <strong>${orphans.map(a=>a.generic_id).join(', ')}</strong></div>
+      <button class="btn btn-ghost btn-sm" style="margin-left:auto;white-space:nowrap" onclick="filterByStatus('orphan')">Review</button></div>`;
+  if (pwOverdue.length)
+    html+=`<div class="alert alert-warn"><span class="alert-icon">🔑</span>
+      <div><strong>${pwOverdue.length} password(s) overdue</strong> — rotation required for: <strong>${pwOverdue.map(a=>a.generic_id).join(', ')}</strong></div>
+      <button class="btn btn-ghost btn-sm" style="margin-left:auto;white-space:nowrap" onclick="filterByStatus('active')">Review</button></div>`;
+  document.getElementById('alerts-container').innerHTML = html;
+}
+
+function isPwOverdue(a) {
+  if (!a.pw_last_rotated) return false;
+  const age = Math.floor((Date.now()-new Date(a.pw_last_rotated))/(864e5));
+  return age >= (a.app?.pw_rotation_days||30);
+}
+
+function filterByStatus(s) {
+  document.getElementById('status-filter').value=s;
+  renderTable();
+  document.getElementById('assign-tbody').scrollIntoView({behavior:'smooth',block:'start'});
+}
+
+// ── AUDIT LOG ─────────────────────────────────────────────────────
+function renderAuditLog(logs) {
+  document.getElementById('audit-count').textContent = logs.length ? `${logs.length} events` : '';
+  const eventLabels = {
+    grant:'Granted', resign_auto_disable:'Auto-disabled (resign)', pw_rotate:'Password rotated',
+    disable:'Disabled', enable:'Enabled', supervisor_resigned_at_risk:'Supervisor resigned — at risk',
+    orphan_detected:'Orphan detected'
+  };
+  document.getElementById('audit-tbody').innerHTML = logs.length ? logs.map(l=>`
+    <tr>
+      <td style="padding-left:16px;font-size:12px;color:var(--muted);white-space:nowrap">${new Date(l.created_at).toLocaleString()}</td>
+      <td style="font-size:12px;font-weight:500">${eventLabels[l.event_type]||l.event_type}</td>
+      <td style="font-family:monospace;font-size:12px">${l.generic_id||'—'}</td>
+      <td style="font-size:12px">${l.detail?.emp_code||'—'}</td>
+      <td style="font-size:12px;color:var(--muted)">${l.event_by||'system'}</td>
+    </tr>`).join('')
+  : '<tr><td colspan="5" class="empty">No activity yet</td></tr>';
+}
+
+// ── GRANT MODAL ───────────────────────────────────────────────────
+function openGrantModal() {
+  if (!CURRENT_STORE_ID) { alert('Please select a store first'); return; }
+  document.getElementById('grant-emp-id').value='';
+  document.getElementById('grant-emp-selected').textContent='';
+  document.getElementById('grant-sup').value='';
+  document.getElementById('grant-sup-id').value='';
+  document.getElementById('grant-notes').value='';
+  document.getElementById('grant-error').style.display='none';
+  if (CURRENT_APP_CODE) {
+    const sel=document.getElementById('grant-app');
+    const opt=[...sel.options].find(o=>o.dataset.code===CURRENT_APP_CODE);
+    if (opt) { sel.value=opt.value; refreshGenericIds(); }
+  }
+  document.getElementById('grant-modal').classList.remove('hidden');
+}
+
+async function refreshGenericIds() {
+  const appSel = document.getElementById('grant-app');
+  const appOpt = appSel.options[appSel.selectedIndex];
+  if (!appOpt||!appOpt.value) { document.getElementById('grant-gid').innerHTML='<option>Select app first…</option>'; return; }
+
+  const prefix = appOpt.dataset.prefix;
+  const appId  = appOpt.value;
+
+  // Get taken IDs
+  const { data:taken } = await sb.from('generic_id_assignments')
+    .select('generic_id').eq('store_id', CURRENT_STORE_ID).eq('app_id', appId).neq('status','disabled');
+  const takenSet = new Set((taken||[]).map(t=>t.generic_id));
+
+  // Build available list (idle ones from existing + new slots)
+  const { data:all } = await sb.from('generic_id_assignments')
+    .select('generic_id,status').eq('store_id', CURRENT_STORE_ID).eq('app_id', appId).order('generic_id');
+
+  const idle = (all||[]).filter(a=>a.status==='idle').map(a=>a.generic_id);
+  // Suggest next new ID
+  const existing = (all||[]).map(a=>a.generic_id).sort();
+  const nextNum  = existing.length ? (Math.max(...existing.map(g=>parseInt(g.replace(prefix,''))||0))+1) : 1;
+  const nextId   = `${prefix}${String(nextNum).padStart(2,'0')}`;
+
+  const options  = [...idle, nextId].map(id=>`<option value="${id}">${id}${idle.includes(id)?' (idle)':' (new)'}</option>`);
+  document.getElementById('grant-gid').innerHTML = options.length
+    ? '<option value="">Select…</option>'+options.join('')
+    : '<option value="">No slots available</option>';
+}
+
+function searchEmployees() {
+  const q = document.getElementById('grant-emp-search').value.toLowerCase();
+  const results = document.getElementById('emp-results');
+  if (!q || q.length < 2) { results.style.display='none'; return; }
+
+  const matches = EMPLOYEES.filter(e=>
+    e.full_name.toLowerCase().includes(q)||
+    e.emp_code.toLowerCase().includes(q)).slice(0,6);
+
+  if (!matches.length) { results.style.display='none'; return; }
+
+  results.style.display='block';
+  results.innerHTML = matches.map(e=>`
+    <div onclick="selectEmployee('${e.id}')"
+      style="padding:9px 12px;cursor:pointer;border-bottom:0.5px solid var(--border2);font-size:13px"
+      onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">
+      <div style="font-weight:500">${e.full_name}</div>
+      <div style="font-size:11px;color:var(--muted)">${e.emp_code} · ${e.mobile||'no mobile'}</div>
+    </div>`).join('');
+}
+
+async function selectEmployee(empId) {
+  const emp = EMPLOYEES.find(e=>e.id===empId);
+  if (!emp) return;
+  document.getElementById('grant-emp-id').value = emp.id;
+  document.getElementById('grant-emp-search').value = '';
+  document.getElementById('grant-emp-selected').textContent = '✓ ' + emp.full_name + ' (' + emp.emp_code + ')';
+  document.getElementById('emp-results').style.display='none';
+
+  // Auto-fill supervisor
+  if (emp.supervisor_emp_code) {
+    const { data:sup } = await sb.from('employees').select('id,full_name').eq('emp_code', emp.supervisor_emp_code).single();
+    if (sup) { document.getElementById('grant-sup').value=sup.full_name; document.getElementById('grant-sup-id').value=sup.id; }
+  } else { document.getElementById('grant-sup').value=''; document.getElementById('grant-sup-id').value=''; }
+}
+
+async function submitGrant() {
+  const appId   = document.getElementById('grant-app').value;
+  const gid     = document.getElementById('grant-gid').value;
+  const empId   = document.getElementById('grant-emp-id').value;
+  const supId   = document.getElementById('grant-sup-id').value;
+  const notes   = document.getElementById('grant-notes').value;
+  const errEl   = document.getElementById('grant-error');
+
+  if (!appId||!gid||!empId) { errEl.textContent='Please fill in App, Generic ID, and Employee.'; errEl.style.display='block'; return; }
+
+  const btn = document.getElementById('grant-submit-btn');
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span>Granting…';
+
+  const payload = {
+    store_id:CURRENT_STORE_ID, app_id:appId, generic_id:gid,
+    employee_id:empId, supervisor_id:supId||null,
+    status:'active', granted_by:SESSION.user.email,
+    pw_last_rotated:new Date().toISOString(), notes:notes||null,
+    granted_at:new Date().toISOString(), updated_at:new Date().toISOString()
+  };
+
+  const { error } = await sb.from('generic_id_assignments').upsert(payload, { onConflict:'store_id,app_id,generic_id' });
+  if (error) { errEl.textContent=error.message; errEl.style.display='block'; btn.disabled=false; btn.innerHTML='Grant access'; return; }
+
+  // Audit log
+  await sb.from('audit_log').insert({
+    store_id:CURRENT_STORE_ID, app_id:appId, generic_id:gid, employee_id:empId,
+    event_type:'grant', event_by:SESSION.user.email,
+    detail:{ notes }
+  });
+
+  closeModal('grant-modal');
+  btn.disabled=false; btn.innerHTML='Grant access';
+  await loadAll();
+}
+
+// ── MANAGE MODAL ──────────────────────────────────────────────────
+async function openManageModal(assignId) {
+  const a = ASSIGNMENTS.find(x=>x.id===assignId);
+  if (!a) return;
+  const emp = a.employee;
+  const sup = a.supervisor;
+  const age = a.pw_last_rotated ? Math.floor((Date.now()-new Date(a.pw_last_rotated))/(864e5)) : null;
+
+  document.getElementById('manage-title').textContent = a.generic_id + ' — ' + (a.app?.name||'');
+
+  document.getElementById('manage-body').innerHTML = `
+    ${emp ? `<div class="profile-panel">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+        ${emp.photo_url
+          ? `<img src="${emp.photo_url}" class="profile-photo" style="width:56px;height:56px">`
+          : `<div class="profile-avatar">${emp.full_name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}</div>`}
+        <div>
+          <div style="font-size:16px;font-weight:600">${emp.full_name}</div>
+          <div style="font-size:12px;color:var(--muted)">${emp.emp_code}</div>
+        </div>
+        ${statusBadge(a.status)}
+      </div>
+      <table style="font-size:13px;width:100%">
+        <tr><td style="color:var(--muted);padding:4px 0;width:110px">Mobile</td><td>${emp.mobile||'—'}</td></tr>
+        <tr><td style="color:var(--muted);padding:4px 0">Supervisor</td><td>${sup?sup.full_name+(a.status==='at_risk'?' <span style="color:var(--red)">⚠ resigned</span>':''):'—'}</td></tr>
+        <tr><td style="color:var(--muted);padding:4px 0">Granted</td><td>${a.granted_at?new Date(a.granted_at).toLocaleDateString():'—'}</td></tr>
+        <tr><td style="color:var(--muted);padding:4px 0">Granted by</td><td>${a.granted_by||'—'}</td></tr>
+        <tr><td style="color:var(--muted);padding:4px 0">Password age</td>
+          <td style="color:${age!==null&&age>=(a.app?.pw_rotation_days||30)?'var(--red)':'var(--text)'};font-weight:${age!==null&&age>=(a.app?.pw_rotation_days||30)?'600':'400'}">
+            ${age!==null?age+' days (rotate every '+(a.app?.pw_rotation_days||30)+'d)':'—'}</td></tr>
+        ${a.notes?`<tr><td style="color:var(--muted);padding:4px 0">Notes</td><td>${a.notes}</td></tr>`:''}
+        ${a.disabled_reason?`<tr><td style="color:var(--muted);padding:4px 0">Reason</td><td style="color:var(--red)">${a.disabled_reason}</td></tr>`:''}
+      </table>
+    </div>` : `<div style="padding:12px 0;color:var(--muted);font-size:13px">
+      ${a.status==='orphan'?'⛔ Orphan session detected — no employee assigned but login recorded.':'No employee assigned (idle slot).'}
+    </div>`}
+  `;
+
+  const footer = document.getElementById('manage-footer');
+  footer.innerHTML = '';
+
+  const addBtn = (label, cls, fn) => {
+    const b=document.createElement('button');
+    b.className='btn '+cls; b.textContent=label; b.onclick=fn; footer.appendChild(b);
+  };
+
+  addBtn('Close','btn-ghost',()=>closeModal('manage-modal'));
+
+  if (a.status==='active'||a.status==='at_risk') {
+    addBtn('Rotate password','btn-ghost btn-sm',()=>rotatePassword(a.id, a.store_id, a.app_id, a.generic_id));
+    addBtn('Disable ID','btn-danger btn-sm',()=>disableAssignment(a.id, a.generic_id, a.store_id, a.app_id, a.employee_id));
+  }
+  if (a.status==='disabled'||a.status==='idle') {
+    addBtn('Re-grant / assign','btn-success btn-sm',()=>{ closeModal('manage-modal'); openGrantModal(); });
+  }
+
+  document.getElementById('manage-modal').classList.remove('hidden');
+}
+
+async function rotatePassword(id, storeId, appId, gid) {
+  await sb.from('generic_id_assignments').update({ pw_last_rotated:new Date().toISOString(), updated_at:new Date().toISOString() }).eq('id',id);
+  await sb.from('audit_log').insert({ store_id:storeId, app_id:appId, generic_id:gid, event_type:'pw_rotate', event_by:SESSION.user.email, detail:{} });
+  closeModal('manage-modal');
+  await loadAll();
+}
+
+async function disableAssignment(id, gid, storeId, appId, empId) {
+  if (!confirm(`Disable ${gid}? This will revoke access immediately.`)) return;
+  await sb.from('generic_id_assignments').update({
+    status:'disabled', disabled_at:new Date().toISOString(),
+    disabled_reason:`Manually disabled by ${SESSION.user.email}`, updated_at:new Date().toISOString()
+  }).eq('id',id);
+  await sb.from('audit_log').insert({ store_id:storeId, app_id:appId, generic_id:gid, employee_id:empId,
+    event_type:'disable', event_by:SESSION.user.email, detail:{} });
+  closeModal('manage-modal');
+  await loadAll();
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────
+function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+async function doSignOut() { await sb.auth.signOut(); window.location.href='index.html'; }
+
+// Close modals on background click
+document.querySelectorAll('.modal-bg').forEach(bg => bg.addEventListener('click', e => { if(e.target===bg) bg.classList.add('hidden'); }));
+
+init();
+</script>
+</body>
+</html>
