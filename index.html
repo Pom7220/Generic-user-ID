@@ -1,1 +1,359 @@
 
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Generic ID Manager">
+<meta name="theme-color" content="#1C1C1E">
+<title>Generic ID Manager</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-font-smoothing:antialiased}
+:root{
+  --blue:#0A84FF;--blue-lt:rgba(10,132,255,.15);
+  --green:#30D158;--green-lt:rgba(48,209,88,.15);--green-dk:#248A3D;
+  --red:#FF453A;--red-lt:rgba(255,69,58,.15);--red-dk:#C0392B;
+  --amber:#FF9F0A;--amber-lt:rgba(255,159,10,.15);
+  --glass-bg:rgba(255,255,255,.75);
+  --glass-border:rgba(255,255,255,.55);
+  --glass-blur:saturate(180%) blur(24px);
+  --bg:linear-gradient(160deg,#E8F4FF 0%,#F0EBF8 50%,#E6F7F0 100%);
+  --surface:rgba(255,255,255,.85);
+  --surface2:rgba(255,255,255,.5);
+  --text:#1C1C1E;--muted:#636366;--hint:#AEAEB2;
+  --border:rgba(0,0,0,.09);--border2:rgba(0,0,0,.05);
+  --radius:14px;--radius-lg:20px;--radius-xl:28px;
+  --safe-top:env(safe-area-inset-top);--safe-bottom:env(safe-area-inset-bottom);
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --glass-bg:rgba(28,28,30,.82);--glass-border:rgba(255,255,255,.12);
+    --bg:linear-gradient(160deg,#0D1B2A 0%,#1A0D2E 50%,#0A1F17 100%);
+    --surface:rgba(44,44,46,.9);--surface2:rgba(58,58,60,.7);
+    --text:#F2F2F7;--muted:#AEAEB2;--hint:#636366;
+    --border:rgba(255,255,255,.1);--border2:rgba(255,255,255,.06);
+    --blue-lt:rgba(10,132,255,.2);--green-lt:rgba(48,209,88,.2);--red-lt:rgba(255,69,58,.2);
+  }
+}
+html,body{min-height:100%;background:var(--bg)}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',Arial,sans-serif;
+  display:flex;align-items:center;justify-content:center;
+  min-height:100vh;padding:20px;
+}
+
+/* ── SCREENS ── */
+.screen{width:100%;max-width:420px;display:none}
+.screen.active{display:block}
+
+/* ── LOGIN CARD ── */
+.login-card{
+  background:var(--glass-bg);
+  -webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);
+  border:0.5px solid var(--glass-border);
+  border-radius:var(--radius-xl);
+  box-shadow:0 20px 60px rgba(0,0,0,.15),0 4px 16px rgba(0,0,0,.1);
+  padding:36px 32px 32px;
+  animation:slideUp .4s cubic-bezier(.34,1.56,.64,1);
+}
+@keyframes slideUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+
+.logo-wrap{text-align:center;margin-bottom:28px}
+.logo{
+  width:72px;height:72px;border-radius:20px;margin:0 auto 16px;
+  background:linear-gradient(135deg,#0A84FF 0%,#5AC8FA 100%);
+  display:flex;align-items:center;justify-content:center;
+  font-size:26px;font-weight:800;color:#fff;letter-spacing:-1px;
+  box-shadow:0 8px 24px rgba(10,132,255,.4);
+}
+.logo-title{font-size:22px;font-weight:700;color:var(--text);margin-bottom:4px}
+.logo-sub{font-size:14px;color:var(--muted)}
+
+.field{margin-bottom:14px}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:7px;text-transform:uppercase;letter-spacing:.06em}
+.field input{
+  width:100%;padding:14px 16px;border-radius:var(--radius);
+  border:0.5px solid var(--border);
+  background:var(--surface2);color:var(--text);
+  font-size:16px;font-family:inherit;outline:none;
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+  -webkit-appearance:none;appearance:none;
+  transition:border .15s,box-shadow .15s;
+}
+.field input:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-lt)}
+
+.btn-login{
+  width:100%;padding:15px;border-radius:var(--radius);border:none;
+  background:linear-gradient(135deg,#0A84FF,#0060DF);
+  color:#fff;font-size:17px;font-weight:700;
+  cursor:pointer;font-family:inherit;
+  box-shadow:0 6px 20px rgba(10,132,255,.4);
+  transition:opacity .15s,transform .1s;
+  margin-top:6px;display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.btn-login:active{opacity:.85;transform:scale(.98)}
+.btn-login:disabled{opacity:.5;cursor:not-allowed}
+
+.error-box{
+  background:var(--red-lt);border:0.5px solid rgba(255,69,58,.25);
+  border-radius:var(--radius);padding:11px 14px;
+  font-size:13px;color:var(--red-dk);margin-bottom:14px;display:none;
+  animation:shake .3s ease;
+}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+
+.role-chips{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:20px}
+.role-chip{font-size:11px;padding:4px 10px;border-radius:999px;border:0.5px solid var(--border);color:var(--hint);background:var(--surface2)}
+
+/* ── BU PICKER ── */
+.bu-picker-card{
+  background:var(--glass-bg);
+  -webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);
+  border:0.5px solid var(--glass-border);
+  border-radius:var(--radius-xl);
+  box-shadow:0 20px 60px rgba(0,0,0,.15),0 4px 16px rgba(0,0,0,.1);
+  overflow:hidden;
+  animation:slideUp .4s cubic-bezier(.34,1.56,.64,1);
+}
+.picker-header{padding:28px 28px 20px;text-align:center}
+.picker-avatar{
+  width:56px;height:56px;border-radius:16px;margin:0 auto 14px;
+  background:linear-gradient(135deg,#0A84FF,#5AC8FA);
+  display:flex;align-items:center;justify-content:center;
+  font-size:20px;font-weight:800;color:#fff;
+}
+.picker-title{font-size:20px;font-weight:700;color:var(--text);margin-bottom:4px}
+.picker-sub{font-size:13px;color:var(--muted)}
+.picker-list{padding:0 12px 12px}
+.bu-item{
+  display:flex;align-items:center;gap:14px;
+  padding:16px;border-radius:var(--radius-lg);
+  cursor:pointer;transition:background .15s;
+  border:0.5px solid transparent;margin-bottom:8px;
+}
+.bu-item:hover,.bu-item:active{background:var(--surface2);border-color:var(--border)}
+.bu-icon{
+  width:46px;height:46px;border-radius:13px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;font-weight:800;color:#fff;
+}
+.bu-item-info{flex:1;min-width:0}
+.bu-item-name{font-size:16px;font-weight:600;color:var(--text)}
+.bu-item-role{font-size:12px;color:var(--muted);margin-top:2px;text-transform:capitalize}
+.bu-item-arrow{font-size:20px;color:var(--hint)}
+.picker-divider{height:0.5px;background:var(--border);margin:4px 0 12px}
+.picker-signout{
+  width:100%;padding:12px;border:none;background:transparent;
+  color:var(--muted);font-size:14px;cursor:pointer;font-family:inherit;
+  border-top:0.5px solid var(--border2);margin-top:4px;
+}
+.picker-signout:hover{color:var(--red-dk)}
+
+/* ── SPINNER ── */
+.spinner{
+  display:inline-block;width:20px;height:20px;
+  border:2.5px solid rgba(255,255,255,.3);border-top-color:#fff;
+  border-radius:50%;animation:spin .6s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── FOOTER ── */
+.footer{text-align:center;color:var(--hint);font-size:11px;margin-top:16px}
+</style>
+</head>
+<body>
+
+<!-- SCREEN 1: LOGIN -->
+<div class="screen active" id="screen-login">
+  <div class="login-card">
+    <div class="logo-wrap">
+      <div class="logo">GID</div>
+      <div class="logo-title">Generic ID Manager</div>
+      <div class="logo-sub">Store access lifecycle · BU-scoped</div>
+    </div>
+
+    <div class="error-box" id="err"></div>
+
+    <div class="field">
+      <label>Email</label>
+      <input type="email" id="email" placeholder="your@company.com"
+        autocomplete="off" autocapitalize="none" autocorrect="off"
+        onfocus="this.removeAttribute('readonly')" readonly>
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="password" placeholder="••••••••"
+        autocomplete="new-password"
+        onfocus="this.removeAttribute('readonly')" readonly>
+    </div>
+
+    <button class="btn-login" id="login-btn" onclick="doLogin()">Sign in</button>
+
+    <div class="role-chips">
+      <span class="role-chip">HO Admin</span>
+      <span class="role-chip">HR Admin</span>
+      <span class="role-chip">BU Manager</span>
+      <span class="role-chip">Store Manager</span>
+    </div>
+  </div>
+  <div class="footer">v0.2 POC · Pom7220/Generic-user-ID</div>
+</div>
+
+<!-- SCREEN 2: BU PICKER -->
+<div class="screen" id="screen-picker">
+  <div class="bu-picker-card">
+    <div class="picker-header">
+      <div class="picker-avatar" id="picker-avatar">?</div>
+      <div class="picker-title">Select business unit</div>
+      <div class="picker-sub" id="picker-email">Loading…</div>
+    </div>
+    <div class="picker-list" id="picker-list"></div>
+    <button class="picker-signout" onclick="doSignOut()">Sign out</button>
+  </div>
+  <div class="footer">v0.2 POC · Pom7220/Generic-user-ID</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+// ── CONFIG ──────────────────────────────────────────────────────
+const SUPABASE_URL  = 'https://hnvytilmxoiaqceseooh.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhudnl0aWxteG9pYXFjZXNlb29oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MTc0ODIsImV4cCI6MjA4OTQ5MzQ4Mn0.x7WCLXRZEoorxEIuk5dwHG8EpasBGGB7peBysWUdElw';
+// ────────────────────────────────────────────────────────────────
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+// BU colors for picker
+const BU_COLORS = [
+  'linear-gradient(135deg,#0A84FF,#5AC8FA)',
+  'linear-gradient(135deg,#30D158,#34C759)',
+  'linear-gradient(135deg,#FF9F0A,#FF6B35)',
+  'linear-gradient(135deg,#BF5AF2,#9B59B6)',
+  'linear-gradient(135deg,#FF453A,#FF6B6B)',
+  'linear-gradient(135deg,#5AC8FA,#1D9E75)',
+];
+
+const ROLE_LABELS = {
+  ho_admin: 'HO Admin · All access',
+  hr_admin: 'HR Admin · Employee management',
+  bu_hr_admin: 'HR Admin · This BU',
+  bu_manager: 'BU Manager',
+  store_manager: 'Store Manager',
+};
+
+const ROLE_DESTINATIONS = {
+  ho_admin: 'ho.html',
+  hr_admin: 'bu.html',
+  bu_hr_admin: 'hr-upload.html',
+  bu_manager: 'bu.html',
+  store_manager: 'store.html',
+};
+
+// Do NOT auto-redirect on login page — prevents browser autofill from bypassing login
+// User must explicitly click Sign in each time
+
+function showErr(msg) {
+  const e = document.getElementById('err');
+  e.textContent = msg; e.style.display = 'block';
+  e.style.animation = 'none';
+  requestAnimationFrame(() => e.style.animation = 'shake .3s ease');
+}
+
+async function doLogin() {
+  document.getElementById('err').style.display = 'none';
+  const email    = document.getElementById('email').value.trim();
+  const password = document.getElementById('password').value;
+  if (!email || !password) { showErr('Please enter your email and password.'); return; }
+
+  const btn = document.getElementById('login-btn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>';
+
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+  if (error) {
+    showErr(error.message);
+    btn.disabled = false;
+    btn.textContent = 'Sign in';
+    return;
+  }
+
+  // Upsert user profile
+  await sb.from('user_profiles').upsert({ id: data.user.id, email: data.user.email }, { onConflict: 'id' });
+  await handleAfterLogin(data.user);
+}
+
+async function handleAfterLogin(user) {
+  // Get all roles for this user
+  const { data: roles } = await sb
+    .from('user_roles')
+    .select('role, bu_id, store_id, business_units(name, code)')
+    .eq('user_id', user.id);
+
+  if (!roles || roles.length === 0) {
+    showErr('No role assigned. Contact your administrator.');
+    await sb.auth.signOut();
+    const btn = document.getElementById('login-btn');
+    if (btn) { btn.disabled = false; btn.textContent = 'Sign in'; }
+    return;
+  }
+
+  // Single role → redirect immediately
+  if (roles.length === 1) {
+    const role = roles[0];
+    sessionStorage.setItem('gid_bu_id', role.bu_id);
+    sessionStorage.setItem('gid_role', role.role);
+    sessionStorage.setItem('gid_bu_name', role.business_units?.name || '');
+    window.location.href = ROLE_DESTINATIONS[role.role] || 'store.html';
+    return;
+  }
+
+  // Multiple roles → show BU picker
+  showPicker(user, roles);
+}
+
+function showPicker(user, roles) {
+  // Switch screens
+  document.getElementById('screen-login').classList.remove('active');
+  document.getElementById('screen-picker').classList.add('active');
+
+  const initials = (user.email || '?').slice(0, 2).toUpperCase();
+  document.getElementById('picker-avatar').textContent = initials;
+  document.getElementById('picker-email').textContent = user.email;
+
+  document.getElementById('picker-list').innerHTML = roles.map((r, i) => {
+    const buName = r.business_units?.name || 'Unknown BU';
+    const buCode = r.business_units?.code || '?';
+    const color  = BU_COLORS[i % BU_COLORS.length];
+    const label  = ROLE_LABELS[r.role] || r.role;
+    return `<div class="bu-item" onclick="selectBU('${r.bu_id}','${r.role}','${buName}')">
+      <div class="bu-icon" style="background:${color}">${buCode.slice(0,2)}</div>
+      <div class="bu-item-info">
+        <div class="bu-item-name">${buName}</div>
+        <div class="bu-item-role">${label}</div>
+      </div>
+      <span class="bu-item-arrow">›</span>
+    </div>`;
+  }).join('');
+}
+
+function selectBU(buId, role, buName) {
+  sessionStorage.setItem('gid_bu_id', buId);
+  sessionStorage.setItem('gid_role', role);
+  sessionStorage.setItem('gid_bu_name', buName);
+  window.location.href = ROLE_DESTINATIONS[role] || 'store.html';
+}
+
+async function doSignOut() {
+  await sb.auth.signOut();
+  sessionStorage.clear();
+  window.location.reload();
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('screen-login').classList.contains('active')) doLogin();
+});
+</script>
+</body>
+</html>
