@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="BU Dashboard">
+<meta name="theme-color" content="#1C1C1E">
+<title>BU Dashboard — Generic ID Manager</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-font-smoothing:antialiased}
+:root{
+  --blue:#0A84FF;--blue-lt:rgba(10,132,255,.14);--blue-dk:#0060DF;
+  --green:#30D158;--green-lt:rgba(48,209,88,.14);--green-dk:#248A3D;
+  --red:#FF453A;--red-lt:rgba(255,69,58,.14);--red-dk:#C0392B;
+  --amber:#FF9F0A;--amber-lt:rgba(255,159,10,.14);--amber-dk:#B25000;
+  --purple:#BF5AF2;--purple-lt:rgba(191,90,242,.14);
+  --teal:#5AC8FA;--teal-lt:rgba(90,200,250,.14);
+  --glass-bg:rgba(255,255,255,.72);
+  --glass-border:rgba(255,255,255,.5);
+  --glass-shadow:0 8px 32px rgba(0,0,0,.12),0 2px 8px rgba(0,0,0,.08);
+  --glass-blur:saturate(180%) blur(24px);
+  --bg:linear-gradient(160deg,#E8F4FF 0%,#F0EBF8 50%,#E6F7F0 100%);
+  --surface:rgba(255,255,255,.82);
+  --surface2:rgba(255,255,255,.55);
+  --text:#1C1C1E;--muted:#636366;--hint:#AEAEB2;
+  --border:rgba(0,0,0,.09);--border2:rgba(0,0,0,.05);
+  --radius:14px;--radius-lg:20px;--radius-xl:28px;
+  --safe-top:env(safe-area-inset-top);
+  --safe-bottom:env(safe-area-inset-bottom);
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --glass-bg:rgba(28,28,30,.78);--glass-border:rgba(255,255,255,.12);
+    --glass-shadow:0 8px 32px rgba(0,0,0,.4),0 2px 8px rgba(0,0,0,.3);
+    --bg:linear-gradient(160deg,#0D1B2A 0%,#1A0D2E 50%,#0A1F17 100%);
+    --surface:rgba(44,44,46,.88);--surface2:rgba(58,58,60,.7);
+    --text:#F2F2F7;--muted:#AEAEB2;--hint:#636366;
+    --border:rgba(255,255,255,.1);--border2:rgba(255,255,255,.06);
+    --blue-lt:rgba(10,132,255,.2);--green-lt:rgba(48,209,88,.2);
+    --red-lt:rgba(255,69,58,.2);--amber-lt:rgba(255,159,10,.2);--purple-lt:rgba(191,90,242,.2);
+  }
+}
+
+html{height:100%;background:var(--bg)}
+body{
+  min-height:100vh;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',Arial,sans-serif;
+  padding-bottom:calc(80px + var(--safe-bottom));
+}
+
+/* ── GLASS UTILITY ── */
+.glass{
+  background:var(--glass-bg);
+  -webkit-backdrop-filter:var(--glass-blur);
+  backdrop-filter:var(--glass-blur);
+  border:0.5px solid var(--glass-border);
+  box-shadow:var(--glass-shadow);
+}
+
+/* ── TOP NAV ── */
+.topnav{
+  position:sticky;top:0;z-index:300;
+  padding:calc(var(--safe-top) + 12px) 16px 12px;
+  background:var(--glass-bg);
+  -webkit-backdrop-filter:var(--glass-blur);
+  backdrop-filter:var(--glass-blur);
+  border-bottom:0.5px solid var(--glass-border);
+}
+.topnav-inner{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.nav-logo{
+  width:36px;height:36px;border-radius:10px;
+  background:linear-gradient(135deg,#0A84FF,#5AC8FA);
+  color:#fff;display:flex;align-items:center;justify-content:center;
+  font-size:13px;font-weight:800;flex-shrink:0;letter-spacing:-.5px;
+}
+.nav-info{flex:1;min-width:0}
+.nav-title{font-size:17px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nav-sub{font-size:12px;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nav-actions{display:flex;align-items:center;gap:6px}
+.sync-pill{
+  display:flex;align-items:center;gap:5px;
+  padding:4px 10px;border-radius:999px;
+  background:var(--green-lt);border:0.5px solid rgba(48,209,88,.3);
+  font-size:11px;font-weight:600;color:var(--green-dk);
+}
+.sync-pill.syncing{background:var(--amber-lt);border-color:rgba(255,159,10,.3);color:var(--amber-dk)}
+.sync-pill.error{background:var(--red-lt);border-color:rgba(255,69,58,.3);color:var(--red-dk)}
+.sync-dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+.sync-pill.syncing .sync-dot{animation:pulse .8s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ── BU SWITCHER ── */
+.bu-switcher{
+  display:flex;align-items:center;gap:8px;
+  padding:10px 16px;margin:12px 16px 0;
+  border-radius:var(--radius-lg);
+  background:var(--surface2);
+  -webkit-backdrop-filter:blur(12px);
+  backdrop-filter:blur(12px);
+  border:0.5px solid var(--glass-border);
+}
+.bu-switcher select{
+  flex:1;background:transparent;border:none;outline:none;
+  color:var(--text);font-size:15px;font-weight:600;font-family:inherit;
+  cursor:pointer;
+}
+.bu-switcher-label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+
+/* ── SCROLL SECTIONS ── */
+.section{padding:0 16px;margin-top:20px}
+.section-title{font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;padding-left:4px}
+
+/* ── METRIC CARDS SCROLL ── */
+.metrics-scroll{
+  display:flex;gap:10px;overflow-x:auto;padding:0 16px 4px;
+  margin-top:16px;scrollbar-width:none;-webkit-overflow-scrolling:touch;
+}
+.metrics-scroll::-webkit-scrollbar{display:none}
+.metric-card{
+  flex-shrink:0;width:130px;padding:14px 16px;border-radius:var(--radius-lg);
+  background:var(--glass-bg);
+  -webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);
+  border:0.5px solid var(--glass-border);box-shadow:var(--glass-shadow);
+}
+.metric-card-label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
+.metric-card-value{font-size:28px;font-weight:700;line-height:1;color:var(--text)}
+.metric-card-value.blue{color:var(--blue)}
+.metric-card-value.green{color:var(--green-dk)}
+.metric-card-value.red{color:var(--red-dk)}
+.metric-card-value.amber{color:var(--amber-dk)}
+.metric-card-sub{font-size:11px;color:var(--muted);margin-top:4px}
+
+/* ── GLASS CARDS ── */
+.gcard{
+  border-radius:var(--radius-lg);
+  background:var(--glass-bg);
+  -webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);
+  border:0.5px solid var(--glass-border);
+  box-shadow:var(--glass-shadow);
+  overflow:hidden;margin-bottom:12px;
+}
+.gcard-header{
+  padding:14px 16px;display:flex;align-items:center;justify-content:space-between;
+  border-bottom:0.5px solid var(--border2);gap:10px;flex-wrap:wrap;
+}
+.gcard-title{font-size:16px;font-weight:700;color:var(--text)}
+.gcard-body{padding:16px}
+
+/* ── APP CHIPS ── */
+.app-chips{display:flex;gap:7px;overflow-x:auto;padding:0 16px 4px;margin-top:16px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.app-chips::-webkit-scrollbar{display:none}
+.app-chip{
+  flex-shrink:0;display:flex;align-items:center;gap:6px;
+  padding:8px 14px;border-radius:999px;border:none;cursor:pointer;
+  font-size:13px;font-weight:500;font-family:inherit;
+  background:var(--surface2);color:var(--muted);
+  -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+  border:0.5px solid var(--glass-border);transition:all .18s;
+}
+.app-chip.active{background:var(--blue);color:#fff;border-color:transparent;box-shadow:0 4px 12px rgba(10,132,255,.35)}
+.app-chip-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+
+/* ── STORE ROWS ── */
+.store-row{
+  display:flex;align-items:center;gap:12px;padding:14px 16px;
+  border-bottom:0.5px solid var(--border2);cursor:pointer;transition:background .15s;
+}
+.store-row:last-child{border-bottom:none}
+.store-row:active{background:var(--surface2)}
+.store-icon{
+  width:40px;height:40px;border-radius:12px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:700;color:#fff;
+}
+.store-info{flex:1;min-width:0}
+.store-name{font-size:15px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.store-meta{font-size:12px;color:var(--muted);margin-top:2px}
+.store-chevron{color:var(--hint);font-size:18px;flex-shrink:0}
+.risk-pills{display:flex;gap:5px;flex-wrap:wrap;margin-top:6px}
+
+/* ── BADGES ── */
+.badge{display:inline-block;font-size:11px;font-weight:600;padding:3px 8px;border-radius:999px}
+.b-ok{background:var(--green-lt);color:var(--green-dk)}
+.b-warn{background:var(--amber-lt);color:var(--amber-dk)}
+.b-danger{background:var(--red-lt);color:var(--red-dk)}
+.b-info{background:var(--blue-lt);color:var(--blue-dk)}
+.b-neutral{background:var(--surface2);color:var(--muted)}
+.b-active{background:var(--green-lt);color:var(--green-dk)}
+.b-idle{background:var(--surface2);color:var(--muted)}
+.b-disabled{background:var(--red-lt);color:var(--red-dk)}
+.b-atrisk{background:var(--amber-lt);color:var(--amber-dk)}
+
+/* ── BUTTONS ── */
+.btn{
+  padding:10px 20px;border-radius:var(--radius);border:none;
+  font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;
+  transition:opacity .15s,transform .1s;display:inline-flex;align-items:center;gap:7px;
+}
+.btn:active{transform:scale(.97);opacity:.85}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-blue{background:var(--blue);color:#fff;box-shadow:0 4px 14px rgba(10,132,255,.3)}
+.btn-green{background:var(--green-dk);color:#fff;box-shadow:0 4px 14px rgba(48,209,88,.25)}
+.btn-red{background:var(--red-dk);color:#fff}
+.btn-glass{background:var(--surface2);color:var(--text);border:0.5px solid var(--glass-border);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+.btn-sm{padding:7px 14px;font-size:13px}
+.btn-xs{padding:5px 10px;font-size:12px}
+.btn-full{width:100%;justify-content:center}
+
+/* ── RISK ALERT CARD ── */
+.risk-card{
+  border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:10px;
+  display:flex;align-items:flex-start;gap:12px;
+  border:0.5px solid;
+}
+.risk-card.danger{background:var(--red-lt);border-color:rgba(255,69,58,.25);color:var(--red-dk)}
+.risk-card.warn{background:var(--amber-lt);border-color:rgba(255,159,10,.25);color:var(--amber-dk)}
+.risk-icon{font-size:20px;flex-shrink:0;margin-top:1px}
+.risk-title{font-size:14px;font-weight:700;margin-bottom:3px}
+.risk-desc{font-size:13px;opacity:.85;line-height:1.5}
+
+/* ── BOTTOM TAB BAR ── */
+.tab-bar{
+  position:fixed;bottom:0;left:0;right:0;z-index:300;
+  padding:10px 16px calc(var(--safe-bottom) + 10px);
+  background:var(--glass-bg);
+  -webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);
+  border-top:0.5px solid var(--glass-border);
+  display:flex;gap:4px;
+}
+.tab-item{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;
+  padding:6px 4px;border-radius:var(--radius);border:none;background:transparent;
+  cursor:pointer;font-family:inherit;color:var(--muted);transition:all .15s;
+}
+.tab-item.active{color:var(--blue)}
+.tab-item:active{transform:scale(.93)}
+.tab-icon{font-size:22px;line-height:1}
+.tab-label{font-size:10px;font-weight:500}
+
+/* ── MODAL / SHEET ── */
+.sheet-bg{
+  position:fixed;inset:0;z-index:500;
+  background:rgba(0,0,0,.4);
+  -webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);
+  display:flex;align-items:flex-end;justify-content:center;
+}
+.sheet{
+  width:100%;max-width:600px;max-height:92vh;
+  border-radius:var(--radius-xl) var(--radius-xl) 0 0;
+  background:var(--glass-bg);
+  -webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);
+  border-top:0.5px solid var(--glass-border);
+  overflow-y:auto;-webkit-overflow-scrolling:touch;
+  padding-bottom:calc(var(--safe-bottom) + 20px);
+}
+.sheet-handle{width:36px;height:4px;border-radius:2px;background:var(--hint);margin:12px auto 4px}
+.sheet-header{padding:12px 20px 16px;border-bottom:0.5px solid var(--border2);display:flex;align-items:center;justify-content:space-between}
+.sheet-title{font-size:18px;font-weight:700}
+.sheet-close{width:30px;height:30px;border-radius:50%;border:none;background:var(--surface2);color:var(--muted);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;font-family:inherit}
+.sheet-body{padding:20px}
+.sheet-footer{padding:12px 20px;border-top:0.5px solid var(--border2);display:flex;gap:10px}
+
+/* ── FORM ── */
+.field{margin-bottom:16px}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:7px;text-transform:uppercase;letter-spacing:.06em}
+.field input,.field select,.field textarea{
+  width:100%;padding:13px 14px;border-radius:var(--radius);
+  border:0.5px solid var(--border);
+  background:var(--surface2);color:var(--text);
+  font-size:16px;font-family:inherit;outline:none;
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+  transition:border .15s;
+  -webkit-appearance:none;appearance:none;
+}
+.field input:focus,.field select:focus,.field textarea:focus{
+  border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-lt);
+}
+.field textarea{resize:vertical;min-height:80px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:360px){.two-col{grid-template-columns:1fr}}
+
+/* ── LIST ROW ── */
+.list-row{
+  display:flex;align-items:center;gap:12px;padding:13px 16px;
+  border-bottom:0.5px solid var(--border2);cursor:pointer;
+  transition:background .12s;
+}
+.list-row:last-child{border-bottom:none}
+.list-row:active{background:var(--surface2)}
+.list-avatar{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0;background:var(--blue-lt);color:var(--blue-dk)}
+.list-info{flex:1;min-width:0}
+.list-name{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.list-sub{font-size:12px;color:var(--muted);margin-top:2px}
+
+/* ── EMPTY STATE ── */
+.empty{text-align:center;padding:40px 20px;color:var(--hint);font-size:14px}
+.empty-icon{font-size:40px;margin-bottom:12px;opacity:.5}
+
+/* ── SEARCH ── */
+.search-bar{
+  display:flex;align-items:center;gap:8px;
+  padding:11px 14px;border-radius:var(--radius);
+  background:var(--surface2);border:0.5px solid var(--border);
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+  margin-bottom:12px;
+}
+.search-bar input{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-size:15px;font-family:inherit}
+.search-bar input::placeholder{color:var(--hint)}
+
+/* ── SPINNER ── */
+.spinner{display:inline-block;width:18px;height:18px;border:2.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite}
+.spinner-blue{border-color:var(--blue-lt);border-top-color:var(--blue)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.hidden{display:none!important}
+
+/* ── DESKTOP ADJUSTMENTS ── */
+@media(min-width:768px){
+  body{padding-bottom:20px}
+  .tab-bar{display:none}
+  .topnav{padding-top:16px}
+  .metrics-scroll{padding:0 24px 4px;gap:14px}
+  .metric-card{width:150px}
+  .section{padding:0 24px}
+  .app-chips{padding:0 24px 4px}
+  .desktop-nav{display:flex!important}
+  .page-content{max-width:900px;margin:0 auto;padding:0 24px}
+  .gcard{border-radius:var(--radius-xl)}
+}
+.desktop-nav{display:none;align-items:center;gap:6px}
+.desktop-nav button{padding:7px 14px;border-radius:var(--radius);border:0.5px solid var(--glass-border);background:var(--surface2);color:var(--text);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.desktop-nav button:hover{background:var(--glass-bg)}
+</style>
+</head>
+<body>
+
+<!-- TOP NAV -->
+<nav class="topnav">
+  <div class="topnav-inner">
+    <div class="nav-logo">GID</div>
+    <div class="nav-info">
+      <div class="nav-title" id="nav-title">BU Dashboard</div>
+      <div class="nav-sub" id="nav-sub">Loading…</div>
+    </div>
+    <div class="nav-actions">
+      <div class="sync-pill" id="sync-pill">
+        <span class="sync-dot"></span>
+        <span id="sync-label">Live</span>
+      </div>
+      <div class="desktop-nav">
+        <button onclick="location.href='store.html'">Stores</button>
+        <button onclick="location.href='hr-upload.html'">HR Upload</button>
+        <button onclick="doSignOut()">Sign out</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- BU SWITCHER (ho_admin only) -->
+<div class="bu-switcher hidden" id="bu-switcher">
+  <span class="bu-switcher-label">BU</span>
+  <select id="bu-select" onchange="onBuChange()"></select>
+</div>
+
+<!-- CONTENT TABS (mobile) -->
+<div class="app-chips" id="main-tabs" style="margin-top:14px">
+  <button class="app-chip active" onclick="showTab('overview')">Overview</button>
+  <button class="app-chip" onclick="showTab('stores')">Stores</button>
+  <button class="app-chip" onclick="showTab('employees')">Employees</button>
+  <button class="app-chip" onclick="showTab('apps')">Apps</button>
+  <button class="app-chip" onclick="showTab('risk')">Risk</button>
+</div>
+
+<!-- ═══ TAB: OVERVIEW ═══ -->
+<div id="tab-overview">
+  <!-- Metrics -->
+  <div class="metrics-scroll" id="metrics-row"></div>
+
+  <!-- App filter chips -->
+  <div class="app-chips" id="app-filter-chips" style="margin-top:12px"></div>
+
+  <!-- Risk alerts -->
+  <div class="section" style="margin-top:16px">
+    <div class="section-title">Open risks</div>
+    <div id="risk-alerts-container">
+      <div class="empty"><div class="empty-icon">✅</div>No open risks</div>
+    </div>
+  </div>
+
+  <!-- Store summary -->
+  <div class="section" style="margin-top:4px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div class="section-title" style="margin-bottom:0">Stores</div>
+      <button class="btn btn-blue btn-xs" onclick="showTab('stores')">See all</button>
+    </div>
+    <div class="gcard">
+      <div id="store-summary-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TAB: STORES ═══ -->
+<div id="tab-stores" class="hidden">
+  <div class="section" style="margin-top:16px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div class="section-title" style="margin-bottom:0">Stores in BU</div>
+      <button class="btn btn-blue btn-sm" onclick="openAddStore()">+ Add store</button>
+    </div>
+    <div class="gcard" id="stores-list"></div>
+  </div>
+</div>
+
+<!-- ═══ TAB: EMPLOYEES ═══ -->
+<div id="tab-employees" class="hidden">
+  <div class="section" style="margin-top:16px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div class="section-title" style="margin-bottom:0">Employees</div>
+      <button class="btn btn-blue btn-sm" onclick="openAddEmployee()">+ Add employee</button>
+    </div>
+    <div class="search-bar">
+      <span style="color:var(--hint);font-size:16px">🔍</span>
+      <input type="text" id="emp-search" placeholder="Search name or EMP code…" oninput="renderEmployees()">
+    </div>
+    <div style="display:flex;gap:7px;margin-bottom:12px;flex-wrap:wrap">
+      <button class="app-chip active" id="ef-all" onclick="setEmpFilter('all')">All</button>
+      <button class="app-chip" id="ef-active" onclick="setEmpFilter('active')">Active</button>
+      <button class="app-chip" id="ef-resigned" onclick="setEmpFilter('resigned')">Resigned</button>
+    </div>
+    <div class="gcard" id="employees-list"></div>
+  </div>
+</div>
+
+<!-- ═══ TAB: APPS ═══ -->
+<div id="tab-apps" class="hidden">
+  <div class="section" style="margin-top:16px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <div class="section-title" style="margin-bottom:0">App registry</div>
+      <button class="btn btn-blue btn-sm" onclick="openAddApp()">+ Add app</button>
+    </div>
+    <div id="apps-list"></div>
+  </div>
+</div>
+
+<!-- ═══ TAB: RISK ═══ -->
+<div id="tab-risk" class="hidden">
+  <div class="section" style="margin-top:16px">
+    <div class="section-title">All risk items</div>
+    <div id="risk-full-list"></div>
+  </div>
+</div>
+
+<!-- BOTTOM TAB BAR (mobile) -->
+<div class="tab-bar">
+  <button class="tab-item active" id="tbar-overview" onclick="showTab('overview')">
+    <span class="tab-icon">📊</span><span class="tab-label">Overview</span>
+  </button>
+  <button class="tab-item" id="tbar-stores" onclick="showTab('stores')">
+    <span class="tab-icon">🏪</span><span class="tab-label">Stores</span>
+  </button>
+  <button class="tab-item" id="tbar-employees" onclick="showTab('employees')">
+    <span class="tab-icon">👥</span><span class="tab-label">People</span>
+  </button>
+  <button class="tab-item" id="tbar-apps" onclick="showTab('apps')">
+    <span class="tab-icon">📱</span><span class="tab-label">Apps</span>
+  </button>
+  <button class="tab-item" id="tbar-risk" onclick="showTab('risk')">
+    <span class="tab-icon">⚠️</span><span class="tab-label">Risk</span>
+  </button>
+</div>
+
+<!-- ═══ SHEETS ═══ -->
+
+<!-- Add Store Sheet -->
+<div class="sheet-bg hidden" id="sheet-store">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <span class="sheet-title" id="store-sheet-title">Add store</span>
+      <button class="sheet-close" onclick="closeSheet('sheet-store')">✕</button>
+    </div>
+    <div class="sheet-body">
+      <div class="two-col">
+        <div class="field"><label>Store code</label><input id="s-code" placeholder="e.g. E09" maxlength="6"></div>
+        <div class="field"><label>Region</label><input id="s-region" placeholder="e.g. South"></div>
+      </div>
+      <div class="field"><label>Store name</label><input id="s-name" placeholder="e.g. E09 Phuket"></div>
+      <div id="store-err" style="color:var(--red-dk);font-size:13px;display:none;margin-top:-8px;margin-bottom:8px"></div>
+    </div>
+    <div class="sheet-footer">
+      <button class="btn btn-glass btn-full" onclick="closeSheet('sheet-store')">Cancel</button>
+      <button class="btn btn-green btn-full" id="store-save-btn" onclick="saveStore()">Save store</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Employee Sheet -->
+<div class="sheet-bg hidden" id="sheet-employee">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <span class="sheet-title" id="emp-sheet-title">Add employee</span>
+      <button class="sheet-close" onclick="closeSheet('sheet-employee')">✕</button>
+    </div>
+    <div class="sheet-body">
+      <div class="two-col">
+        <div class="field"><label>Employee code</label><input id="e-code" placeholder="EMP-5001"></div>
+        <div class="field"><label>Mobile</label><input id="e-mobile" placeholder="+66 81…" type="tel"></div>
+      </div>
+      <div class="field"><label>Full name</label><input id="e-name" placeholder="First Last"></div>
+      <div class="two-col">
+        <div class="field">
+          <label>Store</label>
+          <select id="e-store"></select>
+        </div>
+        <div class="field">
+          <label>Status</label>
+          <select id="e-status">
+            <option value="active">Active</option>
+            <option value="resigned">Resigned</option>
+            <option value="suspended">Suspended</option>
+            <option value="transferred">Transferred</option>
+          </select>
+        </div>
+      </div>
+      <div class="field"><label>Supervisor EMP code (optional)</label><input id="e-sup" placeholder="EMP-4200"></div>
+      <div id="emp-err" style="color:var(--red-dk);font-size:13px;display:none;margin-top:-8px;margin-bottom:8px"></div>
+    </div>
+    <div class="sheet-footer">
+      <button class="btn btn-glass btn-full" onclick="closeSheet('sheet-employee')">Cancel</button>
+      <button class="btn btn-green btn-full" id="emp-save-btn" onclick="saveEmployee()">Save employee</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add App Sheet -->
+<div class="sheet-bg hidden" id="sheet-app">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <span class="sheet-title">Add app to BU</span>
+      <button class="sheet-close" onclick="closeSheet('sheet-app')">✕</button>
+    </div>
+    <div class="sheet-body">
+      <div class="two-col">
+        <div class="field"><label>App code</label><input id="a-code" placeholder="e.g. SC" maxlength="6"></div>
+        <div class="field"><label>ID prefix</label><input id="a-prefix" placeholder="e.g. SC" maxlength="6"></div>
+      </div>
+      <div class="field"><label>App name</label><input id="a-name" placeholder="e.g. Self Checkout"></div>
+      <div class="field">
+        <label>Password rotation (days)</label>
+        <input id="a-days" type="number" value="30" min="1" max="365">
+      </div>
+      <div id="app-err" style="color:var(--red-dk);font-size:13px;display:none;margin-top:-8px;margin-bottom:8px"></div>
+    </div>
+    <div class="sheet-footer">
+      <button class="btn btn-glass btn-full" onclick="closeSheet('sheet-app')">Cancel</button>
+      <button class="btn btn-green btn-full" id="app-save-btn" onclick="saveApp()">Save app</button>
+    </div>
+  </div>
+</div>
+
+<!-- Store Detail Sheet -->
+<div class="sheet-bg hidden" id="sheet-store-detail">
+  <div class="sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <span class="sheet-title" id="sd-title">Store detail</span>
+      <button class="sheet-close" onclick="closeSheet('sheet-store-detail')">✕</button>
+    </div>
+    <div class="sheet-body" id="sd-body"></div>
+    <div class="sheet-footer">
+      <button class="btn btn-glass btn-full" onclick="closeSheet('sheet-store-detail')">Close</button>
+      <button class="btn btn-blue btn-full" onclick="goToStore()">Open in store portal</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+// ── CONFIG ──────────────────────────────────────────────────────
+const SUPABASE_URL  = 'https://hnvytilmxoiaqceseooh.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhudnl0aWxteG9pYXFjZXNlb29oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MTc0ODIsImV4cCI6MjA4OTQ5MzQ4Mn0.x7WCLXRZEoorxEIuk5dwHG8EpasBGGB7peBysWUdElw';
+// ────────────────────────────────────────────────────────────────
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+const APP_COLORS = {POS:'#0A84FF',GR:'#30D158',ST:'#FF9F0A',FP:'#FF6B35',default:'#8E8E93'};
+const APP_BG = {POS:'#0A84FF22',GR:'#30D15822',ST:'#FF9F0A22',FP:'#FF6B3522',default:'#8E8E9322'};
+
+let SESSION=null, USER_ROLE=null, BU_ID=null, IS_HO=false;
+let ALL_BUS=[], STORES=[], APPS=[], EMPLOYEES=[], ASSIGNMENTS=[];
+let CUR_APP_FILTER=null, CUR_EMP_FILTER='all', CUR_STORE_DETAIL=null;
+let realtimeChannel=null;
+
+// ── INIT ─────────────────────────────────────────────────────────
+async function init(){
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session){window.location.href='index.html';return;}
+  SESSION=session;
+  const {data:roles}=await sb.from('user_roles').select('*').eq('user_id',session.user.id);
+  if(!roles||!roles.length){window.location.href='index.html';return;}
+  USER_ROLE=roles[0]; BU_ID=roles[0].bu_id;
+  IS_HO=roles[0].role==='ho_admin';
+
+  if(IS_HO){
+    const {data:bus}=await sb.from('business_units').select('*').order('name');
+    ALL_BUS=bus||[];
+    if(ALL_BUS.length>1){
+      const sw=document.getElementById('bu-switcher');
+      sw.classList.remove('hidden');
+      document.getElementById('bu-select').innerHTML=ALL_BUS.map(b=>`<option value="${b.id}"${b.id===BU_ID?' selected':''}>${b.name}</option>`).join('');
+    }
+  }
+
+  document.getElementById('nav-sub').textContent=session.user.email;
+  await loadAll();
+  setupRealtime();
+}
+
+async function onBuChange(){
+  BU_ID=document.getElementById('bu-select').value;
+  await loadAll();
+  setupRealtime();
+}
+
+async function loadAll(){
+  setSyncState('syncing');
+  const [stRes,appRes,empRes,asnRes,buRes]=await Promise.all([
+    sb.from('stores').select('*').eq('bu_id',BU_ID).eq('active',true).order('code'),
+    sb.from('apps').select('*').eq('bu_id',BU_ID).eq('active',true).order('code'),
+    sb.from('employees').select('*').eq('bu_id',BU_ID).order('full_name'),
+    sb.from('generic_id_assignments')
+      .select('*,app:app_id(code,name,pw_rotation_days),employee:employee_id(emp_code,full_name,status),supervisor:supervisor_id(emp_code,full_name,status)')
+      .in('store_id',(await sb.from('stores').select('id').eq('bu_id',BU_ID)).data?.map(s=>s.id)||[]),
+    sb.from('business_units').select('name').eq('id',BU_ID).single()
+  ]);
+  STORES=stRes.data||[]; APPS=appRes.data||[]; EMPLOYEES=empRes.data||[]; ASSIGNMENTS=asnRes.data||[];
+  const buName=buRes.data?.name||'BU';
+  document.getElementById('nav-title').textContent=buName;
+  // populate store selects in forms
+  const stOpts=STORES.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
+  document.getElementById('e-store').innerHTML=stOpts;
+  renderAll();
+  setSyncState('ok');
+}
+
+function renderAll(){
+  renderMetrics(); renderAppFilterChips(); renderStoreSummary();
+  renderStoresList(); renderEmployees(); renderApps();
+  renderRiskAlerts(); renderRiskFull();
+}
+
+// ── REALTIME ──────────────────────────────────────────────────────
+function setupRealtime(){
+  if(realtimeChannel) sb.removeChannel(realtimeChannel);
+  realtimeChannel=sb.channel('bu_'+BU_ID)
+    .on('postgres_changes',{event:'*',schema:'public',table:'generic_id_assignments'},()=>loadAll())
+    .on('postgres_changes',{event:'*',schema:'public',table:'employees'},()=>loadAll())
+    .on('postgres_changes',{event:'*',schema:'public',table:'stores'},()=>loadAll())
+    .subscribe(s=>{
+      if(s==='SUBSCRIBED') setSyncState('ok');
+      else if(s==='CHANNEL_ERROR') setSyncState('error');
+    });
+}
+
+function setSyncState(s){
+  const p=document.getElementById('sync-pill'),l=document.getElementById('sync-label');
+  p.className='sync-pill'+(s==='syncing'?' syncing':s==='error'?' error':'');
+  l.textContent=s==='ok'?'Live':s==='syncing'?'Syncing…':'Offline';
+}
+
+// ── METRICS ───────────────────────────────────────────────────────
+function renderMetrics(){
+  const asnFiltered=CUR_APP_FILTER?ASSIGNMENTS.filter(a=>a.app?.code===CUR_APP_FILTER):ASSIGNMENTS;
+  const pwOverdue=asnFiltered.filter(a=>a.status==='active'&&isPwOverdue(a)).length;
+  const risk=asnFiltered.filter(a=>['at_risk','orphan'].includes(a.status)).length;
+  const metrics=[
+    {label:'Stores',value:STORES.length,cls:'blue'},
+    {label:'Employees',value:EMPLOYEES.filter(e=>e.status==='active').length,cls:'green'},
+    {label:'Total IDs',value:asnFiltered.length,cls:''},
+    {label:'Active IDs',value:asnFiltered.filter(a=>a.status==='active').length,cls:'green'},
+    {label:'Pw overdue',value:pwOverdue,cls:pwOverdue?'amber':'green'},
+    {label:'Risk alerts',value:risk,cls:risk?'red':'green'},
+  ];
+  document.getElementById('metrics-row').innerHTML=metrics.map(m=>`
+    <div class="metric-card">
+      <div class="metric-card-label">${m.label}</div>
+      <div class="metric-card-value ${m.cls}">${m.value}</div>
+    </div>`).join('');
+}
+
+// ── APP FILTER CHIPS ──────────────────────────────────────────────
+function renderAppFilterChips(){
+  const counts={};
+  ASSIGNMENTS.forEach(a=>{const c=a.app?.code||'?';counts[c]=(counts[c]||0)+1;});
+  document.getElementById('app-filter-chips').innerHTML=
+    `<button class="app-chip${CUR_APP_FILTER===null?' active':''}" onclick="setAppFilter(null)">All apps <span style="opacity:.6;font-size:11px">${ASSIGNMENTS.length}</span></button>`+
+    APPS.map(a=>`<button class="app-chip${CUR_APP_FILTER===a.code?' active':''}" onclick="setAppFilter('${a.code}')">
+      <span class="app-chip-dot" style="background:${APP_COLORS[a.code]||APP_COLORS.default}"></span>
+      ${a.name} <span style="opacity:.6;font-size:11px">${counts[a.code]||0}</span>
+    </button>`).join('');
+}
+
+function setAppFilter(code){
+  CUR_APP_FILTER=code; renderMetrics(); renderAppFilterChips();
+  renderStoreSummary(); renderRiskAlerts(); renderRiskFull();
+}
+
+// ── STORE SUMMARY ─────────────────────────────────────────────────
+function renderStoreSummary(){
+  const el=document.getElementById('store-summary-list');
+  if(!STORES.length){el.innerHTML='<div class="empty"><div class="empty-icon">🏪</div>No stores yet</div>';return;}
+  el.innerHTML=STORES.slice(0,5).map(s=>storeRowHtml(s)).join('');
+}
+
+function renderStoresList(){
+  const el=document.getElementById('stores-list');
+  if(!STORES.length){el.innerHTML='<div class="empty"><div class="empty-icon">🏪</div>No stores yet — add one above</div>';return;}
+  el.innerHTML=STORES.map(s=>storeRowHtml(s,'detail')).join('');
+}
+
+function storeRowHtml(s,mode){
+  const asnForStore=ASSIGNMENTS.filter(a=>a.store_id===s.id&&(!CUR_APP_FILTER||a.app?.code===CUR_APP_FILTER));
+  const active=asnForStore.filter(a=>a.status==='active').length;
+  const risk=asnForStore.filter(a=>['at_risk','orphan','disabled'].includes(a.status)&&a.employee_id).length;
+  const pwDue=asnForStore.filter(a=>a.status==='active'&&isPwOverdue(a)).length;
+  const color=`hsl(${s.code.charCodeAt(0)*17%360},55%,45%)`;
+  return `<div class="store-row" onclick="${mode==='detail'?`openStoreDetail('${s.id}')`:`location.href='store.html'`}">
+    <div class="store-icon" style="background:${color}">${s.code.slice(0,2)}</div>
+    <div class="store-info">
+      <div class="store-name">${s.name}</div>
+      <div class="store-meta">${s.region||'—'} · ${asnForStore.length} IDs · ${active} active</div>
+      <div class="risk-pills">
+        ${pwDue?`<span class="badge b-warn">${pwDue} pw due</span>`:''}
+        ${risk?`<span class="badge b-danger">${risk} risk</span>`:''}
+        ${!pwDue&&!risk?`<span class="badge b-ok">All clear</span>`:''}
+      </div>
+    </div>
+    <span class="store-chevron">›</span>
+  </div>`;
+}
+
+// ── EMPLOYEES ─────────────────────────────────────────────────────
+function setEmpFilter(f){
+  CUR_EMP_FILTER=f;
+  ['all','active','resigned'].forEach(x=>document.getElementById('ef-'+x).classList.toggle('active',x===f));
+  renderEmployees();
+}
+
+function renderEmployees(){
+  const q=(document.getElementById('emp-search').value||'').toLowerCase();
+  let emps=EMPLOYEES;
+  if(CUR_EMP_FILTER!=='all') emps=emps.filter(e=>e.status===CUR_EMP_FILTER);
+  if(q) emps=emps.filter(e=>e.full_name.toLowerCase().includes(q)||e.emp_code.toLowerCase().includes(q)||(e.mobile||'').includes(q));
+  const el=document.getElementById('employees-list');
+  if(!emps.length){el.innerHTML='<div class="empty"><div class="empty-icon">👤</div>No employees found</div>';return;}
+  const storeMap={};STORES.forEach(s=>storeMap[s.id]=s.name);
+  el.innerHTML='<div>'+emps.map(e=>{
+    const initials=e.full_name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    const storeName=storeMap[e.store_id]||'—';
+    const statusCls={active:'b-active',resigned:'b-disabled',suspended:'b-warn',transferred:'b-neutral'}[e.status]||'b-neutral';
+    return `<div class="list-row" onclick="openEmpDetail('${e.id}')">
+      <div class="list-avatar" style="${e.status==='resigned'?'background:var(--red-lt);color:var(--red-dk)':''}">${initials}</div>
+      <div class="list-info">
+        <div class="list-name">${e.full_name}</div>
+        <div class="list-sub">${e.emp_code} · ${storeName} · ${e.mobile||'no mobile'}</div>
+      </div>
+      <span class="badge ${statusCls}">${e.status}</span>
+    </div>`;
+  }).join('')+'</div>';
+}
+
+// ── APPS ──────────────────────────────────────────────────────────
+function renderApps(){
+  const el=document.getElementById('apps-list');
+  if(!APPS.length){el.innerHTML='<div class="empty"><div class="empty-icon">📱</div>No apps registered</div>';return;}
+  el.innerHTML=APPS.map(a=>{
+    const count=ASSIGNMENTS.filter(x=>x.app?.code===a.code).length;
+    const active=ASSIGNMENTS.filter(x=>x.app?.code===a.code&&x.status==='active').length;
+    const color=APP_COLORS[a.code]||APP_COLORS.default;
+    return `<div class="gcard" style="margin-bottom:12px">
+      <div class="gcard-header">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:38px;height:38px;border-radius:10px;background:${color}22;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:${color}">${a.id_prefix}</div>
+          <div>
+            <div style="font-size:15px;font-weight:700">${a.name}</div>
+            <div style="font-size:12px;color:var(--muted)">Prefix: ${a.id_prefix} · Rotate every ${a.pw_rotation_days}d</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px">
+          <span class="badge b-info">${count} IDs</span>
+          <span class="badge b-ok">${active} active</span>
+        </div>
+      </div>
+      <div class="gcard-body" style="padding:12px 16px">
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          ${STORES.map(s=>{
+            const stCount=ASSIGNMENTS.filter(x=>x.app?.code===a.code&&x.store_id===s.id).length;
+            return `<span class="badge b-neutral">${s.code}: ${stCount}</span>`;
+          }).join('')}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── RISK ──────────────────────────────────────────────────────────
+function getRiskItems(){
+  const asnFiltered=CUR_APP_FILTER?ASSIGNMENTS.filter(a=>a.app?.code===CUR_APP_FILTER):ASSIGNMENTS;
+  const items=[];
+  const atRisk=asnFiltered.filter(a=>a.status==='at_risk');
+  const orphans=asnFiltered.filter(a=>a.status==='orphan');
+  const pwOver=asnFiltered.filter(a=>a.status==='active'&&isPwOverdue(a));
+  if(atRisk.length) items.push({type:'danger',icon:'⚠️',title:`${atRisk.length} ID(s) at risk — supervisor resigned`,desc:'Generic IDs where the assigned supervisor has resigned. Reassign supervisor or disable.',ids:atRisk.map(a=>a.generic_id).join(', ')});
+  if(orphans.length) items.push({type:'danger',icon:'⛔',title:`${orphans.length} orphan session(s)`,desc:'Login detected with no active employee assignment. Investigate immediately.',ids:orphans.map(a=>a.generic_id).join(', ')});
+  if(pwOver.length) items.push({type:'warn',icon:'🔑',title:`${pwOver.length} password(s) overdue`,desc:'Password rotation required. IDs still active but non-compliant.',ids:pwOver.map(a=>a.generic_id).join(', ')});
+  return items;
+}
+
+function renderRiskAlerts(){
+  const items=getRiskItems();
+  document.getElementById('risk-alerts-container').innerHTML=items.length
+    ?items.map(i=>`<div class="risk-card ${i.type}">
+      <div class="risk-icon">${i.icon}</div>
+      <div>
+        <div class="risk-title">${i.title}</div>
+        <div class="risk-desc">${i.desc}</div>
+        ${i.ids?`<div style="font-size:12px;margin-top:6px;opacity:.8">IDs: <strong>${i.ids}</strong></div>`:''}
+      </div>
+    </div>`).join('')
+    :'<div class="empty"><div class="empty-icon">✅</div>No open risks</div>';
+}
+
+function renderRiskFull(){
+  const items=getRiskItems();
+  document.getElementById('risk-full-list').innerHTML=items.length
+    ?items.map(i=>`<div class="risk-card ${i.type}" style="margin-bottom:10px">
+      <div class="risk-icon">${i.icon}</div>
+      <div style="flex:1">
+        <div class="risk-title">${i.title}</div>
+        <div class="risk-desc">${i.desc}</div>
+        ${i.ids?`<div style="font-size:12px;margin-top:6px;opacity:.8">IDs: <strong>${i.ids}</strong></div>`:''}
+        <button class="btn btn-glass btn-sm" style="margin-top:10px" onclick="showTab('stores')">Go to stores</button>
+      </div>
+    </div>`).join('')
+    :'<div class="empty"><div class="empty-icon">✅</div><div>No open risks — all systems clear</div></div>';
+}
+
+function isPwOverdue(a){
+  if(!a.pw_last_rotated) return false;
+  return Math.floor((Date.now()-new Date(a.pw_last_rotated))/(864e5))>=(a.app?.pw_rotation_days||30);
+}
+
+// ── STORE DETAIL SHEET ────────────────────────────────────────────
+function openStoreDetail(storeId){
+  const s=STORES.find(x=>x.id===storeId);
+  if(!s) return;
+  CUR_STORE_DETAIL=s;
+  document.getElementById('sd-title').textContent=s.name;
+  const asn=ASSIGNMENTS.filter(a=>a.store_id===s.id);
+  const storeMap={};STORES.forEach(x=>storeMap[x.id]=x.name);
+  const emps=EMPLOYEES.filter(e=>e.store_id===s.id);
+  document.getElementById('sd-body').innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px">
+      <div class="metric-card"><div class="metric-card-label">Total IDs</div><div class="metric-card-value blue">${asn.length}</div></div>
+      <div class="metric-card"><div class="metric-card-label">Active</div><div class="metric-card-value green">${asn.filter(a=>a.status==='active').length}</div></div>
+      <div class="metric-card"><div class="metric-card-label">Employees</div><div class="metric-card-value">${emps.filter(e=>e.status==='active').length}</div></div>
+      <div class="metric-card"><div class="metric-card-label">Pw overdue</div><div class="metric-card-value amber">${asn.filter(a=>a.status==='active'&&isPwOverdue(a)).length}</div></div>
+    </div>
+    <div style="margin-bottom:16px">
+      <div class="section-title" style="margin-bottom:8px">By app</div>
+      ${APPS.map(a=>{
+        const c=asn.filter(x=>x.app?.code===a.code);
+        const color=APP_COLORS[a.code]||APP_COLORS.default;
+        return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:0.5px solid var(--border2)">
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="width:8px;height:8px;border-radius:50%;background:${color};flex-shrink:0;display:inline-block"></span>
+            <span style="font-size:14px;font-weight:500">${a.name}</span>
+          </div>
+          <div style="display:flex;gap:6px">
+            <span class="badge b-info">${c.length} IDs</span>
+            <span class="badge b-ok">${c.filter(x=>x.status==='active').length} active</span>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+    <div>
+      <div class="section-title" style="margin-bottom:8px">Store info</div>
+      <div style="font-size:14px;color:var(--muted)">Region: ${s.region||'—'} · Code: ${s.code}</div>
+    </div>`;
+  document.getElementById('sheet-store-detail').classList.remove('hidden');
+}
+
+function goToStore(){
+  if(CUR_STORE_DETAIL) window.location.href='store.html';
+  closeSheet('sheet-store-detail');
+}
+
+// ── EMPLOYEE DETAIL ───────────────────────────────────────────────
+function openEmpDetail(empId){
+  const e=EMPLOYEES.find(x=>x.id===empId);
+  if(!e) return;
+  const initials=e.full_name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  const storeName=STORES.find(s=>s.id===e.store_id)?.name||'—';
+  const empAsn=ASSIGNMENTS.filter(a=>a.employee_id===e.id);
+  const statusCls={active:'b-active',resigned:'b-disabled',suspended:'b-warn',transferred:'b-neutral'}[e.status]||'b-neutral';
+  document.getElementById('emp-sheet-title').textContent=e.full_name;
+  document.getElementById('sheet-employee').querySelector('.sheet-body').innerHTML=`
+    <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;padding:16px;background:var(--surface2);border-radius:var(--radius-lg)">
+      ${e.photo_url?`<img src="${e.photo_url}" style="width:64px;height:64px;border-radius:50%;object-fit:cover;flex-shrink:0">`
+        :`<div style="width:64px;height:64px;border-radius:50%;background:var(--blue-lt);color:var(--blue-dk);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;flex-shrink:0">${initials}</div>`}
+      <div>
+        <div style="font-size:18px;font-weight:700">${e.full_name}</div>
+        <div style="font-size:13px;color:var(--muted);margin-top:2px">${e.emp_code}</div>
+        <div style="margin-top:6px"><span class="badge ${statusCls}">${e.status}</span></div>
+      </div>
+    </div>
+    <table style="width:100%;font-size:14px;border-collapse:collapse">
+      <tr><td style="color:var(--muted);padding:8px 0;width:110px">Store</td><td>${storeName}</td></tr>
+      <tr><td style="color:var(--muted);padding:8px 0;border-top:0.5px solid var(--border2)">Mobile</td><td>${e.mobile||'—'}</td></tr>
+      <tr><td style="color:var(--muted);padding:8px 0;border-top:0.5px solid var(--border2)">Supervisor</td><td>${e.supervisor_emp_code||'—'}</td></tr>
+      ${e.resigned_at?`<tr><td style="color:var(--muted);padding:8px 0;border-top:0.5px solid var(--border2)">Resigned</td><td style="color:var(--red-dk)">${new Date(e.resigned_at).toLocaleDateString()}</td></tr>`:''}
+    </table>
+    ${empAsn.length?`<div style="margin-top:16px">
+      <div class="section-title" style="margin-bottom:8px">Generic ID assignments</div>
+      ${empAsn.map(a=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:0.5px solid var(--border2)">
+        <span style="font-family:monospace;font-size:13px;font-weight:600">${a.generic_id}</span>
+        <span style="font-size:12px;color:var(--muted)">${a.app?.name||'—'}</span>
+        <span class="badge b-${a.status==='active'?'active':'idle'}">${a.status}</span>
+      </div>`).join('')}
+    </div>`:''}`;
+  document.getElementById('sheet-employee').querySelector('.sheet-footer').innerHTML=`
+    <button class="btn btn-glass btn-full" onclick="closeSheet('sheet-employee')">Close</button>
+    ${e.status==='active'?`<button class="btn btn-red btn-full btn-sm" onclick="markResigned('${e.id}')">Mark resigned</button>`:''}`;
+  document.getElementById('sheet-employee').classList.remove('hidden');
+}
+
+async function markResigned(empId){
+  if(!confirm('Mark this employee as resigned? This will trigger auto-disable of their generic IDs.')) return;
+  const now=new Date().toISOString();
+  await sb.from('employees').update({status:'resigned',resigned_at:now,updated_at:now}).eq('id',empId);
+  const {data:held}=await sb.from('generic_id_assignments').select('id,generic_id,store_id,app_id').eq('employee_id',empId).neq('status','disabled');
+  if(held&&held.length){
+    await sb.from('generic_id_assignments').update({status:'disabled',disabled_at:now,disabled_reason:'Marked resigned via BU dashboard'}).eq('employee_id',empId).neq('status','disabled');
+    for(const a of held){
+      await sb.from('audit_log').insert({store_id:a.store_id,app_id:a.app_id,generic_id:a.generic_id,employee_id:empId,event_type:'resign_auto_disable',event_by:SESSION.user.email,detail:{source:'bu_dashboard'}});
+    }
+  }
+  closeSheet('sheet-employee');
+  await loadAll();
+}
+
+// ── ADD STORE ─────────────────────────────────────────────────────
+function openAddStore(){
+  document.getElementById('s-code').value='';
+  document.getElementById('s-name').value='';
+  document.getElementById('s-region').value='';
+  document.getElementById('store-err').style.display='none';
+  document.getElementById('store-sheet-title').textContent='Add store';
+  document.getElementById('sheet-store').classList.remove('hidden');
+}
+
+async function saveStore(){
+  const code=document.getElementById('s-code').value.trim().toUpperCase();
+  const name=document.getElementById('s-name').value.trim();
+  const region=document.getElementById('s-region').value.trim();
+  const errEl=document.getElementById('store-err');
+  if(!code||!name){errEl.textContent='Store code and name are required.';errEl.style.display='block';return;}
+  const btn=document.getElementById('store-save-btn');
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span>';
+  const {error}=await sb.from('stores').insert({bu_id:BU_ID,code,name,region:region||null});
+  btn.disabled=false;btn.textContent='Save store';
+  if(error){errEl.textContent=error.message;errEl.style.display='block';return;}
+  closeSheet('sheet-store');
+  await loadAll();
+}
+
+// ── ADD EMPLOYEE ──────────────────────────────────────────────────
+function openAddEmployee(){
+  ['e-code','e-name','e-mobile','e-sup'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('e-status').value='active';
+  document.getElementById('emp-err').style.display='none';
+  document.getElementById('emp-sheet-title').textContent='Add employee';
+  document.getElementById('sheet-employee').querySelector('.sheet-body').innerHTML=`
+    <div class="two-col">
+      <div class="field"><label>Employee code</label><input id="e-code" placeholder="EMP-5001"></div>
+      <div class="field"><label>Mobile</label><input id="e-mobile" placeholder="+66 81…" type="tel"></div>
+    </div>
+    <div class="field"><label>Full name</label><input id="e-name" placeholder="First Last"></div>
+    <div class="two-col">
+      <div class="field"><label>Store</label><select id="e-store">${STORES.map(s=>`<option value="${s.id}">${s.name}</option>`).join('')}</select></div>
+      <div class="field"><label>Status</label><select id="e-status"><option value="active">Active</option><option value="resigned">Resigned</option><option value="suspended">Suspended</option><option value="transferred">Transferred</option></select></div>
+    </div>
+    <div class="field"><label>Supervisor EMP code</label><input id="e-sup" placeholder="EMP-4200"></div>
+    <div id="emp-err" style="color:var(--red-dk);font-size:13px;display:none;margin-top:-8px;margin-bottom:8px"></div>`;
+  document.getElementById('sheet-employee').querySelector('.sheet-footer').innerHTML=`
+    <button class="btn btn-glass btn-full" onclick="closeSheet('sheet-employee')">Cancel</button>
+    <button class="btn btn-green btn-full" id="emp-save-btn" onclick="saveEmployee()">Save employee</button>`;
+  document.getElementById('sheet-employee').classList.remove('hidden');
+}
+
+async function saveEmployee(){
+  const code=document.getElementById('e-code').value.trim().toUpperCase();
+  const name=document.getElementById('e-name').value.trim();
+  const mobile=document.getElementById('e-mobile').value.trim();
+  const storeId=document.getElementById('e-store').value;
+  const status=document.getElementById('e-status').value;
+  const sup=document.getElementById('e-sup').value.trim().toUpperCase();
+  const errEl=document.getElementById('emp-err');
+  if(!code||!name){errEl.textContent='Employee code and name are required.';errEl.style.display='block';return;}
+  const btn=document.getElementById('emp-save-btn');
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span>';
+  const {error}=await sb.from('employees').insert({
+    emp_code:code,bu_id:BU_ID,store_id:storeId||null,full_name:name,
+    mobile:mobile||null,supervisor_emp_code:sup||null,status,source:'manual'
+  });
+  btn.disabled=false;btn.textContent='Save employee';
+  if(error){errEl.textContent=error.message;errEl.style.display='block';return;}
+  closeSheet('sheet-employee');
+  await loadAll();
+}
+
+// ── ADD APP ────────────────────────────────────────────────────────
+function openAddApp(){
+  ['a-code','a-name','a-prefix'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('a-days').value='30';
+  document.getElementById('app-err').style.display='none';
+  document.getElementById('sheet-app').classList.remove('hidden');
+}
+
+async function saveApp(){
+  const code=document.getElementById('a-code').value.trim().toUpperCase();
+  const name=document.getElementById('a-name').value.trim();
+  const prefix=document.getElementById('a-prefix').value.trim().toUpperCase();
+  const days=parseInt(document.getElementById('a-days').value)||30;
+  const errEl=document.getElementById('app-err');
+  if(!code||!name||!prefix){errEl.textContent='All fields required.';errEl.style.display='block';return;}
+  const btn=document.getElementById('app-save-btn');
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span>';
+  const {error}=await sb.from('apps').insert({bu_id:BU_ID,code,name,id_prefix:prefix,pw_rotation_days:days,active:true});
+  btn.disabled=false;btn.textContent='Save app';
+  if(error){errEl.textContent=error.message;errEl.style.display='block';return;}
+  closeSheet('sheet-app');
+  await loadAll();
+}
+
+// ── TAB SWITCHING ─────────────────────────────────────────────────
+function showTab(t){
+  ['overview','stores','employees','apps','risk'].forEach(x=>{
+    document.getElementById('tab-'+x).classList.toggle('hidden',x!==t);
+    const tbar=document.getElementById('tbar-'+x);
+    if(tbar) tbar.classList.toggle('active',x===t);
+    // top chips
+    const chips=document.getElementById('main-tabs');
+    if(chips){[...chips.children].forEach(c=>{
+      c.classList.toggle('active',c.textContent.toLowerCase().trim().startsWith(t));
+    });}
+  });
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────
+function closeSheet(id){document.getElementById(id).classList.add('hidden');}
+async function doSignOut(){await sb.auth.signOut();window.location.href='index.html';}
+
+// Close sheet on background tap
+document.querySelectorAll('.sheet-bg').forEach(bg=>bg.addEventListener('click',e=>{if(e.target===bg)bg.classList.add('hidden');}));
+
+init();
+</script>
+</body>
+</html>
