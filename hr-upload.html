@@ -3,205 +3,153 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#1C1C1E">
 <title>HR Upload — Generic ID Manager</title>
 <style>
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-font-smoothing:antialiased}
 :root{
-  --blue:#185FA5;--blue-lt:#E6F1FB;
-  --green:#3B6D11;--green-lt:#EAF3DE;--green-bd:rgba(59,109,17,.3);
-  --red:#A32D2D;--red-lt:#FCEBEB;--red-bd:rgba(163,45,45,.3);
-  --amber:#854F0B;--amber-lt:#FAEEDA;--amber-bd:rgba(133,79,11,.3);
-  --gray:#5F5E5A;--gray-lt:#F1EFE8;
-  --text:#1C1C1E;--muted:#5F5E5A;--hint:#B4B2A9;
-  --bg:#F5F4F0;--surface:#FFFFFF;--surface2:#F8F7F5;
-  --border:rgba(0,0,0,0.1);--border2:rgba(0,0,0,0.06);
-  --radius:10px;--radius-lg:14px;--shadow:0 1px 8px rgba(0,0,0,0.06);
+  --blue:#0A84FF;--blue-lt:rgba(10,132,255,.14);--blue-dk:#0060DF;
+  --green:#30D158;--green-lt:rgba(48,209,88,.14);--green-dk:#248A3D;
+  --red:#FF453A;--red-lt:rgba(255,69,58,.14);--red-dk:#C0392B;
+  --amber:#FF9F0A;--amber-lt:rgba(255,159,10,.14);--amber-dk:#B25000;
+  --glass-bg:rgba(255,255,255,.72);--glass-border:rgba(255,255,255,.5);
+  --glass-blur:saturate(180%) blur(24px);
+  --bg:linear-gradient(160deg,#E8F4FF 0%,#F0EBF8 50%,#E6F7F0 100%);
+  --surface2:rgba(255,255,255,.55);--text:#1C1C1E;--muted:#636366;--hint:#AEAEB2;
+  --border:rgba(0,0,0,.09);--border2:rgba(0,0,0,.05);
+  --radius:14px;--radius-lg:20px;--radius-xl:28px;
+  --safe-top:env(safe-area-inset-top);--safe-bottom:env(safe-area-inset-bottom);
 }
 @media(prefers-color-scheme:dark){
   :root{
-    --text:#F2F2F7;--muted:#AEAEB2;--hint:#636366;
-    --bg:#1C1C1E;--surface:#2C2C2E;--surface2:#3A3A3C;
-    --border:rgba(255,255,255,0.1);--border2:rgba(255,255,255,0.06);
-    --blue-lt:rgba(24,95,165,.2);--green-lt:rgba(59,109,17,.2);
-    --red-lt:rgba(163,45,45,.2);--amber-lt:rgba(133,79,11,.2);
-    --green-bd:rgba(59,109,17,.4);--red-bd:rgba(163,45,45,.4);--amber-bd:rgba(133,79,11,.4);
+    --glass-bg:rgba(28,28,30,.78);--glass-border:rgba(255,255,255,.12);
+    --bg:linear-gradient(160deg,#0D1B2A 0%,#1A0D2E 50%,#0A1F17 100%);
+    --surface2:rgba(58,58,60,.7);--text:#F2F2F7;--muted:#AEAEB2;--hint:#636366;
+    --border:rgba(255,255,255,.1);--border2:rgba(255,255,255,.06);
+    --blue-lt:rgba(10,132,255,.2);--green-lt:rgba(48,209,88,.2);--red-lt:rgba(255,69,58,.2);--amber-lt:rgba(255,159,10,.2);
   }
 }
-body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
-nav{background:var(--surface);border-bottom:0.5px solid var(--border);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:100}
-.nav-logo{width:32px;height:32px;border-radius:8px;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0}
-.nav-left{display:flex;align-items:center;gap:10px}
-.nav-title{font-size:15px;font-weight:600}
-.nav-sub{font-size:12px;color:var(--muted);margin-top:1px}
-.btn-nav{padding:6px 14px;border-radius:var(--radius);border:0.5px solid var(--border);background:transparent;color:var(--text);font-size:13px;cursor:pointer;font-family:inherit}
-.btn-nav:hover{background:var(--surface2)}
-.page{max-width:960px;margin:0 auto;padding:24px 20px}
-.card{background:var(--surface);border-radius:var(--radius-lg);border:0.5px solid var(--border);box-shadow:var(--shadow);margin-bottom:20px;overflow:hidden}
-.card-header{padding:14px 20px;border-bottom:0.5px solid var(--border2);display:flex;align-items:center;justify-content:space-between}
-.card-title{font-size:14px;font-weight:600}
-.card-body{padding:20px}
-.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:20px}
-.metric{background:var(--surface);border:0.5px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px}
-.metric-label{font-size:11px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
-.metric-value{font-size:24px;font-weight:600}
-.green{color:var(--green)}.red{color:var(--red)}.amber{color:var(--amber)}
-.dropzone{border:2px dashed var(--border);border-radius:var(--radius-lg);padding:48px 24px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface2)}
-.dropzone:hover,.dropzone.drag-over{border-color:var(--blue);background:var(--blue-lt)}
-.dropzone-icon{font-size:40px;margin-bottom:12px;opacity:.5}
-.dropzone h3{font-size:16px;font-weight:600;margin-bottom:6px}
-.dropzone p{font-size:13px;color:var(--muted)}
-.dropzone input{display:none}
-.btn{padding:9px 18px;border-radius:var(--radius);border:none;font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;transition:opacity .15s}
+html{height:100%;background:var(--bg)}
+body{min-height:100vh;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',Arial,sans-serif;padding-bottom:40px}
+
+.topnav{position:sticky;top:0;z-index:100;padding:calc(var(--safe-top)+12px) 16px 12px;background:var(--glass-bg);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);border-bottom:0.5px solid var(--glass-border)}
+.topnav-inner{display:flex;align-items:center;gap:12px}
+.nav-logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#FF9F0A,#FF6B35);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0}
+.nav-title{font-size:17px;font-weight:700}
+.nav-back{padding:6px 12px;border-radius:var(--radius);border:0.5px solid var(--glass-border);background:var(--surface2);color:var(--text);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;margin-left:auto}
+
+.page{max-width:720px;margin:0 auto;padding:20px 16px}
+
+.gcard{border-radius:var(--radius-lg);background:var(--glass-bg);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);border:0.5px solid var(--glass-border);box-shadow:0 8px 32px rgba(0,0,0,.12);overflow:hidden;margin-bottom:16px}
+
+.pdpa-banner{background:linear-gradient(135deg,var(--blue-lt),rgba(48,209,88,.08));border:0.5px solid rgba(10,132,255,.25);border-radius:var(--radius-lg);padding:16px;margin-bottom:16px}
+.pdpa-banner h3{font-size:14px;font-weight:700;color:var(--blue-dk);margin-bottom:8px}
+.pdpa-banner ul{font-size:13px;color:var(--muted);list-style:none;display:flex;flex-direction:column;gap:5px}
+.pdpa-banner li::before{content:'🔒 ';margin-right:4px}
+
+.drop-zone{border:2px dashed var(--border);border-radius:var(--radius-lg);padding:40px 20px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface2)}
+.drop-zone.drag-over{border-color:var(--blue);background:var(--blue-lt)}
+.drop-zone-icon{font-size:48px;margin-bottom:12px}
+.drop-zone-title{font-size:17px;font-weight:600;margin-bottom:6px}
+.drop-zone-sub{font-size:13px;color:var(--muted)}
+
+.section-title{font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
+
+.diff-table{width:100%;border-collapse:collapse;font-size:13px}
+.diff-table th{padding:10px 12px;text-align:left;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;border-bottom:0.5px solid var(--border)}
+.diff-table td{padding:10px 12px;border-bottom:0.5px solid var(--border2)}
+.diff-new{background:var(--green-lt)}
+.diff-resign{background:var(--red-lt)}
+.diff-update{background:var(--amber-lt)}
+.diff-badge{font-size:11px;font-weight:600;padding:2px 7px;border-radius:999px}
+.diff-badge.new{background:var(--green-lt);color:var(--green-dk)}
+.diff-badge.resign{background:var(--red-lt);color:var(--red-dk)}
+.diff-badge.update{background:var(--amber-lt);color:var(--amber-dk)}
+.diff-badge.nochange{background:var(--surface2);color:var(--muted)}
+
+.btn{padding:10px 20px;border-radius:var(--radius);border:none;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;transition:opacity .15s,transform .1s;display:inline-flex;align-items:center;gap:7px}
+.btn:active{transform:scale(.97)}
 .btn:disabled{opacity:.45;cursor:not-allowed}
-.btn-primary{background:var(--blue);color:#fff}
-.btn-primary:hover:not(:disabled){opacity:.88}
-.btn-success{background:var(--green);color:#fff}
-.btn-success:hover:not(:disabled){opacity:.88}
-.btn-ghost{background:transparent;border:0.5px solid var(--border);color:var(--text)}
-.btn-ghost:hover{background:var(--surface2)}
-.btn-sm{padding:5px 12px;font-size:12px}
-.badge{display:inline-block;font-size:11px;font-weight:500;padding:2px 8px;border-radius:999px}
-.badge-new{background:var(--green-lt);color:var(--green);border:0.5px solid var(--green-bd)}
-.badge-resign{background:var(--red-lt);color:var(--red);border:0.5px solid var(--red-bd)}
-.badge-update{background:var(--amber-lt);color:var(--amber);border:0.5px solid var(--amber-bd)}
-.badge-skip{background:var(--gray-lt);color:var(--gray);border:0.5px solid rgba(95,94,90,.2)}
-.table-wrap{overflow-x:auto}
-table{width:100%;border-collapse:collapse;font-size:13px;min-width:700px}
-th{text-align:left;padding:8px 12px;color:var(--muted);font-weight:500;font-size:12px;border-bottom:0.5px solid var(--border);white-space:nowrap}
-td{padding:9px 12px;border-bottom:0.5px solid var(--border2);vertical-align:middle}
-tr:last-child td{border-bottom:none}
-tr.row-new td:first-child{border-left:3px solid var(--green)}
-tr.row-resign td:first-child{border-left:3px solid var(--red)}
-tr.row-update td:first-child{border-left:3px solid var(--amber)}
-tr.row-skip{opacity:.5}
-.alert{padding:12px 16px;border-radius:var(--radius);font-size:13px;margin-bottom:16px;display:flex;align-items:flex-start;gap:10px;line-height:1.6}
-.alert-warn{background:var(--amber-lt);border:0.5px solid var(--amber-bd);color:var(--amber)}
-.alert-success{background:var(--green-lt);border:0.5px solid var(--green-bd);color:var(--green)}
-.steps{display:flex;align-items:center;gap:0;margin-bottom:24px}
-.step{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--hint)}
-.step.active{color:var(--blue);font-weight:500}
-.step.done{color:var(--green)}
-.step-num{width:24px;height:24px;border-radius:50%;border:1.5px solid currentColor;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0}
-.step-line{flex:1;height:1px;background:var(--border);margin:0 8px;min-width:24px}
-.spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:6px}
+.btn-green{background:var(--green-dk);color:#fff}
+.btn-glass{background:var(--surface2);color:var(--text);border:0.5px solid var(--glass-border)}
+.btn-full{width:100%;justify-content:center}
+
+.progress-bar{height:6px;border-radius:3px;background:var(--surface2);overflow:hidden;margin-top:8px}
+.progress-fill{height:100%;border-radius:3px;background:var(--green-dk);transition:width .3s ease}
+
+.spinner{display:inline-block;width:18px;height:18px;border:2.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 .hidden{display:none!important}
-.template-box{background:var(--surface2);border:0.5px solid var(--border);border-radius:var(--radius);padding:14px 16px}
-.template-box code{font-family:'SF Mono','Consolas',monospace;font-size:11px;line-height:1.9;color:var(--text);display:block;white-space:pre;overflow-x:auto}
-.hist-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:0.5px solid var(--border2);font-size:13px}
-.hist-row:last-child{border-bottom:none}
-.filter-row{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+
+.stat-row{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+.stat-chip{padding:8px 14px;border-radius:999px;font-size:13px;font-weight:600}
+.stat-chip.new{background:var(--green-lt);color:var(--green-dk)}
+.stat-chip.resign{background:var(--red-lt);color:var(--red-dk)}
+.stat-chip.update{background:var(--amber-lt);color:var(--amber-dk)}
+.stat-chip.total{background:var(--blue-lt);color:var(--blue-dk)}
 </style>
 </head>
 <body>
 
-<nav>
-  <div class="nav-left">
-    <div class="nav-logo">GID</div>
-    <div>
-      <div class="nav-title">HR Employee Upload</div>
-      <div class="nav-sub" id="nav-bu">Loading…</div>
-    </div>
-  </div>
-  <div style="display:flex;gap:8px">
-    <button class="btn-nav" onclick="location.href='index.html'">← Back</button>
-    <button class="btn-nav" onclick="doSignOut()">Sign out</button>
+<nav class="topnav">
+  <div class="topnav-inner">
+    <div class="nav-logo">HR</div>
+    <div class="nav-title">HR Batch Upload</div>
+    <button class="nav-back" onclick="location.href='bu.html'">← BU Dashboard</button>
   </div>
 </nav>
 
 <div class="page">
 
-  <!-- Steps -->
-  <div class="steps">
-    <div class="step active" id="step1"><span class="step-num">1</span>Upload file</div>
-    <div class="step-line"></div>
-    <div class="step" id="step2"><span class="step-num">2</span>Review changes</div>
-    <div class="step-line"></div>
-    <div class="step" id="step3"><span class="step-num">3</span>Apply &amp; sync</div>
+  <!-- PDPA Notice -->
+  <div class="pdpa-banner">
+    <h3>🔒 PDPA/GDPR Compliance</h3>
+    <ul>
+      <li>Only emp_code, bu_code, store_code, supervisor_code, status and dates are stored</li>
+      <li>Full name, mobile, address and other PII in the CSV are discarded immediately after processing</li>
+      <li>PII is fetched from SuccessFactors in real-time when needed for display</li>
+      <li>This upload log retains only: emp_code, change type, and timestamp</li>
+    </ul>
   </div>
 
-  <!-- PHASE 1: Upload -->
-  <div id="phase-upload">
-    <div class="metrics">
-      <div class="metric"><div class="metric-label">Last upload</div><div class="metric-value" id="last-date" style="font-size:15px;margin-top:4px">—</div></div>
-      <div class="metric"><div class="metric-label">Total employees</div><div class="metric-value" id="stat-total">—</div></div>
-      <div class="metric"><div class="metric-label">Active</div><div class="metric-value green" id="stat-active">—</div></div>
-      <div class="metric"><div class="metric-label">Resigned</div><div class="metric-value red" id="stat-resigned">—</div></div>
+  <!-- CSV Format Guide -->
+  <div class="gcard" style="padding:16px;margin-bottom:16px">
+    <div class="section-title">Required CSV format</div>
+    <div style="background:var(--surface2);border-radius:var(--radius);padding:12px;font-family:monospace;font-size:12px;overflow-x:auto;white-space:nowrap;color:var(--muted)">
+      emp_code, full_name*, bu_code, store_code, supervisor_emp_code, status, effective_date<br>
+      EMP-5001, *, BKK, B12, EMP-4200, active, 2026-03-01<br>
+      EMP-4421, *, BKK, B12, EMP-4200, resigned, 2026-03-15
     </div>
-
-    <div class="card">
-      <div class="card-header">
-        <span class="card-title">Upload employee CSV or Excel</span>
-        <button class="btn btn-ghost btn-sm" onclick="downloadTemplate()">Download template</button>
-      </div>
-      <div class="card-body">
-        <div class="alert alert-warn">
-          <span style="font-size:16px;flex-shrink:0">⚠</span>
-          <div><strong>Resignation rows trigger auto-disable</strong> of all linked generic IDs after you confirm in step 2. Store managers will be notified automatically.</div>
-        </div>
-        <div class="dropzone" id="dropzone"
-          onclick="document.getElementById('fileInput').click()"
-          ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
-          <div class="dropzone-icon">📄</div>
-          <h3>Drop CSV or Excel file here</h3>
-          <p>or click to browse · .csv, .xlsx, .xls</p>
-          <input type="file" id="fileInput" accept=".csv,.xlsx,.xls" onchange="onFileSelect(event)">
-        </div>
-        <div style="margin-top:20px">
-          <p style="font-size:13px;font-weight:500;color:var(--muted);margin-bottom:10px">Required columns:</p>
-          <div class="template-box">
-            <code>emp_code,full_name,bu_code,store_code,mobile,supervisor_emp_code,status,effective_date
-EMP-4600,New Staff Name,BKK,B12,+66811234567,EMP-4200,active,2026-03-20
-EMP-4511,Anan Jaidee,BKK,B12,+66923456789,EMP-4200,resigned,2026-03-19</code>
-          </div>
-          <p style="font-size:11px;color:var(--hint);margin-top:8px">status: <strong>active</strong> · <strong>resigned</strong> · <strong>suspended</strong> · <strong>transferred</strong></p>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-header"><span class="card-title">Recent uploads</span></div>
-      <div class="card-body" id="upload-history">
-        <p style="font-size:13px;color:var(--hint);text-align:center;padding:8px 0">No uploads yet</p>
-      </div>
-    </div>
+    <p style="font-size:12px;color:var(--hint);margin-top:8px">* full_name column is accepted but immediately discarded — not stored in database.</p>
   </div>
 
-  <!-- PHASE 2: Review -->
-  <div id="phase-review" class="hidden">
-    <div class="metrics">
-      <div class="metric"><div class="metric-label">Total rows</div><div class="metric-value" id="diff-total">0</div></div>
-      <div class="metric"><div class="metric-label">New hires</div><div class="metric-value green" id="diff-new">0</div></div>
-      <div class="metric"><div class="metric-label">Resignations</div><div class="metric-value red" id="diff-resign">0</div></div>
-      <div class="metric"><div class="metric-label">Updates / unchanged</div><div class="metric-value amber" id="diff-other">0</div></div>
+  <!-- Drop Zone -->
+  <div class="gcard" style="padding:16px;margin-bottom:16px" id="upload-section">
+    <div class="section-title">Upload CSV file</div>
+    <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+      <div class="drop-zone-icon">📂</div>
+      <div class="drop-zone-title">Drop CSV file here or click to browse</div>
+      <div class="drop-zone-sub">Accepts .csv files · Max 5,000 rows per upload</div>
     </div>
+    <input type="file" id="file-input" accept=".csv" class="hidden" onchange="handleFile(this.files[0])">
+  </div>
 
-    <div class="card" id="resign-warn-card" style="display:none">
-      <div class="card-body">
-        <div class="alert alert-warn" style="margin:0">
-          <span style="font-size:16px;flex-shrink:0">⚠</span>
-          <div id="resign-warn-text"></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="card-header">
-        <span class="card-title">Change preview</span>
-        <div class="filter-row" style="margin:0">
-          <span class="badge badge-new" style="cursor:pointer" onclick="renderDiff('new')">New</span>
-          <span class="badge badge-resign" style="cursor:pointer" onclick="renderDiff('resign')">Resigned</span>
-          <span class="badge badge-update" style="cursor:pointer" onclick="renderDiff('update')">Updates</span>
-          <span class="badge badge-skip" style="cursor:pointer" onclick="renderDiff('skip')">Unchanged</span>
-          <span class="badge badge-skip" style="cursor:pointer" onclick="renderDiff('all')">All</span>
-        </div>
-      </div>
-      <div class="table-wrap">
-        <table>
+  <!-- Diff Preview -->
+  <div id="diff-section" class="hidden">
+    <div class="gcard" style="padding:16px;margin-bottom:16px">
+      <div class="section-title">Changes preview</div>
+      <div class="stat-row" id="stat-row"></div>
+      <div style="overflow-x:auto">
+        <table class="diff-table">
           <thead>
             <tr>
-              <th>Emp code</th><th>Name</th><th>BU</th><th>Store</th>
-              <th>Mobile</th><th>Supervisor</th><th>Status</th><th>Effective</th><th>Change</th>
+              <th>Change</th>
+              <th>Emp code</th>
+              <th>BU</th>
+              <th>Store</th>
+              <th>Status</th>
+              <th>Effective</th>
             </tr>
           </thead>
           <tbody id="diff-tbody"></tbody>
@@ -209,36 +157,30 @@ EMP-4511,Anan Jaidee,BKK,B12,+66923456789,EMP-4200,resigned,2026-03-19</code>
       </div>
     </div>
 
-    <div style="display:flex;gap:10px;justify-content:flex-end">
-      <button class="btn btn-ghost" onclick="resetUpload()">← Start over</button>
-      <button class="btn btn-success" id="apply-btn" onclick="applyChanges()">Apply changes</button>
+    <div id="progress-section" class="hidden" style="margin-bottom:16px">
+      <div style="font-size:14px;font-weight:600" id="progress-label">Processing…</div>
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+    </div>
+
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-glass btn-full" onclick="resetUpload()">Cancel</button>
+      <button class="btn btn-green btn-full" id="apply-btn" onclick="applyChanges()">Apply <span id="apply-count">0</span> changes</button>
     </div>
   </div>
 
-  <!-- PHASE 3: Done -->
-  <div id="phase-done" class="hidden">
-    <div class="card">
-      <div class="card-body" style="text-align:center;padding:40px 20px">
-        <div style="font-size:48px;margin-bottom:16px">✅</div>
-        <h2 style="font-size:20px;font-weight:600;margin-bottom:8px">Upload complete</h2>
-        <p style="font-size:14px;color:var(--muted);margin-bottom:24px" id="done-summary"></p>
-        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
-          <button class="btn btn-primary" onclick="resetUpload()">Upload another file</button>
-          <button class="btn btn-ghost" onclick="location.href='store.html'">Store portal</button>
-          <button class="btn btn-ghost" onclick="location.href='bu.html'">BU dashboard</button>
-        </div>
-      </div>
-    </div>
-    <div class="card" id="done-resign-card" style="display:none">
-      <div class="card-header"><span class="card-title" style="color:var(--red)">Generic IDs disabled — resignations</span></div>
-      <div class="card-body" id="done-resign-list"></div>
+  <!-- Result -->
+  <div id="result-section" class="hidden">
+    <div class="gcard" style="padding:24px;text-align:center">
+      <div style="font-size:48px;margin-bottom:12px" id="result-icon">✅</div>
+      <div style="font-size:20px;font-weight:700;margin-bottom:8px" id="result-title">Upload complete</div>
+      <div style="font-size:14px;color:var(--muted)" id="result-desc"></div>
+      <button class="btn btn-glass" style="margin-top:20px" onclick="resetUpload()">Upload another file</button>
     </div>
   </div>
 
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script>
 // ── CONFIG ──────────────────────────────────────────────────────
 const SUPABASE_URL  = 'https://hnvytilmxoiaqceseooh.supabase.co';
@@ -246,251 +188,200 @@ const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFz
 // ────────────────────────────────────────────────────────────────
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
-let SESSION = null, BU_ID = null;
-let parsedRows = [], diffRows = [];
+let SESSION=null, BUS={}, STORES={}, PARSED=[], DIFF=[];
 
-async function init() {
-  const { data: { session } } = await sb.auth.getSession();
-  if (!session) { window.location.href = 'index.html'; return; }
-  SESSION = session;
-  const { data: roles } = await sb.from('user_roles').select('*').eq('user_id', session.user.id).limit(1);
-  if (!roles || !roles.length) { window.location.href = 'index.html'; return; }
-  BU_ID = roles[0].bu_id;
-  const { data: bu } = await sb.from('business_units').select('name').eq('id', BU_ID).single();
-  document.getElementById('nav-bu').textContent = (bu?.name || 'BU') + ' · HR Upload';
-  loadStats(); loadHistory();
+async function init(){
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session){window.location.href='index.html';return;}
+  SESSION=session;
+
+  // Load BUs and stores for lookup
+  const {data:bus}=await sb.from('business_units').select('id,code,name');
+  const {data:stores}=await sb.from('stores').select('id,code,bu_id');
+  (bus||[]).forEach(b=>BUS[b.code]=b);
+  (stores||[]).forEach(s=>STORES[s.code]=s);
+
+  // Drag and drop
+  const dz=document.getElementById('drop-zone');
+  dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag-over')});
+  dz.addEventListener('dragleave',()=>dz.classList.remove('drag-over'));
+  dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag-over');if(e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0])});
 }
 
-async function loadStats() {
-  const { data } = await sb.from('employees').select('status').eq('bu_id', BU_ID);
-  if (!data) return;
-  document.getElementById('stat-total').textContent = data.length;
-  document.getElementById('stat-active').textContent = data.filter(e => e.status === 'active').length;
-  document.getElementById('stat-resigned').textContent = data.filter(e => e.status === 'resigned').length;
+function handleFile(file){
+  if(!file||!file.name.endsWith('.csv')){alert('Please upload a .csv file');return;}
+  const reader=new FileReader();
+  reader.onload=e=>parseCSV(e.target.result);
+  reader.readAsText(file);
 }
 
-async function loadHistory() {
-  const { data } = await sb.from('hr_upload_log').select('*').order('created_at', { ascending: false }).limit(5);
-  const el = document.getElementById('upload-history');
-  if (!data || !data.length) { el.innerHTML = '<p style="font-size:13px;color:var(--hint);text-align:center;padding:8px 0">No uploads yet</p>'; return; }
-  document.getElementById('last-date').textContent = new Date(data[0].created_at).toLocaleDateString();
-  el.innerHTML = data.map(l => `
-    <div class="hist-row">
-      <div>
-        <span style="font-weight:500">${l.filename || 'upload'}</span>
-        <span style="font-size:11px;color:var(--hint);margin-left:8px">${new Date(l.created_at).toLocaleString()}</span>
-      </div>
-      <div style="display:flex;gap:6px">
-        <span class="badge badge-new">${l.new_hires} new</span>
-        <span class="badge badge-resign">${l.resignations} resign</span>
-        <span class="badge badge-update">${l.updates} update</span>
-      </div>
-    </div>`).join('');
-}
+async function parseCSV(text){
+  const lines=text.trim().split('\n');
+  if(lines.length<2){alert('CSV must have a header row and at least one data row');return;}
 
-// ── FILE HANDLING ────────────────────────────────────────────────
-function onDragOver(e) { e.preventDefault(); document.getElementById('dropzone').classList.add('drag-over'); }
-function onDragLeave() { document.getElementById('dropzone').classList.remove('drag-over'); }
-function onDrop(e) { e.preventDefault(); onDragLeave(); const f = e.dataTransfer.files[0]; if (f) processFile(f); }
-function onFileSelect(e) { const f = e.target.files[0]; if (f) processFile(f); }
+  const headers=lines[0].split(',').map(h=>h.trim().toLowerCase().replace(/[^a-z_]/g,''));
+  const col=name=>headers.indexOf(name);
 
-function processFile(file) {
-  const ext = file.name.split('.').pop().toLowerCase();
-  if (ext === 'csv') {
-    const r = new FileReader(); r.onload = ev => parseCSV(ev.target.result, file.name); r.readAsText(file);
-  } else if (ext === 'xlsx' || ext === 'xls') {
-    const r = new FileReader();
-    r.onload = ev => {
-      const wb = XLSX.read(ev.target.result, { type: 'array' });
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      parseCSV(XLSX.utils.sheet_to_csv(ws), file.name);
+  PARSED=lines.slice(1).map(line=>{
+    const vals=line.split(',').map(v=>v.trim().replace(/^["']|["']$/g,''));
+    return {
+      emp_code: (vals[col('emp_code')]||'').toUpperCase(),
+      // full_name intentionally excluded — PDPA: we read it but never store it
+      bu_code: (vals[col('bu_code')]||'').toUpperCase(),
+      store_code: (vals[col('store_code')]||'').toUpperCase(),
+      supervisor_emp_code: (vals[col('supervisor_emp_code')]||'').toUpperCase()||null,
+      status: (vals[col('status')]||'active').toLowerCase(),
+      effective_date: vals[col('effective_date')]||new Date().toISOString().slice(0,10),
     };
-    r.readAsArrayBuffer(file);
-  } else { alert('Please upload .csv, .xlsx, or .xls'); }
+  }).filter(r=>r.emp_code);
+
+  if(!PARSED.length){alert('No valid rows found in CSV');return;}
+
+  // Load existing employees
+  const empCodes=PARSED.map(r=>r.emp_code);
+  const {data:existing}=await sb.from('employees').select('emp_code,bu_id,store_id,status,supervisor_emp_code').in('emp_code',empCodes);
+  const existMap={};(existing||[]).forEach(e=>existMap[e.emp_code]=e);
+
+  // Build diff
+  DIFF=PARSED.map(row=>{
+    const ex=existMap[row.emp_code];
+    const bu=BUS[row.bu_code];
+    const store=STORES[row.store_code];
+    let changeType='nochange';
+    if(!ex) changeType='new';
+    else if(ex.status!=='resigned'&&row.status==='resigned') changeType='resign';
+    else if(ex.status!==row.status||ex.supervisor_emp_code!==row.supervisor_emp_code) changeType='update';
+    return {...row,changeType,bu_id:bu?.id||null,store_id:store?.id||null,existing:ex};
+  }).filter(r=>r.changeType!=='nochange');
+
+  renderDiff();
 }
 
-function parseCSV(text, filename) {
-  const lines = text.trim().split('\n').map(l => l.split(',').map(c => c.trim().replace(/^"|"$/g, '')));
-  if (lines.length < 2) { alert('File appears empty'); return; }
-  const headers = lines[0].map(h => h.toLowerCase().replace(/\s+/g, '_'));
-  const required = ['emp_code', 'full_name', 'bu_code', 'store_code', 'status'];
-  const missing = required.filter(r => !headers.includes(r));
-  if (missing.length) { alert('Missing columns: ' + missing.join(', ')); return; }
-  parsedRows = lines.slice(1).filter(r => r.length > 1 && r[0]).map(r => {
-    const obj = {}; headers.forEach((h, i) => obj[h] = r[i] || ''); return obj;
-  });
-  window._uploadFilename = filename;
-  buildDiff();
+function renderDiff(){
+  const counts={new:0,resign:0,update:0};
+  DIFF.forEach(r=>counts[r.changeType]=(counts[r.changeType]||0)+1);
+  const total=DIFF.length;
+
+  document.getElementById('stat-row').innerHTML=`
+    <span class="stat-chip total">${total} total changes</span>
+    ${counts.new?`<span class="stat-chip new">+${counts.new} new</span>`:''}
+    ${counts.resign?`<span class="stat-chip resign">${counts.resign} resign</span>`:''}
+    ${counts.update?`<span class="stat-chip update">${counts.update} updates</span>`:''}`;
+
+  document.getElementById('apply-count').textContent=total;
+
+  document.getElementById('diff-tbody').innerHTML=DIFF.map(r=>{
+    const rowCls=r.changeType==='new'?'diff-new':r.changeType==='resign'?'diff-resign':r.changeType==='update'?'diff-update':'';
+    return `<tr class="${rowCls}">
+      <td><span class="diff-badge ${r.changeType}">${r.changeType}</span></td>
+      <td style="font-family:monospace;font-weight:600">${r.emp_code}</td>
+      <td>${r.bu_code}</td>
+      <td>${r.store_code}</td>
+      <td>${r.status}</td>
+      <td>${r.effective_date}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('upload-section').classList.add('hidden');
+  document.getElementById('diff-section').classList.remove('hidden');
 }
 
-async function buildDiff() {
-  document.getElementById('apply-btn').disabled = true;
-  document.getElementById('apply-btn').innerHTML = '<span class="spinner"></span>Analysing…';
-  const { data: existing } = await sb.from('employees').select('emp_code,status,full_name,mobile,supervisor_emp_code').eq('bu_id', BU_ID);
-  const map = {}; (existing || []).forEach(e => map[e.emp_code] = e);
+async function applyChanges(){
+  if(!DIFF.length) return;
+  const btn=document.getElementById('apply-btn');
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Applying…';
+  document.getElementById('progress-section').classList.remove('hidden');
 
-  diffRows = parsedRows.map(row => {
-    const prev = map[row.emp_code];
-    let change = 'skip';
-    if (!prev) change = 'new';
-    else if (row.status === 'resigned' && prev.status !== 'resigned') change = 'resign';
-    else if (prev.full_name !== row.full_name || prev.mobile !== row.mobile || prev.supervisor_emp_code !== row.supervisor_emp_code) change = 'update';
-    return { ...row, change };
-  });
+  let done=0,errors=0;
+  const total=DIFF.length;
+  const bu_id=sessionStorage.getItem('gid_bu_id');
 
-  const counts = { new: 0, resign: 0, update: 0, skip: 0 };
-  diffRows.forEach(r => counts[r.change]++);
-  document.getElementById('diff-total').textContent = diffRows.length;
-  document.getElementById('diff-new').textContent = counts.new;
-  document.getElementById('diff-resign').textContent = counts.resign;
-  document.getElementById('diff-other').textContent = counts.update + counts.skip;
-
-  const rwCard = document.getElementById('resign-warn-card');
-  if (counts.resign > 0) {
-    rwCard.style.display = '';
-    document.getElementById('resign-warn-text').innerHTML =
-      `<strong>${counts.resign} resignation(s) detected.</strong> All generic ID assignments for these employees will be <strong>automatically disabled</strong> after you apply. Supervised IDs will be flagged at-risk.`;
-  } else { rwCard.style.display = 'none'; }
-
-  renderDiff('all');
-  setPhase(2);
-  document.getElementById('apply-btn').disabled = false;
-  document.getElementById('apply-btn').innerHTML = `Apply ${counts.new + counts.resign + counts.update} change(s)`;
-}
-
-function renderDiff(filter) {
-  const rows = filter === 'all' ? diffRows : diffRows.filter(r => r.change === filter);
-  const labels = { new: 'New hire', resign: 'Resignation', update: 'Update', skip: 'Unchanged' };
-  const cls = { new: 'row-new', resign: 'row-resign', update: 'row-update', skip: 'row-skip' };
-  const bcls = { new: 'badge-new', resign: 'badge-resign', update: 'badge-update', skip: 'badge-skip' };
-  document.getElementById('diff-tbody').innerHTML = rows.length
-    ? rows.map(r => `<tr class="${cls[r.change]}">
-        <td style="font-family:monospace;font-size:12px">${r.emp_code}</td>
-        <td style="font-weight:500">${r.full_name}</td>
-        <td>${r.bu_code}</td><td>${r.store_code}</td>
-        <td style="font-size:12px">${r.mobile || '—'}</td>
-        <td style="font-size:12px">${r.supervisor_emp_code || '—'}</td>
-        <td style="${r.status==='resigned'?'color:var(--red);font-weight:500':''}">${r.status}</td>
-        <td style="font-size:12px">${r.effective_date || '—'}</td>
-        <td><span class="badge ${bcls[r.change]}">${labels[r.change]}</span></td>
-      </tr>`).join('')
-    : '<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--hint)">No rows</td></tr>';
-}
-
-async function applyChanges() {
-  const btn = document.getElementById('apply-btn');
-  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>Applying…';
-
-  const toApply = diffRows.filter(r => r.change !== 'skip');
-  const { data: stores } = await sb.from('stores').select('id,code').eq('bu_id', BU_ID);
-  const storeMap = {}; (stores || []).forEach(s => storeMap[s.code] = s.id);
-
-  let newCount = 0, resignCount = 0, updateCount = 0, errCount = 0;
-  const resignedEmps = [];
-
-  for (const row of toApply) {
-    try {
-      const empData = {
-        emp_code: row.emp_code, bu_id: BU_ID,
-        store_id: storeMap[row.store_code] || null,
-        full_name: row.full_name, mobile: row.mobile || null,
-        supervisor_emp_code: row.supervisor_emp_code || null,
-        status: row.status,
-        effective_date: row.effective_date || null,
-        source: 'batch_upload',
-        updated_at: new Date().toISOString(),
+  for(const row of DIFF){
+    try{
+      const payload={
+        emp_code:row.emp_code,
+        bu_id:row.bu_id||bu_id,
+        store_id:row.store_id||null,
+        supervisor_emp_code:row.supervisor_emp_code||null,
+        status:row.status,
+        source:'hr_upload',
+        updated_at:new Date().toISOString(),
       };
-      if (row.status === 'resigned') empData.resigned_at = row.effective_date ? new Date(row.effective_date).toISOString() : new Date().toISOString();
+      if(row.status==='resigned') payload.resigned_at=row.effective_date;
 
-      const { error } = await sb.from('employees').upsert(empData, { onConflict: 'emp_code' });
-      if (error) throw error;
+      if(row.changeType==='new'){
+        await sb.from('employees').upsert(payload,{onConflict:'emp_code'});
+      } else {
+        await sb.from('employees').update(payload).eq('emp_code',row.emp_code);
+      }
 
-      if (row.change === 'new') newCount++;
-      else if (row.change === 'resign') resignCount++;
-      else updateCount++;
-
-      // Resign trigger
-      if (row.change === 'resign') {
-        const { data: empRow } = await sb.from('employees').select('id').eq('emp_code', row.emp_code).single();
-        if (empRow) {
-          // Disable IDs held by this employee
-          const { data: held } = await sb.from('generic_id_assignments')
-            .select('id,generic_id,store_id,app_id').eq('employee_id', empRow.id).neq('status', 'disabled');
-          if (held && held.length) {
-            await sb.from('generic_id_assignments')
-              .update({ status: 'disabled', disabled_at: new Date().toISOString(), disabled_reason: `${row.emp_code} resigned ${row.effective_date || ''}` })
-              .eq('employee_id', empRow.id).neq('status', 'disabled');
-            for (const a of held) {
-              await sb.from('audit_log').insert({
-                store_id: a.store_id, app_id: a.app_id, generic_id: a.generic_id, employee_id: empRow.id,
-                event_type: 'resign_auto_disable', event_by: SESSION.user.email,
-                detail: { emp_code: row.emp_code, effective_date: row.effective_date }
-              });
-            }
-            resignedEmps.push({ ...row, ids: held.map(a => a.generic_id).join(', ') });
-          }
-          // Flag supervised IDs at-risk
+      // Auto-disable generic IDs for resigned employees
+      if(row.status==='resigned'&&row.existing){
+        const {data:held}=await sb.from('generic_id_assignments')
+          .select('id,app_id,store_id,generic_id')
+          .eq('emp_code',row.emp_code)
+          .neq('status','disabled');
+        if(held?.length){
           await sb.from('generic_id_assignments')
-            .update({ status: 'at_risk', disabled_reason: `Supervisor ${row.emp_code} resigned` })
-            .eq('supervisor_id', empRow.id).eq('status', 'active');
+            .update({status:'disabled',disabled_at:new Date().toISOString(),disabled_reason:'Employee resigned via HR upload'})
+            .eq('emp_code',row.emp_code).neq('status','disabled');
+          for(const a of held){
+            await sb.from('audit_log').insert({
+              store_id:a.store_id,app_id:a.app_id,
+              generic_id:a.generic_id,emp_code:row.emp_code,
+              event_type:'resign_auto_disable',event_by:'hr_upload',
+              detail:{effective_date:row.effective_date,source:'csv_upload'}
+            });
+          }
         }
       }
-    } catch (e) { console.error(row.emp_code, e); errCount++; }
+
+      // Write upload log — PDPA: only emp_code and change type, no PII
+      await sb.from('hr_upload_log').upsert({
+        emp_code:row.emp_code,
+        change_type:row.changeType,
+        uploaded_by:SESSION.user.email,
+        effective_date:row.effective_date,
+        uploaded_at:new Date().toISOString()
+      },{onConflict:'emp_code'});
+
+      done++;
+    }catch(e){
+      console.error('Row error:',row.emp_code,e);
+      errors++;
+    }
+
+    const pct=Math.round((done+errors)/total*100);
+    document.getElementById('progress-fill').style.width=pct+'%';
+    document.getElementById('progress-label').textContent=`Processing ${done+errors} of ${total}…`;
   }
 
-  await sb.from('hr_upload_log').insert({
-    uploaded_by: SESSION.user.email, filename: window._uploadFilename || 'upload.csv',
-    total_rows: diffRows.length, new_hires: newCount, resignations: resignCount,
-    updates: updateCount, errors: errCount, status: 'complete'
-  });
-
-  document.getElementById('done-summary').textContent =
-    `${newCount} new hire(s) · ${resignCount} resignation(s) · ${updateCount} update(s) · ${errCount} error(s)`;
-
-  if (resignedEmps.length) {
-    document.getElementById('done-resign-card').style.display = '';
-    document.getElementById('done-resign-list').innerHTML = resignedEmps.map(r => `
-      <div style="padding:10px 0;border-bottom:0.5px solid var(--border2)">
-        <div style="display:flex;align-items:center;justify-content:space-between">
-          <div><span style="font-weight:500">${r.full_name}</span>
-            <span style="font-size:12px;color:var(--muted);margin-left:8px">${r.emp_code}</span></div>
-          <span class="badge badge-resign">Disabled</span>
-        </div>
-        <div style="font-size:12px;color:var(--muted);margin-top:4px">
-          ${r.ids ? 'Generic IDs disabled: <strong>' + r.ids + '</strong>' : 'No active generic IDs found'}
-        </div>
-      </div>`).join('');
-  }
-  setPhase(3);
+  showResult(done,errors,total);
 }
 
-function setPhase(n) {
-  ['upload','review','done'].forEach((p, i) =>
-    document.getElementById('phase-' + p).classList.toggle('hidden', i + 1 !== n));
-  for (let i = 1; i <= 3; i++) {
-    const el = document.getElementById('step' + i);
-    el.classList.remove('active', 'done');
-    if (i < n) el.classList.add('done');
-    else if (i === n) el.classList.add('active');
-  }
+function showResult(done,errors,total){
+  const hasErrors=errors>0;
+  document.getElementById('result-icon').textContent=hasErrors?'⚠️':'✅';
+  document.getElementById('result-title').textContent=hasErrors?'Upload completed with errors':'Upload complete';
+  document.getElementById('result-desc').textContent=
+    `${done} records processed successfully.${errors?' '+errors+' records had errors.':''} `+
+    `Resigned employees have had their generic IDs automatically disabled.`;
+  document.getElementById('diff-section').classList.add('hidden');
+  document.getElementById('result-section').classList.remove('hidden');
 }
 
-function resetUpload() {
-  parsedRows = []; diffRows = [];
-  document.getElementById('fileInput').value = '';
-  document.getElementById('done-resign-card').style.display = 'none';
-  setPhase(1); loadStats(); loadHistory();
+function resetUpload(){
+  PARSED=[];DIFF=[];
+  document.getElementById('upload-section').classList.remove('hidden');
+  document.getElementById('diff-section').classList.add('hidden');
+  document.getElementById('result-section').classList.add('hidden');
+  document.getElementById('progress-section').classList.add('hidden');
+  document.getElementById('progress-fill').style.width='0%';
+  document.getElementById('file-input').value='';
+  const btn=document.getElementById('apply-btn');
+  btn.disabled=false;btn.innerHTML='Apply <span id="apply-count">0</span> changes';
 }
 
-function downloadTemplate() {
-  const csv = `emp_code,full_name,bu_code,store_code,mobile,supervisor_emp_code,status,effective_date\nEMP-4600,New Employee,BKK,B12,+66811234567,EMP-4200,active,2026-03-20\nEMP-4511,Resigned Employee,BKK,B12,+66923456789,EMP-4200,resigned,2026-03-19`;
-  const a = document.createElement('a');
-  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
-  a.download = 'hr_upload_template.csv';
-  a.click();
-}
-
-async function doSignOut() { await sb.auth.signOut(); window.location.href = 'index.html'; }
 init();
 </script>
 </body>

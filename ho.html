@@ -167,10 +167,11 @@ body{min-height:100vh;background:var(--bg);color:var(--text);font-family:-apple-
     </div>
     <div class="nav-actions">
       <div class="sync-pill" id="sync-pill"><span class="sync-dot"></span><span id="sync-label">Live</span></div>
-      <div class="desktop-nav">
-        <button onclick="location.href='bu.html'">BU view</button>
-        <button onclick="location.href='store.html'">Store portal</button>
-        <button onclick="doSignOut()">Sign out</button>
+      <div style="display:flex;align-items:center;gap:6px">
+        <button onclick="gotoBU()" style="padding:6px 12px;border-radius:var(--radius);border:0.5px solid var(--glass-border);background:var(--surface2);color:var(--text);font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)">BU view</button>
+        <button onclick="location.href='store.html'" style="padding:6px 12px;border-radius:var(--radius);border:0.5px solid var(--glass-border);background:var(--surface2);color:var(--text);font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)">Stores</button>
+        <button onclick="doSignOut()" style="padding:6px 12px;border-radius:var(--radius);border:0.5px solid var(--glass-border);background:var(--surface2);color:var(--text);font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)">Sign out</button>
+        <button onclick="openHOMenu()" style="width:34px;height:34px;border-radius:10px;border:0.5px solid var(--glass-border);background:var(--surface2);color:var(--text);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)">☰</button>
       </div>
     </div>
   </div>
@@ -259,6 +260,18 @@ body{min-height:100vh;background:var(--bg);color:var(--text);font-family:-apple-
   <button class="tab-item" id="tbar-admin" onclick="showTab('admin')"><span class="tab-icon">⚙️</span><span class="tab-label">Admin</span></button>
 </div>
 
+<!-- BU PICKER SHEET -->
+<div class="sheet-bg hidden" id="sheet-bu-picker">
+  <div class="sheet" style="max-height:60vh">
+    <div class="sheet-handle"></div>
+    <div class="sheet-header">
+      <span class="sheet-title">Select business unit</span>
+      <button class="sheet-close" onclick="closeSheet('sheet-bu-picker')">✕</button>
+    </div>
+    <div id="bu-picker-list"></div>
+  </div>
+</div>
+
 <!-- ADD BU SHEET -->
 <div class="sheet-bg hidden" id="sheet-bu">
   <div class="sheet">
@@ -286,6 +299,20 @@ body{min-height:100vh;background:var(--bg);color:var(--text);font-family:-apple-
     <div class="sheet-footer">
       <button class="btn btn-glass btn-full" onclick="closeSheet('sheet-bu-detail')">Close</button>
       <button class="btn btn-blue btn-full" id="bud-open-btn">Open BU dashboard</button>
+    </div>
+  </div>
+</div>
+
+<!-- NAV MENU SHEET -->
+<div class="sheet-bg hidden" id="sheet-ho-menu">
+  <div class="sheet" style="max-height:50vh">
+    <div class="sheet-handle"></div>
+    <div style="padding:8px 12px 20px">
+      <button onclick="gotoBU()" style="width:100%;padding:14px 16px;border:none;background:transparent;color:var(--text);font-size:16px;font-weight:500;cursor:pointer;font-family:inherit;text-align:left;border-radius:var(--radius);display:flex;align-items:center;gap:12px"><span style="font-size:20px">🏢</span>BU Dashboard</button>
+      <button onclick="location.href='store.html'" style="width:100%;padding:14px 16px;border:none;background:transparent;color:var(--text);font-size:16px;font-weight:500;cursor:pointer;font-family:inherit;text-align:left;border-radius:var(--radius);display:flex;align-items:center;gap:12px"><span style="font-size:20px">🏪</span>Store portal</button>
+      <button onclick="location.href='hr-upload.html'" style="width:100%;padding:14px 16px;border:none;background:transparent;color:var(--text);font-size:16px;font-weight:500;cursor:pointer;font-family:inherit;text-align:left;border-radius:var(--radius);display:flex;align-items:center;gap:12px"><span style="font-size:20px">📤</span>HR Upload</button>
+      <div style="height:0.5px;background:var(--border);margin:4px 0"></div>
+      <button onclick="doSignOut()" style="width:100%;padding:14px 16px;border:none;background:transparent;color:var(--red-dk);font-size:16px;font-weight:500;cursor:pointer;font-family:inherit;text-align:left;border-radius:var(--radius);display:flex;align-items:center;gap:12px"><span style="font-size:20px">🚪</span>Sign out</button>
     </div>
   </div>
 </div>
@@ -533,11 +560,7 @@ function openBUDetail(buId){
       <span style="font-size:14px;font-weight:500">${s.name}</span>
       <span style="font-size:12px;color:var(--muted)">${s.region||'—'}</span>
     </div>`).join('')}`;
-  document.getElementById('bud-open-btn').onclick=()=>{
-    sessionStorage.setItem('gid_bu_id',buId);
-    sessionStorage.setItem('gid_bu_name',d.bu.name);
-    window.location.href='bu.html';
-  };
+  document.getElementById('bud-open-btn').onclick=()=>{ gotoBU(buId); };
   openSheet('sheet-bu-detail');
 }
 
@@ -577,8 +600,38 @@ function exportReport(){
 
 // ── HELPERS ───────────────────────────────────────────────────────
 function isPwOverdue(a){if(!a.pw_last_rotated)return false;return Math.floor((Date.now()-new Date(a.pw_last_rotated))/(864e5))>=(a.app?.pw_rotation_days||30)}
+function gotoBU(buId){
+  // If specific BU requested (from card click), go directly
+  if(buId){
+    const bu=ALL_BUS.find(b=>b.id===buId)||ALL_BUS[0];
+    sessionStorage.setItem('gid_bu_id',bu.id);
+    sessionStorage.setItem('gid_bu_name',bu.name);
+    sessionStorage.setItem('gid_role','ho_admin');
+    window.location.href='bu.html';
+    return;
+  }
+  // Multiple BUs — show picker sheet so user chooses explicitly
+  if(ALL_BUS.length>1){
+    document.getElementById('bu-picker-list').innerHTML=ALL_BUS.map((bu,i)=>`
+      <div onclick="gotoBU('${bu.id}')" style="display:flex;align-items:center;gap:14px;padding:14px 16px;cursor:pointer;border-bottom:0.5px solid var(--border2)">
+        <div style="width:42px;height:42px;border-radius:12px;background:${['linear-gradient(135deg,#0A84FF,#5AC8FA)','linear-gradient(135deg,#30D158,#34C759)','linear-gradient(135deg,#FF9F0A,#FF6B35)','linear-gradient(135deg,#BF5AF2,#9B59B6)'][i%4]};display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;flex-shrink:0">${bu.code.slice(0,2)}</div>
+        <div><div style="font-size:15px;font-weight:600;color:var(--text)">${bu.name}</div><div style="font-size:12px;color:var(--muted)">HO Admin · All access</div></div>
+        <span style="margin-left:auto;color:var(--hint);font-size:20px">›</span>
+      </div>`).join('');
+    openSheet('sheet-bu-picker');
+    return;
+  }
+  // Single BU — go directly
+  const bu=ALL_BUS[0];
+  if(!bu) return;
+  sessionStorage.setItem('gid_bu_id',bu.id);
+  sessionStorage.setItem('gid_bu_name',bu.name);
+  sessionStorage.setItem('gid_role','ho_admin');
+  window.location.href='bu.html';
+}
 function openSheet(id){document.getElementById(id).classList.remove('hidden')}
 function closeSheet(id){document.getElementById(id).classList.add('hidden')}
+function openHOMenu(){openSheet('sheet-ho-menu')}
 async function doSignOut(){await sb.auth.signOut();sessionStorage.clear();window.location.href='index.html'}
 
 function showTab(t){
