@@ -154,6 +154,20 @@ tr:hover td{background:#FAFAFA}
 .spinner-blue{border-color:#DBEAFE;border-top-color:var(--blue)}
 @keyframes spin{to{transform:rotate(360deg)}}
 .hidden{display:none!important}
+
+/* REASSIGN SECTION */
+.reassign-section{margin-top:20px;padding:16px;background:var(--amber-lt);border:1px solid #FCD34D;border-radius:var(--radius)}
+.reassign-section h4{font-size:13px;font-weight:700;color:#92400E;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.reassign-section .field label{color:#92400E}
+.reassign-section .field input{background:var(--white)}
+
+/* SUCCESS FLASH */
+.success-flash{display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--green-lt);border:1px solid #BBF7D0;border-radius:var(--radius);font-size:13px;font-weight:600;color:var(--green);animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+
+/* ACTION SECTION DIVIDER */
+.action-section{margin-top:20px;padding-top:16px;border-top:1px solid var(--border)}
+.action-section-label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px}
 </style>
 </head>
 <body>
@@ -667,6 +681,21 @@ async function openManage(asnId){
   const color=APP_COLORS[a.app?.code]||APP_COLORS.default;
   const pwDays=a.pw_last_rotated?Math.floor((Date.now()-new Date(a.pw_last_rotated))/(864e5)):null;
   const pwMax=a.app?.pw_rotation_days||30;
+  const isOverdue=pwDays!==null&&pwDays>=pwMax;
+
+  // Build pw age display
+  const pwAgeHtml=a.pw_last_rotated
+    ?`${new Date(a.pw_last_rotated).toLocaleDateString('en-GB')} <span class="${isOverdue?'pw-danger':'pw-ok'}" style="font-size:11px">${pwDays}d${isOverdue?' — overdue!':' ago'}</span>`
+    :`<span class="pw-na">Never recorded</span>`;
+
+  // Build status badge inline
+  const statusMap={
+    active:`<span class="badge badge-active"><span class="badge-dot"></span>Active</span>`,
+    disabled:`<span class="badge badge-disabled">Disabled</span>`,
+    at_risk:`<span class="badge badge-atrisk">⚠ At risk — supervisor resigned</span>`,
+    idle:`<span class="badge badge-idle">Idle</span>`,
+  };
+
   document.getElementById('manage-title').textContent=`${a.generic_id} — ${a.app?.name||''}`;
   document.getElementById('manage-body').innerHTML=`
     <div class="pdpa-note">🔒 PDPA: Employee details fetched live from SuccessFactors — not stored here.</div>
@@ -681,37 +710,159 @@ async function openManage(asnId){
       </div>
     </div>
     <table style="width:100%;font-size:13px;border-collapse:collapse">
-      <tr><td style="color:var(--muted);padding:8px 0;width:130px;border-bottom:1px solid var(--border2)">Generic ID</td><td style="padding:8px 0;font-family:monospace;font-weight:700;border-bottom:1px solid var(--border2)">${a.generic_id}</td></tr>
+      <tr><td style="color:var(--muted);padding:8px 0;width:140px;border-bottom:1px solid var(--border2)">Generic ID</td><td style="padding:8px 0;font-family:monospace;font-weight:700;border-bottom:1px solid var(--border2)">${a.generic_id}</td></tr>
       <tr><td style="color:var(--muted);padding:8px 0;border-bottom:1px solid var(--border2)">App</td><td style="padding:8px 0;border-bottom:1px solid var(--border2)">${a.app?.name||'—'}</td></tr>
-      <tr><td style="color:var(--muted);padding:8px 0;border-bottom:1px solid var(--border2)">Status</td><td style="padding:8px 0;border-bottom:1px solid var(--border2)">${a.status}</td></tr>
-      <tr><td style="color:var(--muted);padding:8px 0;border-bottom:1px solid var(--border2)">Supervisor</td><td style="padding:8px 0;border-bottom:1px solid var(--border2)">${sup?.full_name||a.supervisor_emp_code||'—'}</td></tr>
+      <tr><td style="color:var(--muted);padding:8px 0;border-bottom:1px solid var(--border2)">Status</td><td style="padding:8px 0;border-bottom:1px solid var(--border2)">${statusMap[a.status]||a.status}</td></tr>
+      <tr><td style="color:var(--muted);padding:8px 0;border-bottom:1px solid var(--border2)">Supervisor</td><td style="padding:8px 0;border-bottom:1px solid var(--border2)">${sup?.full_name||a.supervisor_emp_code||'—'}${a.status==='at_risk'?` <span style="font-size:11px;color:var(--amber)">(resigned)</span>`:''}</td></tr>
       <tr><td style="color:var(--muted);padding:8px 0;border-bottom:1px solid var(--border2)">Granted by</td><td style="padding:8px 0;border-bottom:1px solid var(--border2)">${a.granted_by||'—'}</td></tr>
-      <tr><td style="color:var(--muted);padding:8px 0;border-bottom:1px solid var(--border2)">Granted at</td><td style="padding:8px 0;border-bottom:1px solid var(--border2)">${a.granted_at?new Date(a.granted_at).toLocaleDateString():'-'}</td></tr>
-      <tr><td style="color:var(--muted);padding:8px 0">Pw last rotated</td><td style="padding:8px 0">${a.pw_last_rotated?new Date(a.pw_last_rotated).toLocaleDateString():'-'} ${pwDays>=pwMax?`<span style="color:var(--amber);font-size:11px;font-weight:600">${pwDays}d overdue</span>`:''}</td></tr>
+      <tr><td style="color:var(--muted);padding:8px 0;border-bottom:1px solid var(--border2)">Granted at</td><td style="padding:8px 0;border-bottom:1px solid var(--border2)">${a.granted_at?new Date(a.granted_at).toLocaleDateString('en-GB'):'-'}</td></tr>
+      <tr><td style="color:var(--muted);padding:8px 0">Pw last rotated</td><td style="padding:8px 0">${pwAgeHtml}</td></tr>
     </table>
-    ${a.notes?`<div style="margin-top:14px;font-size:13px;color:var(--muted);padding:10px;background:var(--bg);border-radius:var(--radius)">📝 ${a.notes}</div>`:''}`;
-  document.getElementById('manage-footer').innerHTML=`
-    <button class="btn btn-outline" onclick="closeModal('modal-manage')">Close</button>
-    ${a.status==='active'?`<button class="btn btn-outline" onclick="markPwRotated('${a.id}')">✓ Password rotated</button>`:''}
-    ${a.status==='active'?`<button class="btn" style="background:var(--red);color:#fff" onclick="terminateId('${a.id}')">Terminate</button>`:''}
-    ${['at_risk','disabled'].includes(a.status)?`<button class="btn btn-primary" onclick="reactivate('${a.id}')">Re-activate</button>`:''}`;
+    ${a.notes?`<div style="margin-top:14px;font-size:13px;color:var(--muted);padding:10px;background:var(--bg);border-radius:var(--radius)">📝 ${a.notes}</div>`:''}
+    ${isOverdue&&a.status==='active'?`
+    <div style="margin-top:14px;padding:12px 14px;background:var(--amber-lt);border:1px solid #FCD34D;border-radius:var(--radius);font-size:13px;color:#92400E">
+      <strong>⚠ Password is ${pwDays} days old</strong> (limit: ${pwMax} days). Please rotate it in the system and click <em>Mark as rotated</em> to record the change.
+    </div>`:''}
+    ${a.status==='at_risk'?`
+    <div class="reassign-section" id="reassign-section">
+      <h4>⚠️ Action required — supervisor resigned</h4>
+      <p style="font-size:12px;color:#92400E;margin-bottom:12px">Reassign this ID to a new employee, or disable it to revoke access immediately.</p>
+      <div class="field">
+        <label>New employee code</label>
+        <div class="lookup-row">
+          <input id="reassign-emp" placeholder="EMP-4200" style="font-family:monospace" oninput="document.getElementById('reassign-preview').classList.add('hidden')">
+          <button class="lookup-btn" onclick="lookupReassignEmp()">Look up</button>
+        </div>
+      </div>
+      <div id="reassign-preview" class="emp-preview hidden" style="background:var(--white)">
+        <div class="emp-avatar" id="reassign-avatar" style="background:#DBEAFE;color:#1D4ED8;width:32px;height:32px;font-size:11px">?</div>
+        <div>
+          <div style="font-size:13px;font-weight:600" id="reassign-name">—</div>
+          <div style="font-size:12px;color:var(--muted)" id="reassign-detail">—</div>
+        </div>
+      </div>
+      <div id="reassign-err" class="hidden" style="color:var(--red);font-size:12px;margin-top:4px"></div>
+    </div>`:''}
+    <div id="manage-success" class="hidden"></div>`;
+
+  // Footer buttons based on status
+  let footerHtml=`<button class="btn btn-outline" onclick="closeModal('modal-manage')">Close</button>`;
+  if(a.status==='active'){
+    footerHtml+=`<button class="btn btn-outline" id="pw-rotate-btn" onclick="markPwRotated('${a.id}')">🔑 Mark as rotated</button>`;
+    footerHtml+=`<button class="btn" style="background:var(--red);color:#fff" onclick="terminateId('${a.id}')">Terminate</button>`;
+  }
+  if(a.status==='at_risk'){
+    footerHtml+=`<button class="btn" style="background:var(--red);color:#fff" onclick="disableAtRisk('${a.id}')">Disable ID</button>`;
+    footerHtml+=`<button class="btn btn-primary" id="reassign-btn" onclick="reassignId('${a.id}')">Reassign →</button>`;
+  }
+  if(a.status==='disabled'){
+    footerHtml+=`<button class="btn btn-primary" onclick="reactivate('${a.id}')">Re-activate</button>`;
+  }
+  document.getElementById('manage-footer').innerHTML=footerHtml;
   openModal('modal-manage');
 }
 
-async function markPwRotated(id){
+async function lookupReassignEmp(){
+  const code=document.getElementById('reassign-emp').value.trim().toUpperCase();
+  if(!code)return;
+  const emp=await EMP_CACHE.get(code);
+  if(!emp){
+    document.getElementById('reassign-err').textContent='Employee not found.';
+    document.getElementById('reassign-err').classList.remove('hidden');
+    return;
+  }
+  document.getElementById('reassign-err').classList.add('hidden');
+  document.getElementById('reassign-avatar').textContent=emp.full_name?.split(' ').map(w=>w[0]).join('').slice(0,2)||code.slice(-2);
+  document.getElementById('reassign-name').textContent=emp.full_name||code;
+  document.getElementById('reassign-detail').textContent=`${emp.title||''}${emp.mobile?' · '+emp.mobile:''}`;
+  document.getElementById('reassign-preview').classList.remove('hidden');
+}
+
+async function reassignId(id){
+  const newEmp=document.getElementById('reassign-emp')?.value.trim().toUpperCase();
+  const errEl=document.getElementById('reassign-err');
+  if(!newEmp){errEl.textContent='Enter a new employee code first.';errEl.classList.remove('hidden');return;}
+  const btn=document.getElementById('reassign-btn');
+  btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Saving…';
   const a=ASSIGNMENTS.find(x=>x.id===id);
-  await sb.from('generic_id_assignments').update({pw_last_rotated:new Date().toISOString()}).eq('id',id);
-  await sb.from('audit_log').insert({store_id:STORE_ID,app_id:a.app_id,generic_id:a.generic_id,emp_code:a.emp_code,event_type:'pw_rotate',event_by:SESSION.user.email,detail:{}});
-  closeModal('modal-manage');await loadAll();
+  const {error}=await sb.from('generic_id_assignments').update({
+    emp_code:newEmp,
+    status:'active',
+    granted_at:new Date().toISOString(),
+    granted_by:SESSION.user.email
+  }).eq('id',id);
+  btn.disabled=false;btn.innerHTML='Reassign →';
+  if(error){errEl.textContent=error.message;errEl.classList.remove('hidden');return;}
+  await sb.from('audit_log').insert({
+    store_id:STORE_ID,app_id:a.app_id,generic_id:a.generic_id,
+    emp_code:newEmp,event_type:'reassign',event_by:SESSION.user.email,
+    detail:{prev_emp_code:a.emp_code,reason:'at_risk_reassign'}
+  });
+  // Show success then close
+  document.getElementById('manage-success').innerHTML=`<div class="success-flash" style="margin-top:12px">✅ Reassigned to ${newEmp} — ID is now active.</div>`;
+  document.getElementById('manage-success').classList.remove('hidden');
+  document.getElementById('reassign-section').classList.add('hidden');
+  document.getElementById('manage-footer').innerHTML=`<button class="btn btn-primary" onclick="closeModal('modal-manage')">Done</button>`;
+  await loadAll();
+}
+
+async function disableAtRisk(id){
+  if(!confirm('Disable this ID? The employee will lose access immediately.'))return;
+  const a=ASSIGNMENTS.find(x=>x.id===id);
+  const now=new Date().toISOString();
+  const {error}=await sb.from('generic_id_assignments').update({
+    status:'disabled',
+    disabled_at:now,
+    disabled_reason:'Disabled — supervisor resigned (at_risk)'
+  }).eq('id',id);
+  if(error){alert('Error: '+error.message);return;}
+  await sb.from('audit_log').insert({
+    store_id:STORE_ID,app_id:a.app_id,generic_id:a.generic_id,
+    emp_code:a.emp_code,event_type:'disable_at_risk',event_by:SESSION.user.email,
+    detail:{reason:'Supervisor resigned'}
+  });
+  document.getElementById('manage-success').innerHTML=`<div class="success-flash" style="margin-top:12px">🚫 ID disabled. Access revoked.</div>`;
+  document.getElementById('manage-success').classList.remove('hidden');
+  document.getElementById('reassign-section').classList.add('hidden');
+  document.getElementById('manage-footer').innerHTML=`<button class="btn btn-outline" onclick="closeModal('modal-manage')">Close</button>`;
+  await loadAll();
+}
+
+async function markPwRotated(id){
+  const btn=document.getElementById('pw-rotate-btn');
+  if(btn){btn.disabled=true;btn.innerHTML='<span class="spinner spinner-blue" style="border-top-color:var(--blue)"></span> Saving…';}
+  const a=ASSIGNMENTS.find(x=>x.id===id);
+  const now=new Date().toISOString();
+  const {error}=await sb.from('generic_id_assignments').update({pw_last_rotated:now}).eq('id',id);
+  if(error){
+    if(btn){btn.disabled=false;btn.innerHTML='🔑 Mark as rotated';}
+    alert('Error saving: '+error.message);return;
+  }
+  await sb.from('audit_log').insert({store_id:STORE_ID,app_id:a.app_id,generic_id:a.generic_id,emp_code:a.emp_code,event_type:'pw_rotate',event_by:SESSION.user.email,detail:{rotated_at:now}});
+  // Show success state in modal instead of closing
+  const successEl=document.getElementById('manage-success');
+  if(successEl){
+    successEl.innerHTML=`<div class="success-flash" style="margin-top:12px">🔑 Password rotation recorded — clock reset to today.</div>`;
+    successEl.classList.remove('hidden');
+  }
+  document.getElementById('manage-footer').innerHTML=`<button class="btn btn-primary" onclick="closeModal('modal-manage')">Done</button>`;
+  await loadAll();
 }
 
 async function terminateId(id){
   if(!confirm('Terminate this ID? The employee will lose access.'))return;
   const a=ASSIGNMENTS.find(x=>x.id===id);
   const now=new Date().toISOString();
-  await sb.from('generic_id_assignments').update({status:'disabled',disabled_at:now,disabled_reason:'Terminated by store manager'}).eq('id',id);
+  const {error}=await sb.from('generic_id_assignments').update({status:'disabled',disabled_at:now,disabled_reason:'Terminated by store manager'}).eq('id',id);
+  if(error){alert('Error: '+error.message);return;}
   await sb.from('audit_log').insert({store_id:STORE_ID,app_id:a.app_id,generic_id:a.generic_id,emp_code:a.emp_code,event_type:'terminate',event_by:SESSION.user.email,detail:{}});
-  closeModal('modal-manage');await loadAll();
+  const successEl=document.getElementById('manage-success');
+  if(successEl){
+    successEl.innerHTML=`<div class="success-flash" style="margin-top:12px;background:var(--red-lt);border-color:#FECACA;color:var(--red)">🚫 ID terminated. Access revoked.</div>`;
+    successEl.classList.remove('hidden');
+  }
+  document.getElementById('manage-footer').innerHTML=`<button class="btn btn-outline" onclick="closeModal('modal-manage')">Close</button>`;
+  await loadAll();
 }
 
 async function reactivate(id){
@@ -723,7 +874,7 @@ async function reactivate(id){
 // ── AUDIT ───────────────────────────────────────────────────────
 async function showAuditLog(){
   const {data:logs}=await sb.from('audit_log').select('*').eq('store_id',STORE_ID).order('created_at',{ascending:false}).limit(100);
-  const icons={grant:'✅',terminate:'🚫',pw_rotate:'🔑',resign_auto_disable:'⚠️',reactivate:'🔄'};
+  const icons={grant:'✅',terminate:'🚫',pw_rotate:'🔑',resign_auto_disable:'⚠️',reactivate:'🔄',reassign:'🔀',disable_at_risk:'🚫',revoke:'🚫'};
   document.getElementById('audit-tbody').innerHTML=(logs||[]).map(l=>`<tr>
     <td style="font-size:12px;color:var(--muted);white-space:nowrap">${new Date(l.created_at).toLocaleString('th-TH',{dateStyle:'short',timeStyle:'short'})}</td>
     <td><span class="generic-id">${l.generic_id}</span></td>
