@@ -252,6 +252,7 @@ body{min-height:100vh;background:var(--bg);color:var(--text);font-family:-apple-
 <div id="tab-overview">
   <div class="metrics-scroll" id="metrics-row"></div>
   <div class="tab-chips" id="app-filter-chips" style="margin-top:12px"></div>
+  <div class="tab-chips" id="store-filter-chips" style="margin-top:4px"></div>
   <div class="section" style="margin-top:16px">
     <div class="section-title" style="margin-bottom:10px">Open risks</div>
     <div id="risk-alerts"></div>
@@ -475,7 +476,7 @@ const ROLE_CLS={ho_admin:'role-ho',hr_admin:'role-hr',bu_hr_admin:'role-hr',bu_m
 
 let SESSION=null, USER_ROLE=null, BU_ID=null, CURRENT_ROLE=null;
 let ALL_BUS=[], STORES=[], APPS=[], EMPLOYEES=[], ASSIGNMENTS=[], USERS=[], USER_ROLES_ALL=[];
-let CUR_APP_FILTER=null, CUR_EMP_FILTER='all';
+let CUR_APP_FILTER=null, CUR_EMP_FILTER='all', CUR_STORE_FILTER=null;
 let realtimeChannel=null;
 
 // ── INIT ─────────────────────────────────────────────────────────
@@ -596,9 +597,25 @@ async function loadUsers(){
 }
 
 function renderAll(){
-  renderMetrics(); renderAppFilterChips(); renderStoreRows();
+  renderMetrics(); renderAppFilterChips(); renderStoreFilterChips(); renderStoreRows();
   renderEmployees(); renderApps(); renderRiskAlerts(); renderRiskFull();
   if(['ho_admin','hr_admin','bu_hr_admin'].includes(CURRENT_ROLE)) renderUsers();
+}
+
+function renderStoreFilterChips(){
+  const el=document.getElementById('store-filter-chips');
+  if(!el||!STORES.length) return;
+  el.innerHTML=
+    `<button class="tab-chip${!CUR_STORE_FILTER?' active':''}" onclick="setStoreFilter(null)">All stores</button>`+
+    STORES.map(s=>`<button class="tab-chip${CUR_STORE_FILTER===s.id?' active':''}" onclick="setStoreFilter('${s.id}')">${s.code}</button>`).join('');
+}
+
+function setStoreFilter(storeId){
+  CUR_STORE_FILTER=storeId;
+  renderStoreFilterChips();
+  renderStoreRows();
+  renderMetrics();
+  renderRiskAlerts();
 }
 
 // ── REALTIME ──────────────────────────────────────────────────────
@@ -623,7 +640,8 @@ function setSyncState(s){
 
 // ── METRICS ───────────────────────────────────────────────────────
 function renderMetrics(){
-  const asn=CUR_APP_FILTER?ASSIGNMENTS.filter(a=>a.app?.code===CUR_APP_FILTER):ASSIGNMENTS;
+  let asn=CUR_APP_FILTER?ASSIGNMENTS.filter(a=>a.app?.code===CUR_APP_FILTER):ASSIGNMENTS;
+  if(CUR_STORE_FILTER) asn=asn.filter(a=>a.store_id===CUR_STORE_FILTER);
   const pwDue=asn.filter(a=>a.status==='active'&&isPwOverdue(a)).length;
   const risk=asn.filter(a=>['at_risk','orphan'].includes(a.status)).length;
   const metrics=[
@@ -657,12 +675,13 @@ function setAppFilter(code){
 function renderStoreRows(){
   const summaryEl=document.getElementById('store-summary');
   const listEl=document.getElementById('stores-list');
-  if(!STORES.length){
-    const empty='<div class="empty"><div class="empty-icon">🏪</div>No stores yet</div>';
+  const filteredStores=CUR_STORE_FILTER?STORES.filter(s=>s.id===CUR_STORE_FILTER):STORES;
+  if(!filteredStores.length){
+    const empty='<div class="empty"><div class="empty-icon">🏪</div>No stores</div>';
     summaryEl.innerHTML=empty;listEl.innerHTML=empty;return;
   }
-  const html=STORES.map(s=>storeRowHtml(s)).join('');
-  summaryEl.innerHTML=STORES.slice(0,4).map(s=>storeRowHtml(s)).join('');
+  const html=filteredStores.map(s=>storeRowHtml(s)).join('');
+  summaryEl.innerHTML=filteredStores.slice(0,4).map(s=>storeRowHtml(s)).join('');
   listEl.innerHTML=html;
 }
 

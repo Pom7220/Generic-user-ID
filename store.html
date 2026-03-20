@@ -329,7 +329,7 @@ const APP_COLORS={POS:'#2563EB',GR:'#16A34A',ST:'#D97706',FP:'#DC2626',SC:'#7C3A
 
 let SESSION=null,STORE_ID=null,BU_ID=null;
 let APPS=[],ASSIGNMENTS=[],EMPLOYEES=[];
-let CUR_APP=null,RT=null;
+let CUR_APP=null,CUR_FILTER=null,RT=null;
 
 async function init(){
   let {data:{session}}=await sb.auth.getSession();
@@ -395,19 +395,18 @@ function showMain(){
 
 async function loadAll(){
   setSyncState('syncing');
-  if(!BU_ID){
-    const {data:s}=await sb.from('stores').select('bu_id,name,region').eq('id',STORE_ID).single();
-    BU_ID=s?.bu_id;
-    document.getElementById('store-name').textContent=s?.name||'Store Portal';
-    document.getElementById('store-sub').textContent=`${s?.region||''} · POS ID management`;
-    sessionStorage.setItem('gid_bu_id',BU_ID);
-  } else {
-    const {data:s}=await sb.from('stores').select('name,region').eq('id',STORE_ID).single();
-    document.getElementById('store-name').textContent=s?.name||'Store Portal';
-    document.getElementById('store-sub').textContent=`${s?.region||''} · POS ID management`;
-  }
-  document.getElementById('audit-store-name').textContent=document.getElementById('store-name').textContent;
 
+  // First ensure we have BU_ID from the store
+  const {data:storeData}=await sb.from('stores').select('bu_id,name,region').eq('id',STORE_ID).single();
+  if(!BU_ID&&storeData?.bu_id){
+    BU_ID=storeData.bu_id;
+    sessionStorage.setItem('gid_bu_id',BU_ID);
+  }
+  document.getElementById('store-name').textContent=storeData?.name||'Store Portal';
+  document.getElementById('store-sub').textContent=`${storeData?.region||''} · POS ID management`;
+  document.getElementById('audit-store-name').textContent=storeData?.name||'Store Portal';
+
+  // Now fetch all data in parallel with correct BU_ID
   const [appRes,asnRes,empRes]=await Promise.all([
     sb.from('apps').select('*').eq('bu_id',BU_ID).eq('active',true).order('code'),
     sb.from('generic_id_assignments').select('*,app:app_id(id,code,name,pw_rotation_days)').eq('store_id',STORE_ID),
@@ -416,6 +415,8 @@ async function loadAll(){
   APPS=appRes.data||[];
   ASSIGNMENTS=asnRes.data||[];
   EMPLOYEES=empRes.data||[];
+
+  console.log('loadAll: BU_ID=',BU_ID,'APPS=',APPS.length,'ASN=',ASSIGNMENTS.length);
 
   // Populate grant modal app select
   document.getElementById('g-app').innerHTML=APPS.map(a=>`<option value="${a.id}" data-code="${a.code}">${a.name}</option>`).join('');
@@ -450,16 +451,17 @@ function renderMetrics(){
   const unassigned=asn.filter(a=>!a.emp_code||a.status==='idle').length;
   const pwExp=asn.filter(a=>a.status==='active'&&isPwOverdue(a)).length;
   const risk=asn.filter(a=>['at_risk','orphan'].includes(a.status)).length;
-  document.getElementById('metrics-row').innerHTML=`
-    <div class="metric"><div class="metric-label">Total IDs</div><div class="metric-value blue">${asn.length}</div></div>
-    <div class="metric-divider"></div>
-    <div class="metric"><div class="metric-label">Active</div><div class="metric-value green">${active}</div></div>
-    <div class="metric-divider"></div>
-    <div class="metric"><div class="metric-label">Unassigned</div><div class="metric-value">${unassigned}</div></div>
-    <div class="metric-divider"></div>
-    <div class="metric"><div class="metric-label">Pw expiring</div><div class="metric-value ${pwExp?'amber':''}">${pwExp}</div></div>
-    <div class="metric-divider"></div>
-    <div class="metric"><div class="metric-label">Risk alerts</div><div class="metric-value ${risk?'red':''}">${risk}</div></div>`;
+  const mkMetric=(label,val,cls,filter)=>`
+    <div class="metric" onclick="setFilter('${filter}')" style="cursor:pointer;border-radius:var(--radius);padding:8px;transition:background .15s${CUR_FILTER===filter?';background:var(--blue-lt);outline:2px solid var(--blue)':''}" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='${CUR_FILTER===filter?'var(--blue-lt)':''}'"">
+      <div class="metric-label">${label}</div>
+      <div class="metric-value ${cls}">${val}</div>
+    </div>`;
+  document.getElementById('metrics-row').innerHTML=
+    mkMetric('Total IDs',asn.length,'blue','all')+`<div class="metric-divider"></div>`+
+    mkMetric('Active',active,'green','active')+`<div class="metric-divider"></div>`+
+    mkMetric('Unassigned',unassigned,'','idle')+`<div class="metric-divider"></div>`+
+    mkMetric('Pw expiring',pwExp,pwExp?'amber':'','pw_overdue')+`<div class="metric-divider"></div>`+
+    mkMetric('Risk alerts',risk,risk?'red':'','risk');
 }
 
 function renderAppTabs(){
@@ -473,7 +475,11 @@ function renderAppTabs(){
     `<button class="app-tab${CUR_APP==='audit'?' active':''}" onclick="showAuditLog()">Activity log ↗</button>`;
 }
 
-function setApp(code){CUR_APP=code;renderAll();}
+function setApp(code){CUR_APP=code;CUR_FILTER=null;renderAll();}
+function setFilter(f){
+  CUR_FILTER=(f==='all'?null:f);
+  renderMetrics();renderTable();
+}
 
 function renderAlerts(){
   const atRisk=ASSIGNMENTS.filter(a=>a.status==='at_risk');
@@ -485,8 +491,13 @@ function renderAlerts(){
 }
 
 function renderTable(){
-  const asn=CUR_APP?ASSIGNMENTS.filter(a=>a.app?.code===CUR_APP):ASSIGNMENTS;
-  document.getElementById('table-title').textContent=CUR_APP?`${APPS.find(a=>a.code===CUR_APP)?.name||CUR_APP} IDs`:'All IDs';
+  let asn=CUR_APP?ASSIGNMENTS.filter(a=>a.app?.code===CUR_APP):ASSIGNMENTS;
+  if(CUR_FILTER==='active') asn=asn.filter(a=>a.status==='active');
+  else if(CUR_FILTER==='idle') asn=asn.filter(a=>!a.emp_code||a.status==='idle');
+  else if(CUR_FILTER==='pw_overdue') asn=asn.filter(a=>a.status==='active'&&isPwOverdue(a));
+  else if(CUR_FILTER==='risk') asn=asn.filter(a=>['at_risk','orphan'].includes(a.status));
+  const filterLabel={active:'Active IDs',idle:'Unassigned IDs',pw_overdue:'Password Overdue',risk:'Risk Alerts'}[CUR_FILTER]||'';
+  document.getElementById('table-title').textContent=CUR_APP?`${APPS.find(a=>a.code===CUR_APP)?.name||CUR_APP} IDs`:(filterLabel||'All IDs');
   if(!asn.length){
     document.getElementById('ids-tbody').innerHTML=`<tr><td colspan="8"><div class="empty"><div class="empty-icon">🔑</div>No IDs found</div></td></tr>`;
     return;
