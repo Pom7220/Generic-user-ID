@@ -1,174 +1,550 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Generic ID Manager">
-<title>Generic ID Manager — Login</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HR Batch Upload — Generic ID Manager</title>
+<link rel="stylesheet" href="gid-shared.css">
 <style>
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-:root{
-  --blue:#185FA5;--blue-lt:#E6F1FB;--blue-dk:#0C447C;
-  --green:#3B6D11;--green-lt:#EAF3DE;
-  --red:#A32D2D;--red-lt:#FCEBEB;
-  --gray:#5F5E5A;--gray-lt:#F1EFE8;
-  --text:#1C1C1E;--muted:#5F5E5A;--hint:#B4B2A9;
-  --bg:#F5F4F0;--surface:#FFFFFF;
-  --border:rgba(0,0,0,0.1);
-  --radius:12px;--radius-lg:16px;
-  --shadow:0 2px 16px rgba(0,0,0,0.08);
-}
-@media(prefers-color-scheme:dark){
-  :root{
-    --text:#F2F2F7;--muted:#AEAEB2;--hint:#636366;
-    --bg:#1C1C1E;--surface:#2C2C2E;--border:rgba(255,255,255,0.1);
-    --blue-lt:rgba(24,95,165,0.2);--green-lt:rgba(59,109,17,0.2);--red-lt:rgba(163,45,45,0.2);
-  }
-}
-body{
-  min-height:100vh;background:var(--bg);color:var(--text);
-  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
-  display:flex;align-items:center;justify-content:center;padding:20px;
-}
-.card{
-  background:var(--surface);border-radius:var(--radius-lg);
-  box-shadow:var(--shadow);border:0.5px solid var(--border);
-  padding:2rem;width:100%;max-width:400px;
-}
-.logo{text-align:center;margin-bottom:1.5rem}
-.logo-mark{
-  width:60px;height:60px;border-radius:16px;
-  background:var(--blue);color:#fff;
-  display:flex;align-items:center;justify-content:center;
-  font-size:26px;font-weight:700;margin:0 auto 12px;
-}
-.logo h1{font-size:20px;font-weight:600;color:var(--text)}
-.logo p{font-size:13px;color:var(--muted);margin-top:4px}
-.field{margin-bottom:1rem}
-label{display:block;font-size:12px;font-weight:500;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em}
-input{
-  width:100%;padding:11px 14px;border-radius:var(--radius);
-  border:0.5px solid var(--border);background:var(--bg);
-  color:var(--text);font-size:15px;outline:none;transition:border .15s;
-  font-family:inherit;
-}
-input:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-lt)}
-.btn{
-  width:100%;padding:12px;border-radius:var(--radius);border:none;
-  background:var(--blue);color:#fff;font-size:15px;font-weight:600;
-  cursor:pointer;transition:opacity .15s;font-family:inherit;margin-top:.5rem;
-}
-.btn:hover{opacity:.9}
-.btn:active{opacity:.75}
-.btn:disabled{opacity:.5;cursor:not-allowed}
-.error{
-  background:var(--red-lt);color:var(--red);border:0.5px solid rgba(163,45,45,.3);
-  border-radius:var(--radius);padding:10px 14px;font-size:13px;
-  margin-bottom:1rem;display:none;
-}
-.spinner{
-  display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.4);
-  border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;
-  vertical-align:middle;margin-right:6px;
-}
+.page{max-width:860px;margin:0 auto;padding:24px 16px}
+.topnav{background:var(--white);border-bottom:1px solid var(--border);padding:0 24px;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.nav-left{display:flex;align-items:center;gap:10px}
+.nav-logo{width:30px;height:30px;border-radius:7px;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800}
+.nav-title{font-size:14px;font-weight:700}
+.nav-back{padding:5px 12px;border-radius:var(--radius);border:1px solid var(--border);background:var(--white);font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;color:var(--muted)}
+.nav-back:hover{background:var(--bg)}
+
+.gcard{background:var(--white);border-radius:var(--radius-lg);border:1px solid var(--border);padding:20px;margin-bottom:16px;box-shadow:var(--shadow)}
+.section-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:10px}
+
+/* PDPA banner */
+.pdpa-banner{background:var(--blue-lt);border:1px solid var(--blue-mid);border-radius:var(--radius-lg);padding:14px 18px;margin-bottom:16px;font-size:13px}
+.pdpa-banner h3{font-size:13px;font-weight:700;color:var(--blue);margin-bottom:6px}
+.pdpa-banner ul{margin:0;padding-left:18px;color:var(--muted);line-height:1.7}
+
+/* BU Selector */
+.bu-select-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.bu-chip{padding:5px 14px;border-radius:999px;border:1px solid var(--border);background:var(--white);font-size:12px;font-weight:500;color:var(--muted);cursor:pointer;font-family:inherit;transition:all .12s}
+.bu-chip:hover{border-color:var(--blue);color:var(--blue)}
+.bu-chip.active{background:var(--blue);border-color:var(--blue);color:#fff;font-weight:600}
+.bu-none{color:var(--hint);font-size:12px;padding:4px 0}
+
+/* CSV example */
+.csv-example{background:var(--bg);border-radius:var(--radius);padding:12px 14px;font-family:ui-monospace,monospace;font-size:12px;overflow-x:auto;white-space:nowrap;color:var(--muted);line-height:1.8}
+.csv-example .header{color:var(--text);font-weight:600}
+.csv-example .comment{color:var(--hint)}
+
+/* Template download */
+.template-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:var(--radius);border:1px solid var(--border);background:var(--white);font-size:12px;font-weight:600;color:var(--text);cursor:pointer;font-family:inherit;text-decoration:none;transition:all .12s}
+.template-btn:hover{background:var(--bg);border-color:var(--blue);color:var(--blue)}
+
+/* Drop zone */
+.drop-zone{border:2px dashed var(--border);border-radius:var(--radius-lg);padding:40px;text-align:center;cursor:pointer;transition:all .15s}
+.drop-zone:hover,.drop-zone.drag-over{border-color:var(--blue);background:var(--blue-lt)}
+.drop-zone-icon{font-size:32px;margin-bottom:8px}
+.drop-zone-title{font-size:14px;font-weight:600;margin-bottom:4px}
+.drop-zone-sub{font-size:12px;color:var(--hint)}
+
+/* Diff table */
+.diff-table{width:100%;border-collapse:collapse;font-size:13px}
+.diff-table th{padding:8px 12px;text-align:left;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);white-space:nowrap}
+.diff-table td{padding:9px 12px;border-bottom:1px solid var(--border2);vertical-align:middle}
+.diff-table tr:last-child td{border-bottom:none}
+tr.diff-new td{background:#F0FDF4}
+tr.diff-resign td{background:#FEF2F2}
+tr.diff-update td{background:#FFFBEB}
+tr.diff-error td{background:#FEF2F2}
+.diff-badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700}
+.diff-badge.new{background:var(--green-mid);color:var(--green)}
+.diff-badge.resign{background:var(--red-mid);color:var(--red)}
+.diff-badge.update{background:var(--amber-mid);color:var(--amber)}
+.diff-badge.error{background:var(--red-mid);color:var(--red)}
+.diff-badge.nochange{background:var(--border);color:var(--muted)}
+.err-cell{color:var(--red);font-size:11px;font-weight:600}
+
+/* Stats */
+.stat-row{display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap}
+.stat-chip{padding:6px 14px;border-radius:999px;font-size:12px;font-weight:600}
+.stat-chip.new{background:var(--green-lt);color:var(--green)}
+.stat-chip.resign{background:var(--red-lt);color:var(--red)}
+.stat-chip.update{background:var(--amber-lt);color:var(--amber)}
+.stat-chip.total{background:var(--blue-lt);color:var(--blue)}
+.stat-chip.error{background:var(--red-lt);color:var(--red)}
+
+/* Progress */
+.progress-bar{height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:8px}
+.progress-fill{height:100%;background:var(--blue);border-radius:3px;transition:width .3s}
+
+/* Buttons */
+.btn{padding:9px 20px;border-radius:var(--radius);border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;transition:opacity .15s;display:inline-flex;align-items:center;gap:6px}
+.btn:hover{opacity:.85}
+.btn:disabled{opacity:.5;cursor:default}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-outline{background:var(--white);color:var(--text);border:1px solid var(--border)}
+.btn-green{background:var(--green);color:#fff}
+.btn-full{flex:1;justify-content:center}
+.spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
 @keyframes spin{to{transform:rotate(360deg)}}
-.divider{text-align:center;color:var(--hint);font-size:12px;margin:1.25rem 0;position:relative}
-.divider::before,.divider::after{content:'';position:absolute;top:50%;width:42%;height:0.5px;background:var(--border)}
-.divider::before{left:0}.divider::after{right:0}
-.role-badges{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:1.25rem}
-.badge{font-size:11px;font-weight:500;padding:4px 10px;border-radius:999px;border:0.5px solid var(--border);color:var(--muted)}
-.version{text-align:center;color:var(--hint);font-size:11px;margin-top:1.5rem}
+.hidden{display:none!important}
 </style>
 </head>
 <body>
-<div class="card">
-  <div class="logo">
-    <div class="logo-mark">G</div>
-    <h1>Generic ID Manager</h1>
-    <p>Store access lifecycle management</p>
+
+<nav class="topnav">
+  <div class="nav-left">
+    <div class="nav-logo">HR</div>
+    <div class="nav-title">HR Batch Upload</div>
+  </div>
+  <div style="display:flex;gap:8px">
+    <button class="nav-back" onclick="location.href='bu.html'">← BU Dashboard</button>
+    <button class="nav-back" onclick="location.href='ho.html'">HO View</button>
+  </div>
+</nav>
+
+<div class="page">
+
+  <!-- PDPA Notice -->
+  <div class="pdpa-banner">
+    <h3>🔒 PDPA Compliance — What gets stored</h3>
+    <ul>
+      <li><strong>Stored:</strong> emp_code, bu_code, store_code, supervisor_emp_code, status, effective_date only</li>
+      <li><strong>Discarded immediately:</strong> full_name and any other PII columns in the CSV</li>
+      <li><strong>Names displayed</strong> via SuccessFactors real-time fetch — never written to this database</li>
+      <li><strong>Upload log</strong> records only: file name, counts, timestamp — no employee PII</li>
+    </ul>
   </div>
 
-  <div class="error" id="err"></div>
-
-  <div class="field">
-    <label>Email</label>
-    <input type="email" id="email" placeholder="your@email.com" autocomplete="email">
+  <!-- BU Scope Selector -->
+  <div class="gcard" id="bu-selector-card">
+    <div class="section-title">Step 1 — Select Business Unit</div>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:12px">Choose the BU this upload applies to. Employees will be scoped to this BU.</p>
+    <div class="bu-select-row" id="bu-chips">
+      <span class="bu-none">Loading BUs…</span>
+    </div>
+    <div id="bu-warning" class="hidden" style="margin-top:10px;font-size:12px;color:var(--amber);font-weight:600">⚠ Please select a BU before uploading</div>
   </div>
-  <div class="field">
-    <label>Password</label>
-    <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
+
+  <!-- CSV Format Guide -->
+  <div class="gcard">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div class="section-title" style="margin-bottom:0">Step 2 — Prepare CSV file</div>
+      <button class="template-btn" onclick="downloadTemplate()">⬇ Download template</button>
+    </div>
+    <div class="csv-example">
+      <span class="header">emp_code,full_name,bu_code,store_code,supervisor_emp_code,status,effective_date</span><br>
+      <span class="comment"># New hire</span><br>
+      EMP-5001,*,CDS,CDS-001,EMP-4200,active,2026-03-20<br>
+      <span class="comment"># Resignation</span><br>
+      EMP-4421,*,CDS,CDS-001,EMP-4200,resigned,2026-03-20<br>
+      <span class="comment"># Transfer to different store</span><br>
+      EMP-4499,*,RBS,RBS-005,EMP-4300,active,2026-03-20
+    </div>
+    <div style="margin-top:10px">
+      <p style="font-size:12px;color:var(--hint);margin-bottom:6px">* full_name is accepted but immediately discarded (PDPA). You may put <code>*</code> as placeholder.</p>
+      <p style="font-size:12px;color:var(--hint);margin-bottom:4px"><strong>Valid BU codes:</strong> <span id="valid-bu-list" style="font-family:monospace">loading…</span></p>
+      <p style="font-size:12px;color:var(--hint)"><strong>Valid status values:</strong> <code>active</code> · <code>resigned</code> · <code>on_leave</code></p>
+    </div>
   </div>
 
-  <button class="btn" id="loginBtn" onclick="doLogin()">Sign in</button>
-
-  <div class="divider">roles</div>
-  <div class="role-badges">
-    <span class="badge">Store Manager</span>
-    <span class="badge">BU Manager</span>
-    <span class="badge">HO Admin</span>
+  <!-- Drop Zone -->
+  <div class="gcard" id="upload-section">
+    <div class="section-title">Step 3 — Upload CSV</div>
+    <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+      <div class="drop-zone-icon">📂</div>
+      <div class="drop-zone-title">Drop CSV file here or click to browse</div>
+      <div class="drop-zone-sub">Accepts .csv files · Max 5,000 rows per upload</div>
+    </div>
+    <input type="file" id="file-input" accept=".csv" class="hidden" onchange="handleFile(this.files[0])">
   </div>
-  <p class="version">v0.1 POC · Generic ID Manager</p>
+
+  <!-- Diff Preview -->
+  <div id="diff-section" class="hidden">
+    <div class="gcard">
+      <div class="section-title">Changes preview</div>
+      <div class="stat-row" id="stat-row"></div>
+      <div id="error-banner" class="hidden" style="background:var(--red-lt);border:1px solid var(--red-mid);border-radius:var(--radius);padding:10px 14px;margin-bottom:12px;font-size:13px;color:var(--red)">
+        ⚠ Some rows have errors (shown in red). They will be skipped during apply.
+      </div>
+      <div style="overflow-x:auto">
+        <table class="diff-table">
+          <thead>
+            <tr>
+              <th>Change</th><th>Emp code</th><th>BU</th><th>Store</th>
+              <th>Supervisor</th><th>Status</th><th>Effective</th><th>Note</th>
+            </tr>
+          </thead>
+          <tbody id="diff-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="progress-section" class="hidden" style="margin-bottom:16px;background:var(--white);padding:16px;border-radius:var(--radius-lg);border:1px solid var(--border)">
+      <div style="font-size:13px;font-weight:600" id="progress-label">Processing…</div>
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
+    </div>
+
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-outline btn-full" onclick="resetUpload()">← Cancel</button>
+      <button class="btn btn-green btn-full" id="apply-btn" onclick="applyChanges()">
+        Apply <span id="apply-count">0</span> changes
+      </button>
+    </div>
+  </div>
+
+  <!-- Result -->
+  <div id="result-section" class="hidden">
+    <div class="gcard" style="text-align:center;padding:32px">
+      <div style="font-size:48px;margin-bottom:12px" id="result-icon">✅</div>
+      <div style="font-size:20px;font-weight:700;margin-bottom:8px" id="result-title">Upload complete</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.6" id="result-desc"></div>
+      <div style="display:flex;gap:10px;margin-top:20px;justify-content:center">
+        <button class="btn btn-outline" onclick="resetUpload()">Upload another file</button>
+        <button class="btn btn-primary" onclick="location.href='bu.html'">Back to BU Dashboard</button>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
-const SUPABASE_URL = 'https://scakduifuyurgpgiqorh.supabase.co';
-const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNjYWtkdWlmdXl1cmdwZ2lxb3JoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MTM4MjgsImV4cCI6MjA4OTQ4OTgyOH0.T5xDLMSXRvTuZNjq1DyHpC_l5HlPOBv8-ccUCG4nr2k';
+const SUPABASE_URL  = 'https://hnvytilmxoiaqceseooh.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhudnl0aWxteG9pYXFjZXNlb29oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MTc0ODIsImV4cCI6MjA4OTQ5MzQ4Mn0.x7WCLXRZEoorxEIuk5dwHG8EpasBGGB7peBysWUdElw';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
 
-// If already logged in, redirect
-sb.auth.getSession().then(({data:{session}})=>{
-  if(session) redirect(session.user.id);
-});
+let SESSION=null, BUS_LIST=[], BUS={}, STORES={}, PARSED=[], DIFF=[];
+let SELECTED_BU=null; // { id, code, name }
 
-function showErr(msg){
-  const e=document.getElementById('err');
-  e.textContent=msg;e.style.display='block';
+// ── INIT ─────────────────────────────────────────────────────────
+async function init(){
+  let session=null;
+  try{
+    const{data:d}=await sb.auth.getSession();
+    session=d?.session;
+    if(!session){const{data:r}=await sb.auth.refreshSession();session=r?.session;}
+  }catch(e){
+    console.warn('Session check failed:',e.message);
+    // Show error but don't redirect — let user see the issue
+    document.getElementById('bu-selector-card').innerHTML=
+      `<div style="color:var(--red);padding:16px;text-align:center">
+        <strong>⚠ Connection error</strong><br>
+        <span style="font-size:12px;color:var(--muted)">Could not reach authentication server. Please <a href="index.html">sign in again</a>.</span>
+      </div>`;
+    return;
+  }
+  if(!session){location.href='index.html';return;}
+  SESSION=session;
+
+  const [{data:bus},{data:stores}]=await Promise.all([
+    sb.from('business_units').select('id,code,name').order('name'),
+    sb.from('stores').select('id,code,bu_id,name').order('code')
+  ]);
+  BUS_LIST=bus||[];
+  BUS_LIST.forEach(b=>BUS[b.code]=b);
+  (stores||[]).forEach(s=>STORES[s.code]=s);
+
+  // Show valid BU codes
+  document.getElementById('valid-bu-list').textContent=BUS_LIST.map(b=>b.code).join(', ');
+
+  // Render BU chips
+  renderBUChips();
+
+  // Pre-select BU from session if available
+  const savedBuId=sessionStorage.getItem('gid_bu_id');
+  if(savedBuId){
+    const bu=BUS_LIST.find(b=>b.id===savedBuId);
+    if(bu) selectBU(bu);
+  }
+
+  // Drop zone
+  const dz=document.getElementById('drop-zone');
+  dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag-over');});
+  dz.addEventListener('dragleave',()=>dz.classList.remove('drag-over'));
+  dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag-over');if(e.dataTransfer.files[0])handleFile(e.dataTransfer.files[0]);});
 }
-function hideErr(){document.getElementById('err').style.display='none';}
 
-async function doLogin(){
-  hideErr();
-  const email=document.getElementById('email').value.trim();
-  const password=document.getElementById('password').value;
-  if(!email||!password){showErr('Please enter email and password.');return;}
+function renderBUChips(){
+  document.getElementById('bu-chips').innerHTML=BUS_LIST.map(b=>`
+    <button class="bu-chip${SELECTED_BU?.id===b.id?' active':''}" onclick="selectBU(${JSON.stringify(b).replace(/"/g,'&quot;')})">
+      <strong>${b.code}</strong> ${b.name}
+    </button>`).join('');
+}
 
-  const btn=document.getElementById('loginBtn');
+function selectBU(bu){
+  SELECTED_BU=bu;
+  sessionStorage.setItem('gid_bu_id',bu.id);
+  document.getElementById('bu-warning').classList.add('hidden');
+  renderBUChips();
+}
+
+// ── FILE HANDLING ─────────────────────────────────────────────────
+function handleFile(file){
+  if(!file||!file.name.endsWith('.csv')){alert('Please upload a .csv file');return;}
+  if(!SELECTED_BU){
+    document.getElementById('bu-warning').classList.remove('hidden');
+    document.getElementById('bu-selector-card').scrollIntoView({behavior:'smooth'});
+    return;
+  }
+  const reader=new FileReader();
+  reader.onload=e=>parseCSV(e.target.result,file.name);
+  reader.readAsText(file);
+}
+
+// ── PARSE & VALIDATE ──────────────────────────────────────────────
+async function parseCSV(text, filename){
+  const lines=text.trim().split('\n').filter(l=>l.trim()&&!l.trim().startsWith('#'));
+  if(lines.length<2){alert('CSV must have a header row and at least one data row');return;}
+
+  const headers=lines[0].split(',').map(h=>h.trim().toLowerCase().replace(/[^a-z_]/g,''));
+  const col=name=>headers.indexOf(name);
+
+  // Check required columns
+  const required=['emp_code','bu_code','store_code','status','effective_date'];
+  const missing=required.filter(r=>col(r)===-1);
+  if(missing.length){
+    alert(`Missing required columns: ${missing.join(', ')}\n\nRequired: emp_code, bu_code, store_code, supervisor_emp_code, status, effective_date`);
+    return;
+  }
+
+  PARSED=lines.slice(1).map((line,i)=>{
+    const vals=line.split(',').map(v=>v.trim().replace(/^["']|["']$/g,''));
+    return {
+      _line: i+2,
+      emp_code: (vals[col('emp_code')]||'').toUpperCase().trim(),
+      // full_name read then discarded — PDPA compliant
+      bu_code: (vals[col('bu_code')]||'').toUpperCase().trim(),
+      store_code: (vals[col('store_code')]||'').toUpperCase().trim(),
+      supervisor_emp_code: col('supervisor_emp_code')>=0?(vals[col('supervisor_emp_code')]||'').toUpperCase().trim()||null:null,
+      status: (vals[col('status')]||'active').toLowerCase().trim(),
+      effective_date: vals[col('effective_date')]?.trim()||new Date().toISOString().slice(0,10),
+    };
+  }).filter(r=>r.emp_code);
+
+  if(!PARSED.length){alert('No valid rows found');return;}
+
+  // Load existing employees for diff
+  const empCodes=PARSED.map(r=>r.emp_code);
+  const {data:existing}=await sb.from('employees')
+    .select('emp_code,bu_id,store_id,status,supervisor_emp_code')
+    .in('emp_code',empCodes);
+  const existMap={};(existing||[]).forEach(e=>existMap[e.emp_code]=e);
+
+  // Build diff with validation
+  DIFF=PARSED.map(row=>{
+    const ex=existMap[row.emp_code];
+    const bu=BUS[row.bu_code];
+    const store=STORES[row.store_code];
+
+    // Validate
+    const errors=[];
+    if(!row.emp_code) errors.push('Missing emp_code');
+    if(!bu) errors.push(`Unknown BU code "${row.bu_code}"`);
+    if(!store) errors.push(`Unknown store code "${row.store_code}"`);
+    else if(bu && store.bu_id !== bu.id) errors.push(`Store ${row.store_code} not in BU ${row.bu_code}`);
+    if(!['active','resigned','on_leave'].includes(row.status)) errors.push(`Invalid status "${row.status}"`);
+
+    // Determine change type
+    let changeType='nochange';
+    if(errors.length) changeType='error';
+    else if(!ex) changeType='new';
+    else if(row.status==='resigned'&&ex.status!=='resigned') changeType='resign';
+    else if(ex.store_id!==store?.id||ex.supervisor_emp_code!==row.supervisor_emp_code||ex.status!==row.status) changeType='update';
+
+    return {
+      ...row,
+      changeType,
+      bu_id: bu?.id||null,
+      store_id: store?.id||null,
+      errors,
+      existing: ex,
+      bu_name: bu?.name||row.bu_code,
+      store_name: store?.name||row.store_code
+    };
+  }).filter(r=>r.changeType!=='nochange'); // only show changes
+
+  renderDiff(filename);
+}
+
+// ── RENDER DIFF ───────────────────────────────────────────────────
+function renderDiff(filename){
+  const counts={new:0,resign:0,update:0,error:0};
+  DIFF.forEach(r=>counts[r.changeType]=(counts[r.changeType]||0)+1);
+  const validCount=DIFF.filter(r=>r.changeType!=='error').length;
+  const total=DIFF.length;
+
+  document.getElementById('stat-row').innerHTML=`
+    <span class="stat-chip total">${total} changes detected</span>
+    ${counts.new?`<span class="stat-chip new">+${counts.new} new hires</span>`:''}
+    ${counts.resign?`<span class="stat-chip resign">⚠ ${counts.resign} resignations</span>`:''}
+    ${counts.update?`<span class="stat-chip update">${counts.update} updates</span>`:''}
+    ${counts.error?`<span class="stat-chip error">✗ ${counts.error} errors</span>`:''}`;
+
+  document.getElementById('apply-count').textContent=validCount;
+  document.getElementById('error-banner').classList.toggle('hidden',!counts.error);
+
+  document.getElementById('diff-tbody').innerHTML=DIFF.map(r=>{
+    const isErr=r.changeType==='error';
+    const rowCls=isErr?'diff-error':r.changeType==='new'?'diff-new':r.changeType==='resign'?'diff-resign':r.changeType==='update'?'diff-update':'';
+    return `<tr class="${rowCls}">
+      <td><span class="diff-badge ${r.changeType}">${r.changeType}</span></td>
+      <td style="font-family:monospace;font-weight:600">${r.emp_code}</td>
+      <td>${isErr&&!BUS[r.bu_code]?`<span class="err-cell">⚠ ${r.bu_code}</span>`:r.bu_code}</td>
+      <td>${isErr&&!STORES[r.store_code]?`<span class="err-cell">⚠ ${r.store_code}</span>`:r.store_code}</td>
+      <td style="font-size:12px;color:var(--muted)">${r.supervisor_emp_code||'—'}</td>
+      <td>${r.status}</td>
+      <td style="font-size:12px">${r.effective_date}</td>
+      <td style="font-size:11px;color:${isErr?'var(--red)':'var(--hint)'}">${r.errors.length?r.errors.join(', '):(r.changeType==='resign'?'⚠ Will disable all Generic IDs':r.changeType==='new'?'Will create employee record':'')}</td>
+    </tr>`;
+  }).join('');
+
+  document.getElementById('upload-section').classList.add('hidden');
+  document.getElementById('diff-section').classList.remove('hidden');
+}
+
+// ── APPLY CHANGES ─────────────────────────────────────────────────
+async function applyChanges(){
+  const toApply=DIFF.filter(r=>r.changeType!=='error');
+  if(!toApply.length){alert('No valid changes to apply');return;}
+
+  const btn=document.getElementById('apply-btn');
   btn.disabled=true;
-  btn.innerHTML='<span class="spinner"></span>Signing in…';
+  btn.innerHTML='<span class="spinner"></span> Applying…';
+  document.getElementById('progress-section').classList.remove('hidden');
 
-  const {data,error}=await sb.auth.signInWithPassword({email,password});
-  if(error){
-    showErr(error.message);
-    btn.disabled=false;btn.innerHTML='Sign in';
-    return;
+  let done=0, errors=0, newHires=0, resignations=0, updates=0;
+  const total=toApply.length;
+  const errorDetails=[];
+
+  for(const row of toApply){
+    try{
+      const payload={
+        emp_code: row.emp_code,
+        bu_id: row.bu_id,
+        store_id: row.store_id,
+        supervisor_emp_code: row.supervisor_emp_code||null,
+        status: row.status,
+        source: 'hr_upload',
+        updated_at: new Date().toISOString(),
+      };
+      if(row.status==='resigned') payload.resigned_at=row.effective_date;
+      if(row.changeType==='new') payload.effective_date=row.effective_date;
+
+      if(row.changeType==='new'){
+        const{error}=await sb.from('employees').upsert(payload,{onConflict:'emp_code'});
+        if(error) throw error;
+        newHires++;
+      } else {
+        const{error}=await sb.from('employees').update(payload).eq('emp_code',row.emp_code);
+        if(error) throw error;
+        if(row.changeType==='resign') resignations++;
+        else updates++;
+      }
+
+      // Resignation cascade: flip all active/idle Generic IDs to at_risk
+      if(row.changeType==='resign'){
+        const{data:held}=await sb.from('generic_id_assignments')
+          .select('id,app_id,store_id,generic_id')
+          .eq('emp_code',row.emp_code)
+          .not('status','in','("disabled","idle")');
+
+        if(held?.length){
+          await sb.from('generic_id_assignments')
+            .update({
+              status: 'at_risk',
+              notes: `Supervisor/employee resigned ${row.effective_date} — pending reassign or disable`
+            })
+            .eq('emp_code',row.emp_code)
+            .not('status','in','("disabled","idle")');
+
+          for(const a of held){
+            await sb.from('audit_log').insert({
+              store_id: a.store_id, app_id: a.app_id,
+              generic_id: a.generic_id,
+              emp_code: row.emp_code,
+              event_type: 'resign_at_risk',
+              event_by: `hr_upload:${SESSION.user.email}`,
+              detail: {effective_date:row.effective_date,note:'Pending reassign or disable by store manager'}
+            });
+          }
+        }
+      }
+
+      done++;
+    }catch(e){
+      console.error('Row error:',row.emp_code,e);
+      errors++;
+      errorDetails.push(`${row.emp_code}: ${e.message}`);
+    }
+
+    const pct=Math.round((done+errors)/total*100);
+    document.getElementById('progress-fill').style.width=pct+'%';
+    document.getElementById('progress-label').textContent=`Processing ${done+errors} of ${total}…`;
   }
-  redirect(data.user.id);
+
+  // Write batch upload log
+  await sb.from('hr_upload_log').insert({
+    uploaded_by: SESSION.user.email,
+    filename: 'manual_upload',
+    total_rows: total,
+    new_hires: newHires,
+    resignations: resignations,
+    updates: updates,
+    errors: errors,
+    status: errors?'partial':'done',
+    detail: errorDetails.length?errorDetails:[]
+  });
+
+  showResult(done, errors, newHires, resignations, updates);
 }
 
-async function redirect(userId){
-  // Get role for this user
-  const {data:roles}=await sb.from('user_roles').select('role,store_id').eq('user_id',userId).limit(1);
-  if(!roles||roles.length===0){
-    // First time — go to setup or show message
-    showErr('No role assigned yet. Ask your admin to assign your role in user_roles table.');
-    await sb.auth.signOut();
-    document.getElementById('loginBtn').disabled=false;
-    document.getElementById('loginBtn').innerHTML='Sign in';
-    return;
-  }
-  const role=roles[0].role;
-  if(role==='store_manager') window.location.href='store.html';
-  else if(role==='bu_manager') window.location.href='bu.html';
-  else if(role==='ho_admin') window.location.href='ho.html';
-  else window.location.href='store.html';
+function showResult(done, errors, newHires, resignations, updates){
+  document.getElementById('result-icon').textContent=errors?'⚠️':'✅';
+  document.getElementById('result-title').textContent=errors?'Completed with some errors':'Upload complete';
+  document.getElementById('result-desc').innerHTML=`
+    <strong>${done}</strong> records processed successfully.<br>
+    ${newHires?`<span style="color:var(--green)">+${newHires} new employee${newHires>1?'s':''} added</span><br>`:''}
+    ${resignations?`<span style="color:var(--red)">⚠ ${resignations} resignation${resignations>1?'s':''} processed — Generic IDs set to <em>at_risk</em>, pending store manager action</span><br>`:''}
+    ${updates?`<span style="color:var(--amber)">${updates} record${updates>1?'s':''} updated</span><br>`:''}
+    ${errors?`<span style="color:var(--red)">${errors} row${errors>1?'s':''} had errors and were skipped</span>`:''}`;
+  document.getElementById('diff-section').classList.add('hidden');
+  document.getElementById('result-section').classList.remove('hidden');
 }
 
-// Enter key support
-document.addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+function resetUpload(){
+  PARSED=[];DIFF=[];
+  ['diff-section','result-section','progress-section'].forEach(id=>document.getElementById(id).classList.add('hidden'));
+  document.getElementById('upload-section').classList.remove('hidden');
+  document.getElementById('progress-fill').style.width='0%';
+  document.getElementById('file-input').value='';
+  const btn=document.getElementById('apply-btn');
+  btn.disabled=false;
+  btn.innerHTML='Apply <span id="apply-count">0</span> changes';
+}
+
+// ── TEMPLATE DOWNLOAD ─────────────────────────────────────────────
+function downloadTemplate(){
+  const buRows=BUS_LIST.map(b=>`# BU: ${b.code} = ${b.name}`).join('\n');
+  const csv=[
+    '# Generic ID Manager — HR Upload Template',
+    '# Valid BU codes listed below:',
+    ...BUS_LIST.map(b=>`# ${b.code} = ${b.name}`),
+    '#',
+    '# Valid status: active | resigned | on_leave',
+    '# full_name column is accepted but discarded (PDPA) — use * as placeholder',
+    '#',
+    'emp_code,full_name,bu_code,store_code,supervisor_emp_code,status,effective_date',
+    `EMP-5001,*,${SELECTED_BU?.code||'CDS'},${SELECTED_BU?.code||'CDS'}-001,EMP-4200,active,${new Date().toISOString().slice(0,10)}`,
+    `EMP-5002,*,${SELECTED_BU?.code||'CDS'},${SELECTED_BU?.code||'CDS'}-001,EMP-4200,active,${new Date().toISOString().slice(0,10)}`,
+  ].join('\n');
+
+  const blob=new Blob([csv],{type:'text/csv'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=`hr-upload-template${SELECTED_BU?'-'+SELECTED_BU.code:''}.csv`;
+  a.click();
+}
+
+init();
 </script>
 </body>
 </html>
-

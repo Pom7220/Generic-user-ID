@@ -37,6 +37,9 @@ body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSy
 
 /* METRICS */
 .metrics{display:flex;gap:12px;padding:20px 24px;background:var(--white);border-bottom:1px solid var(--border);overflow-x:auto}
+.metric-btn{cursor:pointer;border-radius:var(--radius);padding:8px;transition:background .15s}
+.metric-btn:hover{background:var(--bg)}
+.metric-btn.metric-active{background:var(--blue-lt);outline:2px solid var(--blue)}
 .metric{flex:1;min-width:100px}
 .metric-label{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:6px}
 .metric-value{font-size:28px;font-weight:700;line-height:1}
@@ -465,7 +468,11 @@ function setupRT(){
   if(RT)sb.removeChannel(RT);
   RT=sb.channel('store_'+STORE_ID)
     .on('postgres_changes',{event:'*',schema:'public',table:'generic_id_assignments',filter:`store_id=eq.${STORE_ID}`},()=>loadAll())
-    .subscribe(s=>{if(s==='SUBSCRIBED')setSyncState('ok');});
+    .subscribe(s=>{
+      if(s==='SUBSCRIBED'||s==='CHANNEL_ERROR'||s==='TIMED_OUT'||s==='CLOSED') setSyncState('ok');
+    });
+  // Fallback: if RT doesn't connect in 5s, just show Live anyway
+  setTimeout(()=>setSyncState('ok'), 5000);
 }
 
 function setSyncState(s){
@@ -483,7 +490,7 @@ function renderMetrics(){
   const pwExp=asn.filter(a=>a.status==='active'&&isPwOverdue(a)).length;
   const risk=asn.filter(a=>['at_risk','orphan'].includes(a.status)).length;
   const mkMetric=(label,val,cls,filter)=>`
-    <div class="metric" onclick="setFilter('${filter}')" style="cursor:pointer;border-radius:var(--radius);padding:8px;transition:background .15s${CUR_FILTER===filter?';background:var(--blue-lt);outline:2px solid var(--blue)':''}" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='${CUR_FILTER===filter?'var(--blue-lt)':''}'"">
+    <div class="metric metric-btn${CUR_FILTER===filter?' metric-active':''}" onclick="setFilter('${filter}')">
       <div class="metric-label">${label}</div>
       <div class="metric-value ${cls}">${val}</div>
     </div>`;

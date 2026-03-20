@@ -295,9 +295,16 @@ function setStore(id){CUR_STORE=id;CUR_METRIC=null;renderFilters();renderMetrics
 function setAppFilter(code){CUR_APP=code;CUR_METRIC=null;renderFilters();renderMetrics();renderView();}
 
 function setMetric(f){
-  CUR_METRIC=(CUR_METRIC===f)?null:f;
-  if(CUR_METRIC&&CUR_VIEW!=='ids') setView('ids');
-  else{renderMetrics();renderView();}
+  // 'all' = Total IDs = clear any metric filter
+  if(f==='all'){CUR_METRIC=null;}
+  else{CUR_METRIC=(CUR_METRIC===f)?null:f;}
+  // Always switch to Generic IDs tab so filtered records are visible
+  if(CUR_METRIC){
+    CUR_VIEW='ids';
+    ['ids','store','app','people','risk'].forEach(x=>
+      document.getElementById('tab-'+x)?.classList.toggle('active',x==='ids'));
+  }
+  renderMetrics();renderView();
 }
 function clearMetric(){CUR_METRIC=null;renderMetrics();renderView();}
 

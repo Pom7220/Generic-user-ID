@@ -269,12 +269,19 @@ async function doLogin() {
   btn.disabled = true;
   btn.innerHTML = '<span class="spinner"></span>';
 
-  const { data, error } = await sb.auth.signInWithPassword({ email, password });
-  if (error) {
-    showErr(error.message);
-    btn.disabled = false;
-    btn.textContent = 'Sign in';
-    return;
+  let data, error;
+  try{
+    ({data,error}=await sb.auth.signInWithPassword({email,password}));
+  }catch(e){
+    showErr('Network error — could not reach server. Check your internet connection.');
+    btn.disabled=false;btn.textContent='Sign in';return;
+  }
+  if(error){
+    const msg=error.message==='Failed to fetch'
+      ?'Network error — could not reach authentication server. Check your internet connection.'
+      :error.message;
+    showErr(msg);
+    btn.disabled=false;btn.textContent='Sign in';return;
   }
 
   // Upsert user profile
