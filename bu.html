@@ -255,11 +255,14 @@ async function loadAll(){
   if(STORES.length){
     const[asnR,empR]=await Promise.all([
       sb.from('generic_id_assignments')
-        .select('id,store_id,app_id,generic_id,status,pw_last_rotated,emp_code,supervisor_emp_code,app:app_id(code,name,pw_rotation_days)')
+        .select('id,store_id,app_id,generic_id,status,pw_last_rotated,emp_code,supervisor_emp_code')
         .in('store_id',STORES.map(s=>s.id)),
       sb.from('employees').select('id,emp_code,status,store_id').eq('bu_id',BU_ID)
     ]);
-    ASSIGNMENTS=asnR.data||[];EMPLOYEES=empR.data||[];
+    EMPLOYEES=empR.data||[];
+    // Annotate with app info from APPS array (avoids RLS join issues)
+    const appById={};APPS.forEach(a=>{appById[a.id]=a;});
+    ASSIGNMENTS=(asnR.data||[]).map(a=>({...a,app:appById[a.app_id]||null}));
     const codes=[...new Set(EMPLOYEES.map(e=>e.emp_code).filter(Boolean))];
     if(codes.length) EMP_CACHE.getBatch(codes);
   }

@@ -438,12 +438,14 @@ async function loadAll(){
   // Now fetch all data in parallel with correct BU_ID
   const [appRes,asnRes,empRes]=await Promise.all([
     sb.from('apps').select('*').eq('bu_id',BU_ID).eq('active',true).order('code'),
-    sb.from('generic_id_assignments').select('*,app:app_id(id,code,name,pw_rotation_days)').eq('store_id',STORE_ID),
+    sb.from('generic_id_assignments').select('*').eq('store_id',STORE_ID),
     sb.from('employees').select('id,emp_code,status,supervisor_emp_code').eq('store_id',STORE_ID)
   ]);
   APPS=appRes.data||[];
-  ASSIGNMENTS=asnRes.data||[];
   EMPLOYEES=empRes.data||[];
+  // Annotate assignments with app info from APPS array (avoids RLS join issues)
+  const appById={};APPS.forEach(a=>{appById[a.id]=a;});
+  ASSIGNMENTS=(asnRes.data||[]).map(a=>({...a,app:appById[a.app_id]||null}));
 
   console.log('loadAll: BU_ID=',BU_ID,'APPS=',APPS.length,'ASN=',ASSIGNMENTS.length);
 
