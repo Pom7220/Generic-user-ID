@@ -1,174 +1,414 @@
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Generic ID Manager">
-<title>Generic ID Manager — Login</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HO Dashboard — Generic ID Manager</title>
+<link rel="stylesheet" href="gid-shared.css">
 <style>
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-:root{
-  --blue:#185FA5;--blue-lt:#E6F1FB;--blue-dk:#0C447C;
-  --green:#3B6D11;--green-lt:#EAF3DE;
-  --red:#A32D2D;--red-lt:#FCEBEB;
-  --gray:#5F5E5A;--gray-lt:#F1EFE8;
-  --text:#1C1C1E;--muted:#5F5E5A;--hint:#B4B2A9;
-  --bg:#F5F4F0;--surface:#FFFFFF;
-  --border:rgba(0,0,0,0.1);
-  --radius:12px;--radius-lg:16px;
-  --shadow:0 2px 16px rgba(0,0,0,0.08);
-}
-@media(prefers-color-scheme:dark){
-  :root{
-    --text:#F2F2F7;--muted:#AEAEB2;--hint:#636366;
-    --bg:#1C1C1E;--surface:#2C2C2E;--border:rgba(255,255,255,0.1);
-    --blue-lt:rgba(24,95,165,0.2);--green-lt:rgba(59,109,17,0.2);--red-lt:rgba(163,45,45,0.2);
-  }
-}
-body{
-  min-height:100vh;background:var(--bg);color:var(--text);
-  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
-  display:flex;align-items:center;justify-content:center;padding:20px;
-}
-.card{
-  background:var(--surface);border-radius:var(--radius-lg);
-  box-shadow:var(--shadow);border:0.5px solid var(--border);
-  padding:2rem;width:100%;max-width:400px;
-}
-.logo{text-align:center;margin-bottom:1.5rem}
-.logo-mark{
-  width:60px;height:60px;border-radius:16px;
-  background:var(--blue);color:#fff;
-  display:flex;align-items:center;justify-content:center;
-  font-size:26px;font-weight:700;margin:0 auto 12px;
-}
-.logo h1{font-size:20px;font-weight:600;color:var(--text)}
-.logo p{font-size:13px;color:var(--muted);margin-top:4px}
-.field{margin-bottom:1rem}
-label{display:block;font-size:12px;font-weight:500;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em}
-input{
-  width:100%;padding:11px 14px;border-radius:var(--radius);
-  border:0.5px solid var(--border);background:var(--bg);
-  color:var(--text);font-size:15px;outline:none;transition:border .15s;
-  font-family:inherit;
-}
-input:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-lt)}
-.btn{
-  width:100%;padding:12px;border-radius:var(--radius);border:none;
-  background:var(--blue);color:#fff;font-size:15px;font-weight:600;
-  cursor:pointer;transition:opacity .15s;font-family:inherit;margin-top:.5rem;
-}
-.btn:hover{opacity:.9}
-.btn:active{opacity:.75}
-.btn:disabled{opacity:.5;cursor:not-allowed}
-.error{
-  background:var(--red-lt);color:var(--red);border:0.5px solid rgba(163,45,45,.3);
-  border-radius:var(--radius);padding:10px 14px;font-size:13px;
-  margin-bottom:1rem;display:none;
-}
-.spinner{
-  display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.4);
-  border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;
-  vertical-align:middle;margin-right:6px;
-}
-@keyframes spin{to{transform:rotate(360deg)}}
-.divider{text-align:center;color:var(--hint);font-size:12px;margin:1.25rem 0;position:relative}
-.divider::before,.divider::after{content:'';position:absolute;top:50%;width:42%;height:0.5px;background:var(--border)}
-.divider::before{left:0}.divider::after{right:0}
-.role-badges{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:1.25rem}
-.badge{font-size:11px;font-weight:500;padding:4px 10px;border-radius:999px;border:0.5px solid var(--border);color:var(--muted)}
-.version{text-align:center;color:var(--hint);font-size:11px;margin-top:1.5rem}
+.store-col{font-weight:600}
 </style>
 </head>
 <body>
-<div class="card">
-  <div class="logo">
-    <div class="logo-mark">G</div>
-    <h1>Generic ID Manager</h1>
-    <p>Store access lifecycle management</p>
-  </div>
 
-  <div class="error" id="err"></div>
-
-  <div class="field">
-    <label>Email</label>
-    <input type="email" id="email" placeholder="your@email.com" autocomplete="email">
+<!-- HEADER -->
+<div class="gid-header">
+  <div class="gid-header-left">
+    <div class="gid-logo">GID</div>
+    <div class="gid-breadcrumb">
+      <span class="gid-breadcrumb-level">Head Office</span>
+      <span class="gid-breadcrumb-sep">·</span>
+      <span class="gid-breadcrumb-sub">Access risk overview</span>
+    </div>
   </div>
-  <div class="field">
-    <label>Password</label>
-    <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
+  <div class="gid-header-right">
+    <div class="live-pill" id="live-pill"><span class="live-dot"></span><span id="live-label">Live</span></div>
+    <button class="btn btn-sm" onclick="gotoBU()">BU view</button>
+    <button class="btn btn-sm" onclick="gotoStore()">Stores</button>
+    <button class="btn btn-sm" onclick="doSignOut()">Sign out</button>
   </div>
+</div>
 
-  <button class="btn" id="loginBtn" onclick="doLogin()">Sign in</button>
+<!-- METRICS -->
+<div class="metrics-bar" id="metrics-bar"></div>
 
-  <div class="divider">roles</div>
-  <div class="role-badges">
-    <span class="badge">Store Manager</span>
-    <span class="badge">BU Manager</span>
-    <span class="badge">HO Admin</span>
+<!-- FILTER ROW: BU chips + App chips + View tabs + Export -->
+<div class="filter-row" id="filter-row"></div>
+
+<!-- VIEW TABS -->
+<div style="background:var(--white);border-bottom:1px solid var(--border);padding:0 24px;display:flex;gap:4px;height:44px;align-items:center">
+  <button class="filter-chip active" id="tab-store" onclick="setView('store')">By store</button>
+  <button class="filter-chip" id="tab-app" onclick="setView('app')">By application</button>
+  <button class="filter-chip" id="tab-risk" onclick="setView('risk')">Risk area</button>
+  <div class="filter-spacer"></div>
+  <button class="btn btn-sm" onclick="exportCSV()">Export ↗</button>
+</div>
+
+<!-- CONTENT -->
+<div class="content">
+  <div class="table-card">
+    <div class="table-toolbar">
+      <span class="table-toolbar-title" id="table-title">All stores</span>
+      <span id="table-sub" class="text-muted" style="font-size:12px"></span>
+    </div>
+    <div style="overflow-x:auto"><table><thead id="table-head"></thead><tbody id="table-body"></tbody></table></div>
   </div>
-  <p class="version">v0.1 POC · Generic ID Manager</p>
+</div>
+
+<!-- DRAWER -->
+<div class="drawer-overlay hidden" id="drawer" onclick="if(event.target===this)closeDrawer()">
+  <div class="drawer-panel">
+    <div class="drawer-header">
+      <span class="drawer-title" id="drawer-title">Detail</span>
+      <button class="drawer-close" onclick="closeDrawer()">✕</button>
+    </div>
+    <div class="drawer-body" id="drawer-body"></div>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
-const SUPABASE_URL = 'https://scakduifuyurgpgiqorh.supabase.co';
-const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNjYWtkdWlmdXl1cmdwZ2lxb3JoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MTM4MjgsImV4cCI6MjA4OTQ4OTgyOH0.T5xDLMSXRvTuZNjq1DyHpC_l5HlPOBv8-ccUCG4nr2k';
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+const SUPABASE_URL='https://hnvytilmxoiaqceseooh.supabase.co';
+const SUPABASE_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhudnl0aWxteG9pYXFjZXNlb29oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MTc0ODIsImV4cCI6MjA4OTQ5MzQ4Mn0.x7WCLXRZEoorxEIuk5dwHG8EpasBGGB7peBysWUdElw';
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON);
+const APP_COLORS={POS:'#1D4ED8',GR:'#15803D',ST:'#B45309',FP:'#B91C1C',SC:'#6D28D9',default:'#6B7280'};
 
-// If already logged in, redirect
-sb.auth.getSession().then(({data:{session}})=>{
-  if(session) redirect(session.user.id);
-});
+let SESSION=null,CUR_VIEW='store',CUR_BU=null,CUR_APP=null,CUR_METRIC=null;
+let BUS=[],STORES=[],APPS=[],ASSIGNMENTS=[];
 
-function showErr(msg){
-  const e=document.getElementById('err');
-  e.textContent=msg;e.style.display='block';
-}
-function hideErr(){document.getElementById('err').style.display='none';}
-
-async function doLogin(){
-  hideErr();
-  const email=document.getElementById('email').value.trim();
-  const password=document.getElementById('password').value;
-  if(!email||!password){showErr('Please enter email and password.');return;}
-
-  const btn=document.getElementById('loginBtn');
-  btn.disabled=true;
-  btn.innerHTML='<span class="spinner"></span>Signing in…';
-
-  const {data,error}=await sb.auth.signInWithPassword({email,password});
-  if(error){
-    showErr(error.message);
-    btn.disabled=false;btn.innerHTML='Sign in';
-    return;
+async function init(){
+  try{
+    let {data:{session},error}=await sb.auth.getSession();
+    if(error) console.error('getSession error:',error.message);
+    if(!session){
+      console.log('No session, trying refresh...');
+      const{data:r,error:re}=await sb.auth.refreshSession();
+      if(re) console.error('refreshSession error:',re.message);
+      session=r?.session;
+    }
+    if(!session){console.log('No session after refresh → login');location.href='index.html';return;}
+    SESSION=session;
+    console.log('HO init: user=',session.user.email);
+    await loadAll();
+  }catch(e){
+    console.error('init error:',e.message);
+    document.getElementById('table-body').innerHTML=
+      `<tr><td colspan="9" style="padding:40px;text-align:center;color:#B91C1C">
+        ⚠️ <strong>Initialisation failed:</strong> ${e.message}
+        <br><button onclick="init()" style="margin-top:10px;padding:6px 16px;border-radius:6px;border:1px solid #ccc;cursor:pointer;font-family:inherit">Retry</button>
+      </td></tr>`;
   }
-  redirect(data.user.id);
 }
 
-async function redirect(userId){
-  // Get role for this user
-  const {data:roles}=await sb.from('user_roles').select('role,store_id').eq('user_id',userId).limit(1);
-  if(!roles||roles.length===0){
-    // First time — go to setup or show message
-    showErr('No role assigned yet. Ask your admin to assign your role in user_roles table.');
-    await sb.auth.signOut();
-    document.getElementById('loginBtn').disabled=false;
-    document.getElementById('loginBtn').innerHTML='Sign in';
-    return;
+async function loadAll(){
+  setSyncing(true);
+  try{
+    const [busR,stR,apR]=await Promise.all([
+      sb.from('business_units').select('*').order('name'),
+      sb.from('stores').select('*').eq('active',true).order('code'),
+      sb.from('apps').select('*').eq('active',true).order('code')
+    ]);
+    if(busR.error) throw new Error('BU load: '+busR.error.message);
+    if(stR.error)  throw new Error('Store load: '+stR.error.message);
+    BUS=busR.data||[];STORES=stR.data||[];APPS=apR.data||[];
+    console.log('HO load: BUs=',BUS.length,'Stores=',STORES.length,'Apps=',APPS.length);
+    if(STORES.length){
+      const{data:asn,error:asnErr}=await sb.from('generic_id_assignments')
+        .select('id,store_id,app_id,generic_id,status,pw_last_rotated,emp_code,supervisor_emp_code,app:app_id(code,name,pw_rotation_days)')
+        .in('store_id',STORES.map(s=>s.id));
+      if(asnErr) console.warn('Assignments load error:',asnErr.message);
+      ASSIGNMENTS=asn||[];
+      console.log('HO load: Assignments=',ASSIGNMENTS.length);
+    }
+    renderFilters();renderMetrics();renderView();
+  }catch(e){
+    console.error('loadAll error:',e.message);
+    document.getElementById('table-body').innerHTML=
+      `<tr><td colspan="9" style="padding:40px;text-align:center;color:#B91C1C">
+        <div style="font-size:20px;margin-bottom:8px">⚠️</div>
+        <strong>Failed to load data</strong><br>
+        <span style="font-size:12px;color:#6B6B6B">${e.message}</span><br>
+        <button onclick="loadAll()" style="margin-top:12px;padding:6px 16px;border-radius:6px;border:1px solid #E5E5E0;background:#fff;cursor:pointer;font-family:inherit;font-size:12px">Retry</button>
+      </td></tr>`;
+    document.getElementById('table-head').innerHTML='';
   }
-  const role=roles[0].role;
-  if(role==='store_manager') window.location.href='store.html';
-  else if(role==='bu_manager') window.location.href='bu.html';
-  else if(role==='ho_admin') window.location.href='ho.html';
-  else window.location.href='store.html';
+  setSyncing(false);
 }
 
-// Enter key support
-document.addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+function setSyncing(v){
+  document.getElementById('live-label').textContent=v?'Syncing…':'Live';
+  document.getElementById('live-pill').style.background=v?'#FFFBEB':'';
+}
+
+/* ── FILTERED DATA ── */
+function filteredAsn(){
+  let asn=ASSIGNMENTS;
+  if(CUR_BU) asn=asn.filter(a=>STORES.find(s=>s.id===a.store_id)?.bu_id===CUR_BU);
+  if(CUR_APP) asn=asn.filter(a=>a.app?.code===CUR_APP);
+  return asn;
+}
+function filteredStores(){
+  return CUR_BU?STORES.filter(s=>s.bu_id===CUR_BU):STORES;
+}
+
+/* ── FILTERS ── */
+function renderFilters(){
+  const appCodes=[...new Set(APPS.map(a=>a.code))];
+  document.getElementById('filter-row').innerHTML=
+    // BU chips
+    `<button class="filter-chip${!CUR_BU?' active':''}" onclick="setBU(null)">All BUs</button>`+
+    BUS.map(b=>`<button class="filter-chip${CUR_BU===b.id?' active':''}" onclick="setBU('${b.id}')">${b.code}</button>`).join('')+
+    `<div class="filter-sep"></div>`+
+    // App chips
+    `<button class="filter-chip${!CUR_APP?' active':''}" onclick="setApp(null)">All apps</button>`+
+    appCodes.map(c=>`<button class="filter-chip${CUR_APP===c?' active':''}" onclick="setApp('${c}')"><span class="filter-chip-dot" style="background:${APP_COLORS[c]||APP_COLORS.default}"></span>${APPS.find(a=>a.code===c)?.name||c}</button>`).join('');
+}
+
+function setBU(id){CUR_BU=id;CUR_METRIC=null;renderFilters();renderMetrics();renderView();}
+function setApp(code){CUR_APP=code;CUR_METRIC=null;renderFilters();renderMetrics();renderView();}
+
+/* ── METRICS ── */
+function renderMetrics(){
+  const asn=filteredAsn();
+  const active=asn.filter(a=>a.status==='active').length;
+  const unassigned=asn.filter(a=>!a.emp_code||a.status==='idle').length;
+  const pwDue=asn.filter(a=>a.status==='active'&&isPwOverdue(a)).length;
+  const orphans=asn.filter(a=>a.status==='orphan').length;
+  const pending=asn.filter(a=>a.status==='at_risk').length;
+  const mk=(label,val,cls,f)=>`
+    <div class="metric-cell${CUR_METRIC===f?' active-filter':''}" onclick="setMetric('${f}')">
+      <div class="metric-label">${label}</div>
+      <div class="metric-value ${cls}">${val}</div>
+    </div><div class="metric-divider"></div>`;
+  document.getElementById('metrics-bar').innerHTML=
+    mk('Total Generic IDs',asn.length,'mv-blue','all')+
+    mk('Active',active,'mv-green','active')+
+    mk('Unassigned',unassigned,'mv-default','idle')+
+    mk('Pw overdue',pwDue,pwDue?'mv-amber':'mv-default','pw_overdue')+
+    mk('Orphan sessions',orphans,orphans?'mv-red':'mv-default','orphan')+
+    `<div class="metric-cell${CUR_METRIC==='at_risk'?' active-filter':''}" onclick="setMetric('at_risk')">
+      <div class="metric-label">Pending resign</div>
+      <div class="metric-value ${pending?'mv-amber':'mv-default'}">${pending}</div>
+    </div>`;
+}
+
+function setMetric(f){
+  CUR_METRIC=(CUR_METRIC===f||f==='all')?null:f;
+  renderMetrics();renderView();
+}
+
+/* ── VIEW ── */
+function setView(v){
+  CUR_VIEW=v;CUR_METRIC=null;
+  ['store','app','risk'].forEach(x=>document.getElementById('tab-'+x).classList.toggle('active',x===v));
+  renderMetrics();renderView();
+}
+
+function renderView(){
+  if(CUR_VIEW==='store') renderByStore();
+  else if(CUR_VIEW==='app') renderByApp();
+  else renderRisk();
+}
+
+/* ── BY STORE ── */
+function renderByStore(){
+  const stores=filteredStores();
+  document.getElementById('table-title').textContent='Stores';
+  document.getElementById('table-sub').textContent=`${stores.length} stores`;
+  document.getElementById('table-head').innerHTML=`<tr>
+    <th>Store</th><th>BU</th><th>Region</th>
+    <th>IDs total</th><th>Active</th>
+    <th>Pw overdue</th><th>Orphan</th>
+    <th>Risk score</th><th></th></tr>`;
+
+  const rows=stores.map(s=>{
+    const bu=BUS.find(b=>b.id===s.bu_id);
+    let asn=ASSIGNMENTS.filter(a=>a.store_id===s.id);
+    if(CUR_APP) asn=asn.filter(a=>a.app?.code===CUR_APP);
+    if(CUR_METRIC==='active') asn=asn.filter(a=>a.status==='active');
+    else if(CUR_METRIC==='idle') asn=asn.filter(a=>!a.emp_code||a.status==='idle');
+    else if(CUR_METRIC==='pw_overdue') asn=asn.filter(a=>a.status==='active'&&isPwOverdue(a));
+    else if(CUR_METRIC==='orphan') asn=asn.filter(a=>a.status==='orphan');
+    else if(CUR_METRIC==='at_risk') asn=asn.filter(a=>a.status==='at_risk');
+    const active=asn.filter(a=>a.status==='active').length;
+    const pwDue=asn.filter(a=>a.status==='active'&&isPwOverdue(a)).length;
+    const orphans=asn.filter(a=>a.status==='orphan').length;
+    const risk=asn.filter(a=>['at_risk','orphan'].includes(a.status)).length;
+    const score=Math.min(100,pwDue*4+orphans*20+risk*10);
+    const scoreColor=score>=70?'var(--red)':score>=30?'var(--amber)':'var(--green)';
+    return {s,bu,asn,active,pwDue,orphans,score,scoreColor};
+  }).sort((a,b)=>b.score-a.score);
+
+  document.getElementById('table-body').innerHTML=rows.map(({s,bu,asn,active,pwDue,orphans,score,scoreColor})=>`
+    <tr class="clickable" onclick="openStoreDrawer('${s.id}')">
+      <td class="store-col">${s.name}</td>
+      <td class="text-muted">${bu?.name||'—'}</td>
+      <td class="text-muted">${s.region||'—'}</td>
+      <td style="font-weight:600">${asn.length}</td>
+      <td style="color:var(--green);font-weight:600">${active}</td>
+      <td>${pwDue?'<span class="badge badge-amber">'+pwDue+'</span>':'<span class="text-hint">0</span>'}</td>
+      <td>${orphans?'<span class="badge badge-red">'+orphans+'</span>':'<span class="text-hint">0</span>'}</td>
+      <td>
+        <div class="risk-wrap">
+          <div class="risk-bar"><div class="risk-fill" style="width:${score}%;background:${scoreColor}"></div></div>
+          <span class="risk-num" style="color:${scoreColor}">${score}</span>
+        </div>
+      </td>
+      <td class="text-hint">→</td>
+    </tr>`).join('');
+}
+
+/* ── BY APP ── */
+function renderByApp(){
+  const appCodes=[...new Set(APPS.map(a=>a.code))];
+  const stores=filteredStores();
+  document.getElementById('table-title').textContent='Applications';
+  document.getElementById('table-sub').textContent='';
+  document.getElementById('table-head').innerHTML=`<tr>
+    <th>Application</th><th>BUs</th><th>Stores</th>
+    <th>Total IDs</th><th>Active</th>
+    <th>Pw overdue</th><th>Risk alerts</th><th></th></tr>`;
+  document.getElementById('table-body').innerHTML=appCodes.map(code=>{
+    const asn=ASSIGNMENTS.filter(a=>a.app?.code===code&&stores.map(s=>s.id).includes(a.store_id));
+    const active=asn.filter(a=>a.status==='active').length;
+    const pwDue=asn.filter(a=>a.status==='active'&&isPwOverdue(a)).length;
+    const risk=asn.filter(a=>['at_risk','orphan'].includes(a.status)).length;
+    const storeCount=[...new Set(asn.map(a=>a.store_id))].length;
+    const buCount=[...new Set(stores.filter(s=>asn.some(a=>a.store_id===s.id)).map(s=>s.bu_id))].length;
+    const color=APP_COLORS[code]||APP_COLORS.default;
+    const name=APPS.find(a=>a.code===code)?.name||code;
+    return `<tr class="clickable" onclick="openAppDrawer('${code}')">
+      <td><span style="display:inline-flex;align-items:center;gap:8px"><span style="width:8px;height:8px;border-radius:50%;background:${color};display:inline-block"></span><strong>${name}</strong></span></td>
+      <td class="text-muted">${buCount}</td>
+      <td class="text-muted">${storeCount}</td>
+      <td style="font-weight:600">${asn.length}</td>
+      <td style="color:var(--green);font-weight:600">${active}</td>
+      <td>${pwDue?'<span class="badge badge-amber">'+pwDue+'</span>':'<span class="text-hint">0</span>'}</td>
+      <td>${risk?'<span class="badge badge-red">'+risk+'</span>':'<span class="text-hint">0</span>'}</td>
+      <td class="text-hint">→</td>
+    </tr>`;
+  }).join('');
+}
+
+/* ── RISK VIEW ── */
+function renderRisk(){
+  const stores=filteredStores().map(s=>s.id);
+  let asn=ASSIGNMENTS.filter(a=>stores.includes(a.store_id));
+  const items=[
+    ...asn.filter(a=>a.status==='orphan').map(a=>({icon:'⛔',label:'Orphan session',bg:'var(--red-lt)',a})),
+    ...asn.filter(a=>a.status==='at_risk').map(a=>({icon:'⚠️',label:'Supervisor resigned',bg:'var(--amber-lt)',a})),
+    ...asn.filter(a=>a.status==='active'&&isPwOverdue(a)).map(a=>({icon:'🔑',label:'Password overdue',bg:'',a})),
+  ];
+  document.getElementById('table-title').textContent='Risk area';
+  document.getElementById('table-sub').textContent=`${items.length} items`;
+  document.getElementById('table-head').innerHTML=`<tr><th>Risk</th><th>Generic ID</th><th>Store</th><th>App</th><th>Employee</th><th>Days</th></tr>`;
+  document.getElementById('table-body').innerHTML=items.length?items.map(({icon,label,bg,a})=>{
+    const store=STORES.find(s=>s.id===a.store_id);
+    const days=a.pw_last_rotated?Math.floor((Date.now()-new Date(a.pw_last_rotated))/(864e5)):null;
+    return `<tr style="${bg?'background:'+bg:''}">
+      <td>${icon} <span style="font-size:12px;font-weight:600">${label}</span></td>
+      <td class="mono">${a.generic_id}</td>
+      <td class="text-muted">${store?.name||'—'}</td>
+      <td class="text-muted">${a.app?.name||'—'}</td>
+      <td class="mono">${a.emp_code||'—'}</td>
+      <td class="text-muted">${days!==null?days+'d':'—'}</td>
+    </tr>`;
+  }).join(''):`<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">No open risks</div></div></td></tr>`;
+}
+
+/* ── DRAWERS ── */
+function openStoreDrawer(storeId){
+  const s=STORES.find(x=>x.id===storeId);if(!s)return;
+  const bu=BUS.find(b=>b.id===s.bu_id);
+  const asn=ASSIGNMENTS.filter(a=>a.store_id===storeId);
+  const active=asn.filter(a=>a.status==='active').length;
+  const pwDue=asn.filter(a=>a.status==='active'&&isPwOverdue(a)).length;
+  const risk=asn.filter(a=>['at_risk','orphan'].includes(a.status)).length;
+  const appCodes=[...new Set(APPS.filter(a=>a.bu_id===s.bu_id).map(a=>a.code))];
+  document.getElementById('drawer-title').textContent=s.name;
+  document.getElementById('drawer-body').innerHTML=`
+    <div class="drawer-metric-grid">
+      <div class="drawer-metric-cell"><div class="metric-label">Total IDs</div><div class="metric-value mv-blue">${asn.length}</div></div>
+      <div class="drawer-metric-cell"><div class="metric-label">Active</div><div class="metric-value mv-green">${active}</div></div>
+      <div class="drawer-metric-cell"><div class="metric-label">Pw overdue</div><div class="metric-value ${pwDue?'mv-amber':'mv-default'}">${pwDue}</div></div>
+      <div class="drawer-metric-cell"><div class="metric-label">Risk alerts</div><div class="metric-value ${risk?'mv-red':'mv-default'}">${risk}</div></div>
+    </div>
+    <div class="drawer-section-title" style="margin-bottom:8px">By application</div>
+    ${appCodes.map(code=>{
+      const c=asn.filter(a=>a.app?.code===code);
+      const col=APP_COLORS[code]||APP_COLORS.default;
+      return `<div class="drawer-row">
+        <span class="drawer-row-label"><span style="width:8px;height:8px;border-radius:50%;background:${col};display:inline-block"></span>${APPS.find(a=>a.code===code)?.name||code}</span>
+        <div class="drawer-row-badges">
+          <span class="badge badge-gray">${c.length}</span>
+          <span class="badge badge-green">${c.filter(x=>x.status==='active').length} active</span>
+          ${c.filter(x=>isPwOverdue(x)).length?`<span class="badge badge-amber">${c.filter(x=>isPwOverdue(x)).length} pw</span>`:''}
+        </div>
+      </div>`;
+    }).join('')}
+    <div style="margin-top:6px;font-size:12px;color:var(--muted);padding-top:12px;border-top:1px solid var(--border2)">BU: ${bu?.name||'—'} · Region: ${s.region||'—'} · Code: ${s.code}</div>
+    <div style="margin-top:14px">
+      <button class="btn btn-primary" style="width:100%" onclick="gotoStorePortal('${storeId}','${s.name}','${s.bu_id}')">Open store portal →</button>
+    </div>`;
+  document.getElementById('drawer').classList.remove('hidden');
+}
+
+function openAppDrawer(code){
+  const name=APPS.find(a=>a.code===code)?.name||code;
+  const asn=ASSIGNMENTS.filter(a=>a.app?.code===code);
+  const active=asn.filter(a=>a.status==='active').length;
+  const color=APP_COLORS[code]||APP_COLORS.default;
+  document.getElementById('drawer-title').textContent=name;
+  document.getElementById('drawer-body').innerHTML=`
+    <div class="drawer-metric-grid">
+      <div class="drawer-metric-cell"><div class="metric-label">Total IDs</div><div class="metric-value" style="color:${color}">${asn.length}</div></div>
+      <div class="drawer-metric-cell"><div class="metric-label">Active</div><div class="metric-value mv-green">${active}</div></div>
+    </div>
+    <div class="drawer-section-title">By store</div>
+    ${STORES.map(s=>{
+      const c=asn.filter(a=>a.store_id===s.id);
+      if(!c.length) return '';
+      return `<div class="drawer-row">
+        <span class="drawer-row-label">${s.name}</span>
+        <div class="drawer-row-badges">
+          <span class="badge badge-gray">${c.length}</span>
+          <span class="badge badge-green">${c.filter(x=>x.status==='active').length}</span>
+          ${c.filter(x=>isPwOverdue(x)).length?`<span class="badge badge-amber">pw</span>`:''}
+        </div>
+      </div>`;
+    }).join('')}`;
+  document.getElementById('drawer').classList.remove('hidden');
+}
+
+function closeDrawer(){document.getElementById('drawer').classList.add('hidden');}
+
+/* ── NAV ── */
+function gotoBU(){
+  // If only one BU, go directly; otherwise let bu.html figure it out from user_roles
+  if(BUS.length===1){sessionStorage.setItem('gid_bu_id',BUS[0].id);location.href='bu.html';}
+  else{sessionStorage.removeItem('gid_bu_id');location.href='bu.html';}
+}
+function gotoStore(){sessionStorage.removeItem('gid_store_id');location.href='store.html';}
+function gotoStorePortal(id,name,buId){
+  sessionStorage.setItem('gid_store_id',id);
+  sessionStorage.setItem('gid_store_name',name);
+  sessionStorage.setItem('gid_bu_id',buId);
+  location.href='store.html';
+}
+async function doSignOut(){await sb.auth.signOut();sessionStorage.clear();location.href='index.html';}
+function exportCSV(){
+  const rows=[['Store','BU','Region','Total','Active','Pw Overdue','Risk']];
+  filteredStores().forEach(s=>{
+    const bu=BUS.find(b=>b.id===s.bu_id);
+    const asn=ASSIGNMENTS.filter(a=>a.store_id===s.id);
+    rows.push([s.name,bu?.name||'',s.region||'',asn.length,asn.filter(a=>a.status==='active').length,asn.filter(a=>isPwOverdue(a)).length,asn.filter(a=>['at_risk','orphan'].includes(a.status)).length]);
+  });
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(rows.map(r=>r.join(',')).join('\n'));
+  a.download=`ho_${new Date().toISOString().slice(0,10)}.csv`;a.click();
+}
+function isPwOverdue(a){if(!a.pw_last_rotated)return false;return Math.floor((Date.now()-new Date(a.pw_last_rotated))/(864e5))>=(a.app?.pw_rotation_days||30);}
+init();
 </script>
 </body>
 </html>
