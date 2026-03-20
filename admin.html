@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Generic ID Manager</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
+:root{
+  --bg:#F5F5F0;--white:#FFFFFF;--text:#1A1A1A;--muted:#6B6B6B;--hint:#9B9B9B;
+  --border:#E8E8E3;--border2:#F0F0EB;
+  --blue:#2563EB;--blue-lt:#EFF6FF;--blue-dk:#1D4ED8;
+  --green:#16A34A;--green-lt:#F0FDF4;
+  --red:#DC2626;--red-lt:#FEF2F2;
+  --amber:#D97706;--amber-lt:#FFFBEB;
+  --purple:#7C3AED;--purple-lt:#F5F3FF;
+  --radius:8px;--radius-lg:12px;
+}
+body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',sans-serif;font-size:14px;min-height:100vh}
+
+/* TOPNAV */
+.topnav{background:var(--white);border-bottom:1px solid var(--border);padding:0 24px;height:52px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+.nav-left{display:flex;align-items:center;gap:10px}
+.nav-logo{width:30px;height:30px;border-radius:7px;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800}
+.nav-title{font-size:14px;font-weight:700}
+.nav-badge{font-size:11px;padding:2px 8px;border-radius:999px;background:var(--red-lt);color:var(--red);font-weight:600;border:1px solid #FECACA}
+.nav-back{padding:5px 12px;border-radius:var(--radius);border:1px solid var(--border);background:var(--white);font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;color:var(--muted);text-decoration:none;display:inline-flex;align-items:center}
+.nav-back:hover{background:var(--bg)}
+
+/* PAGE */
+.page{max-width:1100px;margin:0 auto;padding:24px 20px}
+.page-header{margin-bottom:24px}
+.page-header h1{font-size:22px;font-weight:700}
+.page-header p{font-size:13px;color:var(--muted);margin-top:4px}
+
+/* SECTION TABS */
+.section-tabs{display:flex;gap:4px;margin-bottom:20px;background:var(--white);padding:4px;border-radius:var(--radius-lg);border:1px solid var(--border);width:fit-content}
+.section-tab{padding:8px 18px;border-radius:var(--radius);border:none;background:transparent;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;font-family:inherit;transition:all .15s;display:flex;align-items:center;gap:6px}
+.section-tab:hover{background:var(--bg);color:var(--text)}
+.section-tab.active{background:var(--blue);color:#fff;font-weight:600}
+.section-tab .tab-count{font-size:11px;padding:1px 6px;border-radius:999px;background:rgba(255,255,255,.25);font-weight:600}
+.section-tab:not(.active) .tab-count{background:var(--border);color:var(--muted)}
+
+/* CARDS */
+.card{background:var(--white);border-radius:var(--radius-lg);border:1px solid var(--border);overflow:hidden;margin-bottom:16px}
+.card-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border)}
+.card-title{font-size:14px;font-weight:700}
+.card-sub{font-size:12px;color:var(--muted);margin-top:2px}
+
+/* TABLE */
+table{width:100%;border-collapse:collapse}
+th{padding:10px 16px;text-align:left;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);background:var(--bg);white-space:nowrap}
+td{padding:12px 16px;border-bottom:1px solid var(--border2);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#FAFAFA}
+
+/* FORM */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:18px}
+.form-grid.three{grid-template-columns:1fr 1fr 1fr}
+.form-grid.full{grid-template-columns:1fr}
+.field{margin-bottom:0}
+.field label{display:block;font-size:11px;font-weight:600;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em}
+.field input,.field select{width:100%;padding:9px 12px;border-radius:var(--radius);border:1px solid var(--border);background:var(--white);color:var(--text);font-size:14px;font-family:inherit;outline:none;transition:border .15s}
+.field input:focus,.field select:focus{border-color:var(--blue);box-shadow:0 0 0 3px #DBEAFE}
+.form-footer{padding:14px 18px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;align-items:center}
+.form-err{font-size:13px;color:var(--red);flex:1}
+.form-ok{font-size:13px;color:var(--green);flex:1;display:none}
+
+/* BTNS */
+.btn{padding:8px 16px;border-radius:var(--radius);border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:6px;transition:opacity .15s}
+.btn:hover{opacity:.85}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-outline{background:var(--white);color:var(--text);border:1px solid var(--border)}
+.btn-danger{background:var(--red-lt);color:var(--red);border:1px solid #FECACA}
+.btn-sm{padding:4px 10px;font-size:12px}
+.btn-success{background:var(--green-lt);color:var(--green);border:1px solid #BBF7D0}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;padding:3px 8px;border-radius:999px}
+.badge-active{background:var(--green-lt);color:var(--green)}
+.badge-inactive{background:#F3F4F6;color:var(--muted)}
+.badge-role{background:var(--blue-lt);color:var(--blue)}
+.badge-ho{background:var(--purple-lt);color:var(--purple)}
+.badge-pending{background:var(--amber-lt);color:var(--amber)}
+
+/* MONO */
+.mono{font-family:ui-monospace,monospace;font-size:12px;font-weight:700}
+
+/* EMPTY */
+.empty-row td{text-align:center;padding:40px;color:var(--hint);font-style:italic}
+
+/* SPINNER */
+.spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;display:inline-block}
+.spinner-blue{border-color:#DBEAFE;border-top-color:var(--blue)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.hidden{display:none!important}
+
+/* MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal{background:var(--white);border-radius:var(--radius-lg);width:100%;max-width:480px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal-header{padding:18px 20px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:15px;font-weight:700}
+.modal-close{width:28px;height:28px;border-radius:50%;border:none;background:var(--bg);color:var(--muted);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
+.modal-body{padding:18px 20px}
+.modal-footer{padding:14px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end}
+</style>
+</head>
+<body>
+
+<!-- TOP NAV -->
+<div class="topnav">
+  <div class="nav-left">
+    <div class="nav-logo">GID</div>
+    <div class="nav-title">Admin — Data Maintenance</div>
+    <span class="nav-badge">HO Admin only</span>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <span id="admin-user" style="font-size:12px;color:var(--muted)"></span>
+    <a href="ho.html" class="nav-back">← HO Dashboard</a>
+  </div>
+</div>
+
+<!-- PAGE -->
+<div class="page">
+  <div class="page-header">
+    <h1>⚙️ Data Maintenance</h1>
+    <p>Manage business units, stores, and user role assignments.</p>
+  </div>
+
+  <!-- SECTION TABS -->
+  <div class="section-tabs">
+    <button class="section-tab active" onclick="showSection('bu')" id="tab-bu">
+      🏢 Business Units <span class="tab-count" id="cnt-bu">—</span>
+    </button>
+    <button class="section-tab" onclick="showSection('stores')" id="tab-stores">
+      🏪 Stores <span class="tab-count" id="cnt-stores">—</span>
+    </button>
+    <button class="section-tab" onclick="showSection('users')" id="tab-users">
+      👤 User Roles <span class="tab-count" id="cnt-users">—</span>
+    </button>
+  </div>
+
+  <!-- ── BUSINESS UNITS SECTION ── -->
+  <div id="section-bu">
+    <!-- Add BU Form -->
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Add Business Unit</div>
+          <div class="card-sub">Create a new BU. Apps and stores can then be scoped to it.</div>
+        </div>
+      </div>
+      <div class="form-grid three">
+        <div class="field"><label>BU Code</label><input id="bu-code" placeholder="CDS" maxlength="6" style="font-family:monospace;font-weight:700;text-transform:uppercase" oninput="this.value=this.value.toUpperCase()"></div>
+        <div class="field"><label>BU Full Name</label><input id="bu-name" placeholder="Central Department Store"></div>
+        <div class="field" style="display:flex;flex-direction:column;justify-content:flex-end">
+          <label style="visibility:hidden">—</label>
+          <button class="btn btn-primary" onclick="addBU()">+ Add BU</button>
+        </div>
+      </div>
+      <div class="form-footer">
+        <span class="form-err" id="bu-err"></span>
+        <span class="form-ok" id="bu-ok">✅ BU added.</span>
+      </div>
+    </div>
+
+    <!-- BU List -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">All Business Units</div>
+        <div id="bu-list-loading" style="font-size:12px;color:var(--muted)">Loading…</div>
+      </div>
+      <table>
+        <thead><tr><th>Code</th><th>Name</th><th>ID</th><th>Status</th><th></th></tr></thead>
+        <tbody id="bu-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── STORES SECTION ── -->
+  <div id="section-stores" class="hidden">
+    <!-- Add Store Form -->
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Add Store</div>
+          <div class="card-sub">Create a new store and assign it to a BU.</div>
+        </div>
+      </div>
+      <div class="form-grid three">
+        <div class="field"><label>Store Code</label><input id="s-code" placeholder="B12" maxlength="8" style="font-family:monospace;font-weight:700;text-transform:uppercase" oninput="this.value=this.value.toUpperCase()"></div>
+        <div class="field"><label>Store Name</label><input id="s-name" placeholder="B12 Sukhumvit"></div>
+        <div class="field"><label>Region</label>
+          <select id="s-region">
+            <option value="Bangkok">Bangkok</option>
+            <option value="Central">Central</option>
+            <option value="North">North</option>
+            <option value="Northeast">Northeast</option>
+            <option value="South">South</option>
+            <option value="East">East</option>
+            <option value="West">West</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-grid" style="padding-top:0">
+        <div class="field">
+          <label>Business Unit</label>
+          <select id="s-bu"></select>
+        </div>
+        <div class="field" style="display:flex;flex-direction:column;justify-content:flex-end">
+          <label style="visibility:hidden">—</label>
+          <button class="btn btn-primary" onclick="addStore()">+ Add Store</button>
+        </div>
+      </div>
+      <div class="form-footer">
+        <span class="form-err" id="s-err"></span>
+        <span class="form-ok" id="s-ok">✅ Store added.</span>
+      </div>
+    </div>
+
+    <!-- Store list -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">All Stores</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <select id="s-filter-bu" onchange="renderStoreTable()" style="padding:5px 10px;border-radius:var(--radius);border:1px solid var(--border);background:var(--white);font-size:12px;font-family:inherit">
+            <option value="">All BUs</option>
+          </select>
+        </div>
+      </div>
+      <table>
+        <thead><tr><th>Code</th><th>Store Name</th><th>BU</th><th>Region</th><th>Status</th><th></th></tr></thead>
+        <tbody id="stores-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── USER ROLES SECTION ── -->
+  <div id="section-users" class="hidden">
+    <!-- Assign Role Form -->
+    <div class="card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">Assign User Role</div>
+          <div class="card-sub">Assign a role to a registered user. They must have signed up first.</div>
+        </div>
+      </div>
+      <div class="form-grid three">
+        <div class="field"><label>User Email</label><input id="u-email" placeholder="nipa.k@central.co.th" type="email"></div>
+        <div class="field"><label>Role</label>
+          <select id="u-role" onchange="onRoleChange()">
+            <option value="store_manager">Store Manager</option>
+            <option value="bu_manager">BU Manager</option>
+            <option value="hr_admin">HR Admin</option>
+            <option value="ho_admin">HO Admin</option>
+          </select>
+        </div>
+        <div class="field"><label>Business Unit</label>
+          <select id="u-bu"></select>
+        </div>
+      </div>
+      <div class="form-grid" id="u-store-row" style="padding-top:0">
+        <div class="field">
+          <label>Store (for Store Manager role only)</label>
+          <select id="u-store"><option value="">— Not store-scoped —</option></select>
+        </div>
+        <div class="field" style="display:flex;flex-direction:column;justify-content:flex-end">
+          <label style="visibility:hidden">—</label>
+          <button class="btn btn-primary" onclick="assignRole()">Assign role</button>
+        </div>
+      </div>
+      <div class="form-footer">
+        <span class="form-err" id="u-err"></span>
+        <span class="form-ok" id="u-ok"></span>
+      </div>
+    </div>
+
+    <!-- User Roles List -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">All User Role Assignments</div>
+        <div id="users-loading" style="font-size:12px;color:var(--muted)">Loading…</div>
+      </div>
+      <table>
+        <thead><tr><th>Email</th><th>Role</th><th>BU</th><th>Store</th><th>Status</th><th></th></tr></thead>
+        <tbody id="users-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+</div><!-- end page -->
+
+<!-- CONFIRM MODAL -->
+<div class="modal-bg hidden" id="modal-confirm">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title" id="confirm-title">Confirm</span>
+      <button class="modal-close" onclick="closeModal('modal-confirm')">✕</button>
+    </div>
+    <div class="modal-body" id="confirm-body"></div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-confirm')">Cancel</button>
+      <button class="btn btn-danger" id="confirm-ok-btn">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT STORE MODAL -->
+<div class="modal-bg hidden" id="modal-edit-store">
+  <div class="modal">
+    <div class="modal-header">
+      <span class="modal-title">Edit Store</span>
+      <button class="modal-close" onclick="closeModal('modal-edit-store')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-store-id">
+      <div class="field" style="margin-bottom:12px"><label>Store Code</label><input id="edit-s-code" style="font-family:monospace;font-weight:700"></div>
+      <div class="field" style="margin-bottom:12px"><label>Store Name</label><input id="edit-s-name"></div>
+      <div class="field" style="margin-bottom:12px"><label>Region</label>
+        <select id="edit-s-region">
+          <option>Bangkok</option><option>Central</option><option>North</option>
+          <option>Northeast</option><option>South</option><option>East</option><option>West</option>
+        </select>
+      </div>
+      <div class="field" style="margin-bottom:0"><label>Business Unit</label><select id="edit-s-bu"></select></div>
+      <div id="edit-s-err" style="color:var(--red);font-size:12px;margin-top:8px"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-edit-store')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveEditStore()">Save changes</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+const SUPABASE_URL='https://hnvytilmxoiaqceseooh.supabase.co';
+const SUPABASE_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhudnl0aWxteG9pYXFjZXNlb29oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MTc0ODIsImV4cCI6MjA4OTQ5MzQ4Mn0.x7WCLXRZEoorxEIuk5dwHG8EpasBGGB7peBysWUdElw';
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON);
+
+let SESSION=null, BUS=[], STORES=[], USERS_ROLES=[];
+
+async function init(){
+  let {data:{session}}=await sb.auth.getSession();
+  if(!session){const {data:r}=await sb.auth.refreshSession();session=r?.session;}
+  if(!session){location.href='index.html';return;}
+  SESSION=session;
+
+  // Check ho_admin role
+  const {data:roles}=await sb.from('user_roles').select('role').eq('user_id',session.user.id);
+  const isAdmin=roles?.some(r=>r.role==='ho_admin');
+  if(!isAdmin){
+    document.querySelector('.page').innerHTML=`<div style="text-align:center;padding:80px;color:var(--muted)"><div style="font-size:40px;margin-bottom:16px">🔒</div><h2>Access restricted</h2><p style="margin-top:8px">This page is for HO Admins only.</p><br><a href="ho.html" style="color:var(--blue)">← Back to HO Dashboard</a></div>`;
+    return;
+  }
+
+  document.getElementById('admin-user').textContent=session.user.email;
+  await loadAll();
+}
+
+async function loadAll(){
+  await Promise.all([loadBUs(), loadStores(), loadUserRoles()]);
+}
+
+// ── BUSINESS UNITS ──────────────────────────────────────────────
+async function loadBUs(){
+  const {data}=await sb.from('business_units').select('*').order('code');
+  BUS=data||[];
+  document.getElementById('cnt-bu').textContent=BUS.length;
+  document.getElementById('bu-list-loading').textContent='';
+  renderBUTable();
+  // Populate BU selects across all forms
+  const opts=BUS.map(b=>`<option value="${b.id}">${b.code} · ${b.name}</option>`).join('');
+  document.getElementById('s-bu').innerHTML=opts;
+  document.getElementById('u-bu').innerHTML=opts;
+  document.getElementById('edit-s-bu').innerHTML=opts;
+  // Store filter
+  document.getElementById('s-filter-bu').innerHTML=`<option value="">All BUs</option>`+BUS.map(b=>`<option value="${b.id}">${b.code}</option>`).join('');
+}
+
+function renderBUTable(){
+  if(!BUS.length){document.getElementById('bu-tbody').innerHTML=`<tr class="empty-row"><td colspan="5">No business units yet</td></tr>`;return;}
+  document.getElementById('bu-tbody').innerHTML=BUS.map(b=>`<tr>
+    <td><span class="mono">${b.code}</span></td>
+    <td style="font-weight:600">${b.name}</td>
+    <td><span class="mono" style="font-size:11px;color:var(--hint)">${b.id.slice(0,8)}…</span></td>
+    <td><span class="badge badge-active">Active</span></td>
+    <td style="text-align:right"><span style="font-size:11px;color:var(--hint)">Cannot delete (has stores)</span></td>
+  </tr>`).join('');
+}
+
+async function addBU(){
+  const code=document.getElementById('bu-code').value.trim().toUpperCase();
+  const name=document.getElementById('bu-name').value.trim();
+  const err=document.getElementById('bu-err'),ok=document.getElementById('bu-ok');
+  err.textContent='';ok.style.display='none';
+  if(!code||!name){err.textContent='Code and name are required.';return;}
+  if(BUS.find(b=>b.code===code)){err.textContent=`BU "${code}" already exists.`;return;}
+  const {error}=await sb.from('business_units').insert({code,name});
+  if(error){err.textContent=error.message;return;}
+  ok.style.display='block';
+  document.getElementById('bu-code').value='';document.getElementById('bu-name').value='';
+  await loadBUs();
+  setTimeout(()=>ok.style.display='none',3000);
+}
+
+// ── STORES ──────────────────────────────────────────────────────
+async function loadStores(){
+  const {data}=await sb.from('stores').select('*,business_units(code,name)').order('code');
+  STORES=data||[];
+  document.getElementById('cnt-stores').textContent=STORES.length;
+  renderStoreTable();
+  // Populate store selector for user role assignment
+  populateStoreSelect(document.getElementById('u-store'));
+}
+
+function renderStoreTable(){
+  const filterBU=document.getElementById('s-filter-bu')?.value||'';
+  let rows=STORES;
+  if(filterBU) rows=rows.filter(s=>s.bu_id===filterBU);
+  if(!rows.length){document.getElementById('stores-tbody').innerHTML=`<tr class="empty-row"><td colspan="6">No stores found</td></tr>`;return;}
+  document.getElementById('stores-tbody').innerHTML=rows.map(s=>`<tr>
+    <td><span class="mono">${s.code}</span></td>
+    <td style="font-weight:600">${s.name}</td>
+    <td><span class="badge" style="background:var(--blue-lt);color:var(--blue)">${s.business_units?.code||'—'}</span></td>
+    <td style="font-size:12px;color:var(--muted)">${s.region||'—'}</td>
+    <td>${s.active!==false?`<span class="badge badge-active">Active</span>`:`<span class="badge badge-inactive">Inactive</span>`}</td>
+    <td style="text-align:right;display:flex;gap:6px;justify-content:flex-end">
+      <button class="btn btn-outline btn-sm" onclick="openEditStore('${s.id}')">Edit</button>
+      <button class="btn btn-sm ${s.active!==false?'btn-danger':'btn-success'}" onclick="toggleStore('${s.id}',${s.active!==false})">
+        ${s.active!==false?'Deactivate':'Activate'}
+      </button>
+    </td>
+  </tr>`).join('');
+}
+
+function populateStoreSelect(el, selectedId){
+  if(!el)return;
+  el.innerHTML=`<option value="">— Not store-scoped —</option>`+STORES.map(s=>`<option value="${s.id}"${s.id===selectedId?' selected':''}>${s.code} · ${s.name} (${s.business_units?.code||'?'})</option>`).join('');
+}
+
+async function addStore(){
+  const code=document.getElementById('s-code').value.trim().toUpperCase();
+  const name=document.getElementById('s-name').value.trim();
+  const buId=document.getElementById('s-bu').value;
+  const region=document.getElementById('s-region').value;
+  const err=document.getElementById('s-err'),ok=document.getElementById('s-ok');
+  err.textContent='';ok.style.display='none';
+  if(!code||!name||!buId){err.textContent='Code, name, and BU are required.';return;}
+  if(STORES.find(s=>s.code===code)){err.textContent=`Store code "${code}" already exists.`;return;}
+  const {error}=await sb.from('stores').insert({code,name,bu_id:buId,region,active:true});
+  if(error){err.textContent=error.message;return;}
+  ok.style.display='block';
+  document.getElementById('s-code').value='';document.getElementById('s-name').value='';
+  await loadStores();
+  setTimeout(()=>ok.style.display='none',3000);
+}
+
+async function toggleStore(id, isActive){
+  if(isActive&&!confirm('Deactivate this store? It will be hidden from dashboards.'))return;
+  await sb.from('stores').update({active:!isActive}).eq('id',id);
+  await loadStores();
+}
+
+function openEditStore(id){
+  const s=STORES.find(x=>x.id===id);if(!s)return;
+  document.getElementById('edit-store-id').value=s.id;
+  document.getElementById('edit-s-code').value=s.code;
+  document.getElementById('edit-s-name').value=s.name;
+  document.getElementById('edit-s-region').value=s.region||'Bangkok';
+  document.getElementById('edit-s-bu').value=s.bu_id;
+  document.getElementById('edit-s-err').textContent='';
+  openModal('modal-edit-store');
+}
+
+async function saveEditStore(){
+  const id=document.getElementById('edit-store-id').value;
+  const code=document.getElementById('edit-s-code').value.trim().toUpperCase();
+  const name=document.getElementById('edit-s-name').value.trim();
+  const region=document.getElementById('edit-s-region').value;
+  const buId=document.getElementById('edit-s-bu').value;
+  const err=document.getElementById('edit-s-err');
+  if(!code||!name){err.textContent='Code and name required.';return;}
+  const {error}=await sb.from('stores').update({code,name,region,bu_id:buId}).eq('id',id);
+  if(error){err.textContent=error.message;return;}
+  closeModal('modal-edit-store');
+  await loadStores();
+}
+
+// ── USER ROLES ──────────────────────────────────────────────────
+async function loadUserRoles(){
+  const {data}=await sb.from('user_roles')
+    .select('id,user_id,role,bu_id,store_id,business_units(code,name),stores(code,name)')
+    .order('role');
+  USERS_ROLES=data||[];
+  document.getElementById('cnt-users').textContent=USERS_ROLES.length;
+  document.getElementById('users-loading').textContent='';
+
+  // Fetch emails via user_profiles (best effort)
+  const userIds=[...new Set(USERS_ROLES.map(r=>r.user_id))];
+  let profileMap={};
+  if(userIds.length){
+    const {data:profiles}=await sb.from('user_profiles').select('id,email,full_name').in('id',userIds);
+    (profiles||[]).forEach(p=>{profileMap[p.id]={email:p.email,name:p.full_name};});
+  }
+
+  const ROLE_LABELS={ho_admin:'HO Admin',bu_manager:'BU Manager',hr_admin:'HR Admin',store_manager:'Store Manager'};
+  const ROLE_BADGE_CLASS={ho_admin:'badge-ho',bu_manager:'badge-role',hr_admin:'badge-active',store_manager:'badge-inactive'};
+
+  document.getElementById('users-tbody').innerHTML=USERS_ROLES.length?USERS_ROLES.map(r=>{
+    const profile=profileMap[r.user_id]||{};
+    const email=profile.email||r.user_id.slice(0,8)+'…';
+    return `<tr>
+      <td>
+        <div style="font-size:13px;font-weight:600">${email}</div>
+        ${profile.name?`<div style="font-size:11px;color:var(--hint)">${profile.name}</div>`:''}
+      </td>
+      <td><span class="badge ${ROLE_BADGE_CLASS[r.role]||'badge-inactive'}">${ROLE_LABELS[r.role]||r.role}</span></td>
+      <td><span class="mono">${r.business_units?.code||'—'}</span></td>
+      <td style="font-size:12px;color:var(--muted)">${r.stores?.code||'—'}</td>
+      <td><span class="badge badge-active">Active</span></td>
+      <td style="text-align:right">
+        <button class="btn btn-danger btn-sm" onclick="confirmRevokeRole('${r.id}','${email}','${ROLE_LABELS[r.role]||r.role}')">Revoke</button>
+      </td>
+    </tr>`;
+  }).join(''):`<tr class="empty-row"><td colspan="6">No user roles assigned</td></tr>`;
+}
+
+function onRoleChange(){
+  const role=document.getElementById('u-role').value;
+  const storeRow=document.getElementById('u-store-row');
+  storeRow.style.display=role==='store_manager'?'':'none';
+}
+
+async function assignRole(){
+  const email=document.getElementById('u-email').value.trim().toLowerCase();
+  const role=document.getElementById('u-role').value;
+  const buId=document.getElementById('u-bu').value;
+  const storeId=document.getElementById('u-store').value||null;
+  const err=document.getElementById('u-err'),ok=document.getElementById('u-ok');
+  err.textContent='';ok.style.display='none';
+
+  if(!email||!role||!buId){err.textContent='Email, role, and BU are required.';return;}
+
+  // Look up user_id from user_profiles
+  const {data:profile}=await sb.from('user_profiles').select('id').eq('email',email).maybeSingle();
+  if(!profile){err.textContent=`No registered user found for "${email}". They must sign up first.`;return;}
+
+  // Check for duplicate
+  const exists=USERS_ROLES.find(r=>r.user_id===profile.id&&r.bu_id===buId&&r.role===role);
+  if(exists){err.textContent='This user already has that role for that BU.';return;}
+
+  const {error}=await sb.from('user_roles').insert({
+    user_id:profile.id,role,bu_id:buId,
+    store_id:role==='store_manager'?storeId:null
+  });
+  if(error){err.textContent=error.message;return;}
+  ok.textContent=`✅ Role assigned to ${email}.`;ok.style.display='block';
+  document.getElementById('u-email').value='';
+  await loadUserRoles();
+  setTimeout(()=>ok.style.display='none',4000);
+}
+
+function confirmRevokeRole(roleId, email, role){
+  document.getElementById('confirm-title').textContent='Revoke role';
+  document.getElementById('confirm-body').innerHTML=`<p>Remove <strong>${role}</strong> from <strong>${email}</strong>?</p><p style="font-size:12px;color:var(--muted);margin-top:8px">They will lose access immediately on next login.</p>`;
+  document.getElementById('confirm-ok-btn').onclick=()=>revokeRole(roleId);
+  openModal('modal-confirm');
+}
+
+async function revokeRole(id){
+  await sb.from('user_roles').delete().eq('id',id);
+  closeModal('modal-confirm');
+  await loadUserRoles();
+}
+
+// ── SECTION SWITCHER ────────────────────────────────────────────
+function showSection(name){
+  ['bu','stores','users'].forEach(s=>{
+    document.getElementById(`section-${s}`).classList.toggle('hidden',s!==name);
+    document.getElementById(`tab-${s}`).classList.toggle('active',s===name);
+  });
+}
+
+function openModal(id){document.getElementById(id).classList.remove('hidden')}
+function closeModal(id){document.getElementById(id).classList.add('hidden')}
+document.querySelectorAll('.modal-bg').forEach(b=>b.addEventListener('click',e=>{if(e.target===b)b.classList.add('hidden')}));
+
+// Init store row visibility
+onRoleChange();
+init();
+</script>
+</body>
+</html>

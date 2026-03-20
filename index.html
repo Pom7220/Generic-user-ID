@@ -150,6 +150,16 @@ body{
 }
 .picker-signout:hover{color:var(--red-dk)}
 
+/* ── TABS ── */
+.auth-tabs{display:flex;gap:0;margin-bottom:24px;border-radius:10px;overflow:hidden;border:0.5px solid var(--border);background:var(--surface2)}
+.auth-tab{flex:1;padding:10px;border:none;background:transparent;font-size:14px;font-weight:600;color:var(--muted);cursor:pointer;font-family:inherit;transition:all .15s}
+.auth-tab.active{background:var(--blue);color:#fff;border-radius:9px}
+
+/* ── REGISTER FIELDS ── */
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.register-note{font-size:12px;color:var(--muted);background:var(--surface2);border-radius:10px;padding:10px 12px;margin-bottom:14px;border:0.5px solid var(--border);line-height:1.6}
+.success-box{background:var(--green-lt);border:0.5px solid rgba(48,209,88,.3);border-radius:var(--radius);padding:14px;font-size:13px;color:var(--green-dk);display:none;text-align:center;line-height:1.6}
+
 /* ── SPINNER ── */
 .spinner{
   display:inline-block;width:20px;height:20px;
@@ -164,7 +174,7 @@ body{
 </head>
 <body>
 
-<!-- SCREEN 1: LOGIN -->
+<!-- SCREEN 1: LOGIN / REGISTER -->
 <div class="screen active" id="screen-login">
   <div class="login-card">
     <div class="logo-wrap">
@@ -173,29 +183,67 @@ body{
       <div class="logo-sub">Store access lifecycle · BU-scoped</div>
     </div>
 
+    <!-- TABS -->
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-signin" onclick="switchTab('signin')">Sign in</button>
+      <button class="auth-tab" id="tab-register" onclick="switchTab('register')">Register</button>
+    </div>
+
     <div class="error-box" id="err"></div>
+    <div class="success-box" id="success-box"></div>
 
-    <div class="field">
-      <label>Email</label>
-      <input type="email" id="email" placeholder="your@company.com"
-        autocomplete="off" autocapitalize="none" autocorrect="off"
-        onfocus="this.removeAttribute('readonly')" readonly>
-    </div>
-    <div class="field">
-      <label>Password</label>
-      <input type="password" id="password" placeholder="••••••••"
-        autocomplete="new-password"
-        onfocus="this.removeAttribute('readonly')" readonly>
+    <!-- SIGN IN FORM -->
+    <div id="form-signin">
+      <div class="field">
+        <label>Email</label>
+        <input type="email" id="email" placeholder="your@company.com"
+          autocomplete="off" autocapitalize="none" autocorrect="off"
+          onfocus="this.removeAttribute('readonly')" readonly>
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="password" placeholder="••••••••"
+          autocomplete="new-password"
+          onfocus="this.removeAttribute('readonly')" readonly>
+      </div>
+      <button class="btn-login" id="login-btn" onclick="doLogin()">Sign in</button>
+      <div class="role-chips">
+        <span class="role-chip">HO Admin</span>
+        <span class="role-chip">HR Admin</span>
+        <span class="role-chip">BU Manager</span>
+        <span class="role-chip">Store Manager</span>
+      </div>
     </div>
 
-    <button class="btn-login" id="login-btn" onclick="doLogin()">Sign in</button>
-
-    <div class="role-chips">
-      <span class="role-chip">HO Admin</span>
-      <span class="role-chip">HR Admin</span>
-      <span class="role-chip">BU Manager</span>
-      <span class="role-chip">Store Manager</span>
+    <!-- REGISTER FORM -->
+    <div id="form-register" style="display:none">
+      <div class="register-note">
+        📋 Register your account. An administrator will assign your role and BU access after approval.
+      </div>
+      <div class="two-col">
+        <div class="field"><label>First name</label><input type="text" id="r-fname" placeholder="Nipa" autocapitalize="words"></div>
+        <div class="field"><label>Last name</label><input type="text" id="r-lname" placeholder="Kaewsai" autocapitalize="words"></div>
+      </div>
+      <div class="field">
+        <label>Work email</label>
+        <input type="email" id="r-email" placeholder="nipa.k@central.co.th" autocapitalize="none">
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="r-password" placeholder="Min 8 characters">
+      </div>
+      <div class="field">
+        <label>Confirm password</label>
+        <input type="password" id="r-password2" placeholder="Repeat password">
+      </div>
+      <button class="btn-login" id="register-btn" onclick="doRegister()" style="background:linear-gradient(135deg,#30D158,#1D9E75);box-shadow:0 6px 20px rgba(48,209,88,.4)">
+        Request access
+      </button>
+      <p style="font-size:12px;color:var(--muted);text-align:center;margin-top:14px;line-height:1.6">
+        After registering, contact your HO Admin to activate your account and assign your BU role.
+      </p>
     </div>
+
   </div>
   <div class="footer">v0.2 POC · Pom7220/Generic-user-ID</div>
 </div>
@@ -259,6 +307,61 @@ function showErr(msg) {
   requestAnimationFrame(() => e.style.animation = 'shake .3s ease');
 }
 
+function switchTab(tab) {
+  const isSignin = tab === 'signin';
+  document.getElementById('tab-signin').classList.toggle('active', isSignin);
+  document.getElementById('tab-register').classList.toggle('active', !isSignin);
+  document.getElementById('form-signin').style.display = isSignin ? '' : 'none';
+  document.getElementById('form-register').style.display = isSignin ? 'none' : '';
+  document.getElementById('err').style.display = 'none';
+  document.getElementById('success-box').style.display = 'none';
+}
+
+async function doRegister() {
+  const fname = document.getElementById('r-fname').value.trim();
+  const lname = document.getElementById('r-lname').value.trim();
+  const email = document.getElementById('r-email').value.trim();
+  const pw = document.getElementById('r-password').value;
+  const pw2 = document.getElementById('r-password2').value;
+  document.getElementById('err').style.display = 'none';
+
+  if (!fname || !lname) { showErr('Please enter your first and last name.'); return; }
+  if (!email) { showErr('Please enter your work email.'); return; }
+  if (pw.length < 8) { showErr('Password must be at least 8 characters.'); return; }
+  if (pw !== pw2) { showErr('Passwords do not match.'); return; }
+
+  const btn = document.getElementById('register-btn');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
+
+  let data, error;
+  try {
+    ({data, error} = await sb.auth.signUp({ email, password: pw,
+      options: { data: { full_name: `${fname} ${lname}` } }
+    }));
+  } catch(e) {
+    showErr('Network error — could not reach server.');
+    btn.disabled = false; btn.textContent = 'Request access'; return;
+  }
+
+  btn.disabled = false; btn.textContent = 'Request access';
+
+  if (error) { showErr(error.message); return; }
+
+  // Store display name in user_profiles if table exists
+  if (data?.user) {
+    await sb.from('user_profiles').upsert({
+      id: data.user.id, email: data.user.email,
+      full_name: `${fname} ${lname}`
+    }, { onConflict: 'id' }).throwOnError().catch(() => {});
+  }
+
+  const successEl = document.getElementById('success-box');
+  successEl.innerHTML = `✅ <strong>Registration submitted!</strong><br>Check <strong>${email}</strong> to confirm your address, then contact your HO Admin to activate your account.`;
+  successEl.style.display = 'block';
+  // Clear fields
+  ['r-fname','r-lname','r-email','r-password','r-password2'].forEach(id => document.getElementById(id).value = '');
+}
+
 async function doLogin() {
   document.getElementById('err').style.display = 'none';
   const email    = document.getElementById('email').value.trim();
@@ -285,7 +388,7 @@ async function doLogin() {
   }
 
   // Upsert user profile
-  await sb.from('user_profiles').upsert({ id: data.user.id, email: data.user.email }, { onConflict: 'id' });
+  await sb.from('user_profiles').upsert({ id: data.user.id, email: data.user.email }, { onConflict: 'id' }).catch(()=>{});
   await handleAfterLogin(data.user);
 }
 
@@ -303,11 +406,15 @@ async function handleAfterLogin(user) {
     return;
   }
 
-  // ho_admin → load ALL BUs and show full picker
+  // ho_admin → go straight to ho.html, no BU picker needed
   const isHoAdmin = roles.some(r => r.role === 'ho_admin');
   if (isHoAdmin) {
-    const { data: allBUs } = await sb.from('business_units').select('id,code,name').order('name');
-    showPicker(user, roles, allBUs || []);
+    sessionStorage.setItem('gid_role', 'ho_admin');
+    sessionStorage.setItem('gid_bu_name', 'Head Office');
+    // Keep bu_id from first ho_admin role for downstream queries
+    const hoRole = roles.find(r => r.role === 'ho_admin');
+    if (hoRole?.bu_id) sessionStorage.setItem('gid_bu_id', hoRole.bu_id);
+    window.location.href = 'ho.html';
     return;
   }
 
@@ -317,6 +424,7 @@ async function handleAfterLogin(user) {
     sessionStorage.setItem('gid_bu_id', role.bu_id);
     sessionStorage.setItem('gid_role', role.role);
     sessionStorage.setItem('gid_bu_name', role.business_units?.name || '');
+    if (role.store_id) sessionStorage.setItem('gid_store_id', role.store_id);
     window.location.href = ROLE_DESTINATIONS[role.role] || 'store.html';
     return;
   }
@@ -413,7 +521,12 @@ async function doSignOut() {
 }
 
 document.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && document.getElementById('screen-login').classList.contains('active')) doLogin();
+  if (e.key === 'Enter') {
+    if (document.getElementById('screen-login').classList.contains('active')) {
+      if (document.getElementById('form-signin').style.display !== 'none') doLogin();
+      else doRegister();
+    }
+  }
 });
 </script>
 </body>
