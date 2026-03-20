@@ -537,6 +537,7 @@ async function onBuSwitch(){
 
 async function loadAll(){
   setSyncState('syncing');
+  console.log('loadAll: BU_ID=', BU_ID, 'CURRENT_ROLE=', CURRENT_ROLE);
   const bu=ALL_BUS.find(b=>b.id===BU_ID);
   document.getElementById('nav-title').textContent=bu?.name||sessionStorage.getItem('gid_bu_name')||'BU Dashboard';
 
@@ -547,11 +548,12 @@ async function loadAll(){
 
   const [appRes,empRes,asnRes]=await Promise.all([
     sb.from('apps').select('*').eq('bu_id',BU_ID).eq('active',true).order('code'),
-    sb.from('employees').select('id,emp_code,status,store_id,supervisor_emp_code,bu_id,resigned_at,source').eq('bu_id',BU_ID).order('emp_code'),
+    sb.from('employees').select('id,emp_code,status,store_id,supervisor_emp_code,bu_id,resigned_at,effective_date,source').eq('bu_id',BU_ID).order('emp_code'),
     storeIds.length
       ? sb.from('generic_id_assignments').select('*,app:app_id(code,name,pw_rotation_days)').in('store_id',storeIds)
       : {data:[]}
   ]);
+  if(empRes.error) console.error('Employees query error:',empRes.error);
   APPS=appRes.data||[];
   EMPLOYEES=empRes.data||[];
   ASSIGNMENTS=asnRes.data||[];
