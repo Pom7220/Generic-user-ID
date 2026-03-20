@@ -143,12 +143,21 @@ function setSyncing(v){
 /* ── FILTERED DATA ── */
 function filteredAsn(){
   let asn=ASSIGNMENTS;
-  if(CUR_BU) asn=asn.filter(a=>STORES.find(s=>s.id===a.store_id)?.bu_id===CUR_BU);
-  if(CUR_APP) asn=asn.filter(a=>a.app?.code===CUR_APP);
+  if(CUR_BU)                     asn=asn.filter(a=>STORES.find(s=>s.id===a.store_id)?.bu_id===CUR_BU);
+  if(CUR_APP)                    asn=asn.filter(a=>a.app?.code===CUR_APP);
+  if(CUR_METRIC==='active')      asn=asn.filter(a=>a.status==='active');
+  else if(CUR_METRIC==='idle')   asn=asn.filter(a=>!a.emp_code||a.status==='idle');
+  else if(CUR_METRIC==='pw_overdue') asn=asn.filter(a=>isPwOverdue(a));
+  else if(CUR_METRIC==='orphan') asn=asn.filter(a=>a.status==='orphan');
+  else if(CUR_METRIC==='at_risk')asn=asn.filter(a=>a.status==='at_risk');
   return asn;
 }
 function filteredStores(){
-  return CUR_BU?STORES.filter(s=>s.bu_id===CUR_BU):STORES;
+  // When metric active, only show stores that have matching IDs
+  const base=CUR_BU?STORES.filter(s=>s.bu_id===CUR_BU):STORES;
+  if(!CUR_METRIC||CUR_METRIC==='all') return base;
+  const storeIdsWithData=new Set(filteredAsn().map(a=>a.store_id));
+  return base.filter(s=>storeIdsWithData.has(s.id));
 }
 
 /* ── FILTERS ── */
@@ -221,30 +230,31 @@ function renderByStore(){
     <th>Pw overdue</th><th>Orphan</th>
     <th>Risk score</th><th></th></tr>`;
 
+  // Use filteredAsn scoped per store (filteredAsn already applies BU+APP+METRIC)
+  const allFiltered=filteredAsn();
+
   const rows=stores.map(s=>{
     const bu=BUS.find(b=>b.id===s.bu_id);
-    let asn=ASSIGNMENTS.filter(a=>a.store_id===s.id);
-    if(CUR_APP) asn=asn.filter(a=>a.app?.code===CUR_APP);
-    if(CUR_METRIC==='active') asn=asn.filter(a=>a.status==='active');
-    else if(CUR_METRIC==='idle') asn=asn.filter(a=>!a.emp_code||a.status==='idle');
-    else if(CUR_METRIC==='pw_overdue') asn=asn.filter(a=>a.status==='active'&&isPwOverdue(a));
-    else if(CUR_METRIC==='orphan') asn=asn.filter(a=>a.status==='orphan');
-    else if(CUR_METRIC==='at_risk') asn=asn.filter(a=>a.status==='at_risk');
-    const active=asn.filter(a=>a.status==='active').length;
-    const pwDue=asn.filter(a=>a.status==='active'&&isPwOverdue(a)).length;
-    const orphans=asn.filter(a=>a.status==='orphan').length;
-    const risk=asn.filter(a=>['at_risk','orphan'].includes(a.status)).length;
+    // Full store asn (for risk score — always show real risk regardless of metric)
+    let fullAsn=ASSIGNMENTS.filter(a=>a.store_id===s.id);
+    if(CUR_APP) fullAsn=fullAsn.filter(a=>a.app?.code===CUR_APP);
+    // Filtered count (for IDs total column when metric active)
+    const filteredCount=allFiltered.filter(a=>a.store_id===s.id).length;
+    const active=fullAsn.filter(a=>a.status==='active').length;
+    const pwDue=fullAsn.filter(a=>isPwOverdue(a)).length;
+    const orphans=fullAsn.filter(a=>a.status==='orphan').length;
+    const risk=fullAsn.filter(a=>['at_risk','orphan'].includes(a.status)).length;
     const score=Math.min(100,pwDue*4+orphans*20+risk*10);
     const scoreColor=score>=70?'var(--red)':score>=30?'var(--amber)':'var(--green)';
-    return {s,bu,asn,active,pwDue,orphans,score,scoreColor};
+    return {s,bu,fullAsn,filteredCount,active,pwDue,orphans,score,scoreColor};
   }).sort((a,b)=>b.score-a.score);
 
-  document.getElementById('table-body').innerHTML=rows.map(({s,bu,asn,active,pwDue,orphans,score,scoreColor})=>`
-    <tr class="clickable" onclick="openStoreDrawer('${s.id}')">
+  document.getElementById('table-body').innerHTML=rows.length?rows.map(({s,bu,fullAsn,filteredCount,active,pwDue,orphans,score,scoreColor})=>`
+    <tr>
       <td class="store-col">${s.name}</td>
       <td class="text-muted">${bu?.name||'—'}</td>
       <td class="text-muted">${s.region||'—'}</td>
-      <td style="font-weight:600">${asn.length}</td>
+      <td style="font-weight:600">${CUR_METRIC?filteredCount:fullAsn.length}</td>
       <td style="color:var(--green);font-weight:600">${active}</td>
       <td>${pwDue?'<span class="badge badge-amber">'+pwDue+'</span>':'<span class="text-hint">0</span>'}</td>
       <td>${orphans?'<span class="badge badge-red">'+orphans+'</span>':'<span class="text-hint">0</span>'}</td>
@@ -254,8 +264,9 @@ function renderByStore(){
           <span class="risk-num" style="color:${scoreColor}">${score}</span>
         </div>
       </td>
-      <td class="text-hint">→</td>
-    </tr>`).join('');
+      <td><button class="btn btn-sm" onclick="gotoStorePortal('${s.id}','${s.name}','${s.bu_id}')" style="white-space:nowrap">Open portal →</button></td>
+    </tr>`).join('')
+  :`<tr><td colspan="9"><div style="text-align:center;padding:48px;color:var(--hint)">No stores match the current filter</div></td></tr>`;
 }
 
 /* ── BY APP ── */
@@ -384,9 +395,35 @@ function closeDrawer(){document.getElementById('drawer').classList.add('hidden')
 
 /* ── NAV ── */
 function gotoBU(){
-  // If only one BU, go directly; otherwise let bu.html figure it out from user_roles
-  if(BUS.length===1){sessionStorage.setItem('gid_bu_id',BUS[0].id);location.href='bu.html';}
-  else{sessionStorage.removeItem('gid_bu_id');location.href='bu.html';}
+  if(BUS.length===1){
+    sessionStorage.setItem('gid_bu_id',BUS[0].id);
+    sessionStorage.setItem('gid_bu_name',BUS[0].name);
+    location.href='bu.html';
+    return;
+  }
+  // Show inline BU picker modal
+  const opts=BUS.map(b=>`<option value="${b.id}||${b.name}">${b.code} · ${b.name}</option>`).join('');
+  const modal=document.createElement('div');
+  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:999;display:flex;align-items:center;justify-content:center';
+  modal.innerHTML=`
+    <div style="background:#fff;border-radius:12px;padding:24px;width:380px;box-shadow:0 8px 32px rgba(0,0,0,.2)">
+      <div style="font-size:15px;font-weight:700;margin-bottom:16px">Select Business Unit</div>
+      <select id="_bu_pick" style="width:100%;padding:10px;border:1px solid #E5E5E0;border-radius:8px;font-size:14px;font-family:inherit;margin-bottom:16px">
+        <option value="">— Choose a BU —</option>${opts}
+      </select>
+      <div style="display:flex;gap:8px">
+        <button onclick="this.closest('div[style*=fixed]').remove()" style="flex:1;padding:9px;border:1px solid #E5E5E0;border-radius:8px;background:#fff;cursor:pointer;font-family:inherit;font-size:13px">Cancel</button>
+        <button onclick="
+          const v=document.getElementById('_bu_pick').value;
+          if(!v)return;
+          const[id,name]=v.split('||');
+          sessionStorage.setItem('gid_bu_id',id);
+          sessionStorage.setItem('gid_bu_name',name);
+          location.href='bu.html';
+        " style="flex:1;padding:9px;background:#1D4ED8;color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:600">Open →</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
 }
 function gotoStore(){sessionStorage.removeItem('gid_store_id');location.href='store.html';}
 function gotoStorePortal(id,name,buId){

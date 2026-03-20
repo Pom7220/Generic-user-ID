@@ -219,20 +219,33 @@ let SELECTED_BU=null; // { id, code, name }
 async function init(){
   let session=null;
   try{
+    // Primary: get session from Supabase
     const{data:d}=await sb.auth.getSession();
     session=d?.session;
-    if(!session){const{data:r}=await sb.auth.refreshSession();session=r?.session;}
+    // Fallback: try refresh if no session
+    if(!session){
+      const{data:r}=await sb.auth.refreshSession();
+      session=r?.session;
+    }
   }catch(e){
-    console.warn('Session check failed:',e.message);
-    // Show error but don't redirect — let user see the issue
-    document.getElementById('bu-selector-card').innerHTML=
-      `<div style="color:var(--red);padding:16px;text-align:center">
-        <strong>⚠ Connection error</strong><br>
-        <span style="font-size:12px;color:var(--muted)">Could not reach authentication server. Please <a href="index.html">sign in again</a>.</span>
-      </div>`;
+    console.warn('Session check error:',e.message);
+    // Try reading token directly from localStorage as last resort
+    try{
+      const lsKey=Object.keys(localStorage).find(k=>k.includes('supabase')&&k.includes('auth'));
+      if(lsKey){
+        const stored=JSON.parse(localStorage.getItem(lsKey));
+        session=stored?.currentSession||stored?.session||stored;
+        if(session?.access_token) console.log('Session recovered from localStorage');
+        else session=null;
+      }
+    }catch(e2){console.warn('localStorage fallback failed:',e2.message);}
+  }
+  if(!session){
+    // Still no session — redirect to login
+    sessionStorage.setItem('gid_return','hr-upload.html');
+    location.href='index.html';
     return;
   }
-  if(!session){location.href='index.html';return;}
   SESSION=session;
 
   const [{data:bus},{data:stores}]=await Promise.all([

@@ -290,7 +290,6 @@ async function doLogin() {
 }
 
 async function handleAfterLogin(user) {
-  // Get all roles for this user
   const { data: roles } = await sb
     .from('user_roles')
     .select('role, bu_id, store_id, business_units(name, code)')
@@ -304,7 +303,15 @@ async function handleAfterLogin(user) {
     return;
   }
 
-  // Single role → redirect immediately
+  // ho_admin → load ALL BUs and show full picker
+  const isHoAdmin = roles.some(r => r.role === 'ho_admin');
+  if (isHoAdmin) {
+    const { data: allBUs } = await sb.from('business_units').select('id,code,name').order('name');
+    showPicker(user, roles, allBUs || []);
+    return;
+  }
+
+  // Single role, single BU → redirect immediately
   if (roles.length === 1) {
     const role = roles[0];
     sessionStorage.setItem('gid_bu_id', role.bu_id);
@@ -314,12 +321,11 @@ async function handleAfterLogin(user) {
     return;
   }
 
-  // Multiple roles → show BU picker
-  showPicker(user, roles);
+  // Multiple non-admin roles → show picker of assigned BUs only
+  showPicker(user, roles, []);
 }
 
-function showPicker(user, roles) {
-  // Switch screens
+function showPicker(user, roles, allBUs) {
   document.getElementById('screen-login').classList.remove('active');
   document.getElementById('screen-picker').classList.add('active');
 
@@ -327,26 +333,76 @@ function showPicker(user, roles) {
   document.getElementById('picker-avatar').textContent = initials;
   document.getElementById('picker-email').textContent = user.email;
 
-  document.getElementById('picker-list').innerHTML = roles.map((r, i) => {
-    const buName = r.business_units?.name || 'Unknown BU';
-    const buCode = r.business_units?.code || '?';
-    const color  = BU_COLORS[i % BU_COLORS.length];
-    const label  = ROLE_LABELS[r.role] || r.role;
-    return `<div class="bu-item" onclick="selectBU('${r.bu_id}','${r.role}','${buName}')">
-      <div class="bu-icon" style="background:${color}">${buCode.slice(0,2)}</div>
-      <div class="bu-item-info">
-        <div class="bu-item-name">${buName}</div>
-        <div class="bu-item-role">${label}</div>
+  const hoRole = roles.find(r => r.role === 'ho_admin');
+
+  if (hoRole && allBUs.length > 0) {
+    // HO Admin: show dropdown of all BUs + direct buttons for HO view
+    document.getElementById('picker-list').innerHTML = `
+      <div style="padding:16px 20px;border-bottom:1px solid #F0F0EB">
+        <div style="font-size:11px;font-weight:700;color:#9B9B9B;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Go to HO Overview</div>
+        <div class="bu-item" onclick="selectBU('${hoRole.bu_id}','ho_admin','HO Admin')" style="background:#EFF6FF;border-color:#DBEAFE">
+          <div class="bu-icon" style="background:linear-gradient(135deg,#1D4ED8,#2563EB)">HO</div>
+          <div class="bu-item-info">
+            <div class="bu-item-name">Head Office — All BUs</div>
+            <div class="bu-item-role">Full access · All 13 business units</div>
+          </div>
+          <span class="bu-item-arrow">›</span>
+        </div>
       </div>
-      <span class="bu-item-arrow">›</span>
-    </div>`;
-  }).join('');
+      <div style="padding:16px 20px">
+        <div style="font-size:11px;font-weight:700;color:#9B9B9B;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Or go directly to a BU Dashboard</div>
+        <select id="bu-dropdown" onchange="onBUDropdownChange(this.value)"
+          style="width:100%;padding:10px 12px;border:1px solid #E8E8E3;border-radius:8px;font-size:14px;font-family:inherit;background:#fff;color:#1A1A1A;cursor:pointer;margin-bottom:10px">
+          <option value="">— Select a Business Unit —</option>
+          ${allBUs.map(b => `<option value="${b.id}||${b.code}||${b.name}">${b.code} · ${b.name}</option>`).join('')}
+        </select>
+        <button id="bu-go-btn" onclick="goBUDirect()" disabled
+          style="width:100%;padding:10px;background:#1D4ED8;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;opacity:.4;font-family:inherit">
+          Open BU Dashboard →
+        </button>
+      </div>`;
+  } else {
+    // Non-admin: list their assigned BUs
+    document.getElementById('picker-list').innerHTML = roles.map((r, i) => {
+      const buName = r.business_units?.name || 'Unknown BU';
+      const buCode = r.business_units?.code || '?';
+      const color  = BU_COLORS[i % BU_COLORS.length];
+      const label  = ROLE_LABELS[r.role] || r.role;
+      return `<div class="bu-item" onclick="selectBU('${r.bu_id}','${r.role}','${buName}')">
+        <div class="bu-icon" style="background:${color}">${buCode.slice(0,2)}</div>
+        <div class="bu-item-info">
+          <div class="bu-item-name">${buName}</div>
+          <div class="bu-item-role">${label}</div>
+        </div>
+        <span class="bu-item-arrow">›</span>
+      </div>`;
+    }).join('');
+  }
+}
+
+let _selectedBUFromDrop = null;
+function onBUDropdownChange(val) {
+  _selectedBUFromDrop = val || null;
+  const btn = document.getElementById('bu-go-btn');
+  if (btn) { btn.disabled = !val; btn.style.opacity = val ? '1' : '.4'; }
+}
+function goBUDirect() {
+  if (!_selectedBUFromDrop) return;
+  const [buId, buCode, buName] = _selectedBUFromDrop.split('||');
+  sessionStorage.setItem('gid_bu_id', buId);
+  sessionStorage.setItem('gid_role', 'ho_admin');
+  sessionStorage.setItem('gid_bu_name', buName);
+  window.location.href = 'bu.html';
 }
 
 function selectBU(buId, role, buName) {
   sessionStorage.setItem('gid_bu_id', buId);
   sessionStorage.setItem('gid_role', role);
   sessionStorage.setItem('gid_bu_name', buName);
+  const ret = sessionStorage.getItem('gid_return');
+  if (ret) { sessionStorage.removeItem('gid_return'); window.location.href = ret; return; }
+  // ho_admin clicking "Head Office" goes to ho.html
+  if (role === 'ho_admin' && buName === 'HO Admin') { window.location.href = 'ho.html'; return; }
   window.location.href = ROLE_DESTINATIONS[role] || 'store.html';
 }
 
