@@ -672,7 +672,7 @@ function storeRowHtml(s){
   const risk=asn.filter(a=>['at_risk','orphan'].includes(a.status)).length;
   const pwDue=asn.filter(a=>a.status==='active'&&isPwOverdue(a)).length;
   const color=`hsl(${(s.code.charCodeAt(0)*47+s.code.charCodeAt(1||0)*23)%360},50%,42%)`;
-  return `<div class="store-row" onclick="openStoreDetail('${s.id}')">
+  return `<div class="store-row" onclick="openStorePortal('${s.id}')">
     <div class="store-icon" style="background:${color}">${s.code.slice(0,2)}</div>
     <div class="store-info">
       <div class="store-name">${s.name}</div>
