@@ -480,7 +480,8 @@ let realtimeChannel=null;
 
 // ── INIT ─────────────────────────────────────────────────────────
 async function init(){
-  const {data:{session}}=await sb.auth.getSession();
+  let {data:{session}}=await sb.auth.getSession();
+  if(!session){const {data:r}=await sb.auth.refreshSession();session=r?.session;}
   if(!session){window.location.href='index.html';return;}
   SESSION=session;
 

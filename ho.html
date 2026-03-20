@@ -340,7 +340,8 @@ let ALL_BUS=[], ALL_STORES=[], ALL_APPS=[], ALL_EMPS=[], ALL_ASSIGNMENTS=[];
 let BU_DATA={}; // keyed by bu_id
 
 async function init(){
-  const {data:{session}}=await sb.auth.getSession();
+  let {data:{session}}=await sb.auth.getSession();
+  if(!session){const {data:r}=await sb.auth.refreshSession();session=r?.session;}
   if(!session){window.location.href='index.html';return;}
   SESSION=session;
   document.getElementById('nav-sub').textContent=`HO Admin · ${session.user.email}`;
