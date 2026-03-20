@@ -1,673 +1,173 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Store Portal">
-<meta name="theme-color" content="#1C1C1E">
-<title>Store Portal — Generic ID Manager</title>
+<meta name="apple-mobile-web-app-title" content="Generic ID Manager">
+<title>Generic ID Manager — Login</title>
 <style>
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{
-  --blue:#0A84FF;--blue-lt:rgba(10,132,255,.14);--blue-dk:#0060DF;
-  --green:#30D158;--green-lt:rgba(48,209,88,.14);--green-dk:#248A3D;
-  --red:#FF453A;--red-lt:rgba(255,69,58,.14);--red-dk:#C0392B;
-  --amber:#FF9F0A;--amber-lt:rgba(255,159,10,.14);--amber-dk:#B25000;
-  --glass-bg:rgba(255,255,255,.72);--glass-border:rgba(255,255,255,.5);
-  --glass-shadow:0 8px 32px rgba(0,0,0,.12),0 2px 8px rgba(0,0,0,.08);
-  --glass-blur:saturate(180%) blur(24px);
-  --bg:linear-gradient(160deg,#E8F4FF 0%,#F0EBF8 50%,#E6F7F0 100%);
-  --surface:rgba(255,255,255,.82);--surface2:rgba(255,255,255,.55);
-  --text:#1C1C1E;--muted:#636366;--hint:#AEAEB2;
-  --border:rgba(0,0,0,.09);--border2:rgba(0,0,0,.05);
-  --radius:14px;--radius-lg:20px;--radius-xl:28px;
-  --safe-top:env(safe-area-inset-top);--safe-bottom:env(safe-area-inset-bottom);
+  --blue:#185FA5;--blue-lt:#E6F1FB;--blue-dk:#0C447C;
+  --green:#3B6D11;--green-lt:#EAF3DE;
+  --red:#A32D2D;--red-lt:#FCEBEB;
+  --gray:#5F5E5A;--gray-lt:#F1EFE8;
+  --text:#1C1C1E;--muted:#5F5E5A;--hint:#B4B2A9;
+  --bg:#F5F4F0;--surface:#FFFFFF;
+  --border:rgba(0,0,0,0.1);
+  --radius:12px;--radius-lg:16px;
+  --shadow:0 2px 16px rgba(0,0,0,0.08);
 }
 @media(prefers-color-scheme:dark){
   :root{
-    --glass-bg:rgba(28,28,30,.78);--glass-border:rgba(255,255,255,.12);
-    --glass-shadow:0 8px 32px rgba(0,0,0,.4),0 2px 8px rgba(0,0,0,.3);
-    --bg:linear-gradient(160deg,#0D1B2A 0%,#1A0D2E 50%,#0A1F17 100%);
-    --surface:rgba(44,44,46,.88);--surface2:rgba(58,58,60,.7);
     --text:#F2F2F7;--muted:#AEAEB2;--hint:#636366;
-    --border:rgba(255,255,255,.1);--border2:rgba(255,255,255,.06);
-    --blue-lt:rgba(10,132,255,.2);--green-lt:rgba(48,209,88,.2);--red-lt:rgba(255,69,58,.2);--amber-lt:rgba(255,159,10,.2);
+    --bg:#1C1C1E;--surface:#2C2C2E;--border:rgba(255,255,255,0.1);
+    --blue-lt:rgba(24,95,165,0.2);--green-lt:rgba(59,109,17,0.2);--red-lt:rgba(163,45,45,0.2);
   }
 }
-html{height:100%;background:var(--bg)}
-body{min-height:100vh;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',Arial,sans-serif;padding-bottom:calc(80px + var(--safe-bottom))}
-
-.topnav{position:sticky;top:0;z-index:300;padding:calc(var(--safe-top) + 12px) 16px 12px;background:var(--glass-bg);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);border-bottom:0.5px solid var(--glass-border)}
-.topnav-inner{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.nav-logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,#30D158,#34C759);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0}
-.nav-info{flex:1;min-width:0}
-.nav-title{font-size:17px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.nav-sub{font-size:12px;color:var(--muted);margin-top:1px}
-.sync-pill{display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:999px;background:var(--green-lt);border:0.5px solid rgba(48,209,88,.3);font-size:11px;font-weight:600;color:var(--green-dk)}
-.sync-pill.syncing{background:var(--amber-lt);border-color:rgba(255,159,10,.3);color:var(--amber-dk)}
-.sync-pill.error{background:var(--red-lt);border-color:rgba(255,69,58,.3);color:var(--red-dk)}
-.sync-dot{width:6px;height:6px;border-radius:50%;background:currentColor}
-.sync-pill.syncing .sync-dot{animation:pulse .8s ease-in-out infinite}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
-
-.tab-chips{display:flex;gap:4px;overflow-x:auto;padding:0 16px 4px;margin-top:14px;scrollbar-width:none}
-.tab-chips::-webkit-scrollbar{display:none}
-.tab-chip{flex-shrink:0;display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:999px;border:none;cursor:pointer;font-size:13px;font-weight:500;font-family:inherit;background:var(--surface2);color:var(--muted);border:0.5px solid var(--glass-border);transition:all .18s}
-.tab-chip.active{background:var(--blue);color:#fff;border-color:transparent;box-shadow:0 4px 12px rgba(10,132,255,.35)}
-.tab-chip-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-
-.metrics-scroll{display:flex;gap:10px;overflow-x:auto;padding:0 16px 4px;margin-top:16px;scrollbar-width:none}
-.metrics-scroll::-webkit-scrollbar{display:none}
-.mcard{flex-shrink:0;width:120px;padding:12px 14px;border-radius:var(--radius-lg);background:var(--glass-bg);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);border:0.5px solid var(--glass-border);box-shadow:var(--glass-shadow)}
-.mcard-label{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px}
-.mcard-value{font-size:26px;font-weight:700;line-height:1}
-.mcard-value.blue{color:var(--blue)}.mcard-value.green{color:var(--green-dk)}.mcard-value.red{color:var(--red-dk)}.mcard-value.amber{color:var(--amber-dk)}
-
-.section{padding:0 16px;margin-top:20px}
-.section-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
-.section-title{font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
-
-.gcard{border-radius:var(--radius-lg);background:var(--glass-bg);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);border:0.5px solid var(--glass-border);box-shadow:var(--glass-shadow);overflow:hidden;margin-bottom:12px}
-
-.id-row{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:0.5px solid var(--border2);cursor:pointer;transition:background .12s}
-.id-row:last-child{border-bottom:none}
-.id-row:active{background:var(--surface2)}
-.id-badge{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;color:#fff;flex-shrink:0}
-.id-info{flex:1;min-width:0}
-.id-code{font-size:15px;font-weight:700;font-family:monospace}
-.id-name{font-size:13px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.id-meta{font-size:11px;color:var(--hint);margin-top:2px}
-
-.badge{display:inline-block;font-size:11px;font-weight:600;padding:3px 8px;border-radius:999px}
-.b-active{background:var(--green-lt);color:var(--green-dk)}
-.b-disabled{background:var(--red-lt);color:var(--red-dk)}
-.b-atrisk{background:var(--amber-lt);color:var(--amber-dk)}
-.b-idle{background:var(--surface2);color:var(--muted)}
-.b-warn{background:var(--amber-lt);color:var(--amber-dk)}
-.b-info{background:var(--blue-lt);color:var(--blue-dk)}
-.b-ok{background:var(--green-lt);color:var(--green-dk)}
-.b-neutral{background:var(--surface2);color:var(--muted)}
-
-.risk-card{border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:10px;display:flex;align-items:flex-start;gap:12px;border:0.5px solid}
-.risk-card.danger{background:var(--red-lt);border-color:rgba(255,69,58,.25);color:var(--red-dk)}
-.risk-card.warn{background:var(--amber-lt);border-color:rgba(255,159,10,.25);color:var(--amber-dk)}
-.risk-icon{font-size:20px;flex-shrink:0}
-.risk-title{font-size:14px;font-weight:700;margin-bottom:3px}
-.risk-desc{font-size:13px;opacity:.85;line-height:1.5}
-
-.tab-bar{position:fixed;bottom:0;left:0;right:0;z-index:300;padding:10px 8px calc(var(--safe-bottom) + 10px);background:var(--glass-bg);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);border-top:0.5px solid var(--glass-border);display:flex;gap:2px}
-.tab-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 4px;border-radius:var(--radius);border:none;background:transparent;cursor:pointer;font-family:inherit;color:var(--muted);transition:all .15s}
-.tab-item.active{color:var(--green-dk)}
-.tab-icon{font-size:22px;line-height:1}
-.tab-label{font-size:10px;font-weight:500}
-
-.sheet-bg{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,.4);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);display:flex;align-items:flex-end;justify-content:center}
-.sheet{width:100%;max-width:600px;max-height:92vh;border-radius:var(--radius-xl) var(--radius-xl) 0 0;background:var(--glass-bg);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);border-top:0.5px solid var(--glass-border);overflow-y:auto;padding-bottom:calc(var(--safe-bottom) + 20px)}
-.sheet-handle{width:36px;height:4px;border-radius:2px;background:var(--hint);margin:12px auto 4px}
-.sheet-header{padding:12px 20px 16px;border-bottom:0.5px solid var(--border2);display:flex;align-items:center;justify-content:space-between}
-.sheet-title{font-size:18px;font-weight:700}
-.sheet-close{width:30px;height:30px;border-radius:50%;border:none;background:var(--surface2);color:var(--muted);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;font-family:inherit}
-.sheet-body{padding:20px}
-.sheet-footer{padding:12px 20px;border-top:0.5px solid var(--border2);display:flex;gap:10px}
-
-.field{margin-bottom:16px}
-.field label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:7px;text-transform:uppercase;letter-spacing:.06em}
-.field input,.field select,.field textarea{width:100%;padding:13px 14px;border-radius:var(--radius);border:0.5px solid var(--border);background:var(--surface2);color:var(--text);font-size:16px;font-family:inherit;outline:none;transition:border .15s;-webkit-appearance:none}
-.field input:focus,.field select:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-lt)}
-.two-col{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-
-.btn{padding:10px 20px;border-radius:var(--radius);border:none;font-size:15px;font-weight:600;cursor:pointer;font-family:inherit;transition:opacity .15s,transform .1s;display:inline-flex;align-items:center;gap:7px}
-.btn:active{transform:scale(.97);opacity:.85}
-.btn:disabled{opacity:.45;cursor:not-allowed}
-.btn-blue{background:var(--blue);color:#fff;box-shadow:0 4px 14px rgba(10,132,255,.3)}
-.btn-green{background:var(--green-dk);color:#fff}
-.btn-red{background:var(--red-dk);color:#fff}
-.btn-glass{background:var(--surface2);color:var(--text);border:0.5px solid var(--glass-border)}
-.btn-sm{padding:7px 14px;font-size:13px}
-.btn-xs{padding:5px 10px;font-size:12px}
-.btn-full{width:100%;justify-content:center}
-
-.profile-card{display:flex;align-items:center;gap:14px;padding:16px;background:var(--surface2);border-radius:var(--radius-lg);margin-bottom:20px}
-.profile-avatar{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:800;flex-shrink:0;background:var(--blue-lt);color:var(--blue-dk);overflow:hidden}
-.profile-avatar img{width:100%;height:100%;object-fit:cover}
-.pdpa-note{font-size:11px;color:var(--hint);padding:8px 12px;background:var(--surface2);border-radius:8px;margin-bottom:16px;border-left:3px solid var(--blue)}
-
-.spinner{display:inline-block;width:18px;height:18px;border:2.5px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite}
-.spinner-blue{border-color:var(--blue-lt);border-top-color:var(--blue)}
+body{
+  min-height:100vh;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;
+  display:flex;align-items:center;justify-content:center;padding:20px;
+}
+.card{
+  background:var(--surface);border-radius:var(--radius-lg);
+  box-shadow:var(--shadow);border:0.5px solid var(--border);
+  padding:2rem;width:100%;max-width:400px;
+}
+.logo{text-align:center;margin-bottom:1.5rem}
+.logo-mark{
+  width:60px;height:60px;border-radius:16px;
+  background:var(--blue);color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  font-size:26px;font-weight:700;margin:0 auto 12px;
+}
+.logo h1{font-size:20px;font-weight:600;color:var(--text)}
+.logo p{font-size:13px;color:var(--muted);margin-top:4px}
+.field{margin-bottom:1rem}
+label{display:block;font-size:12px;font-weight:500;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.04em}
+input{
+  width:100%;padding:11px 14px;border-radius:var(--radius);
+  border:0.5px solid var(--border);background:var(--bg);
+  color:var(--text);font-size:15px;outline:none;transition:border .15s;
+  font-family:inherit;
+}
+input:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-lt)}
+.btn{
+  width:100%;padding:12px;border-radius:var(--radius);border:none;
+  background:var(--blue);color:#fff;font-size:15px;font-weight:600;
+  cursor:pointer;transition:opacity .15s;font-family:inherit;margin-top:.5rem;
+}
+.btn:hover{opacity:.9}
+.btn:active{opacity:.75}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.error{
+  background:var(--red-lt);color:var(--red);border:0.5px solid rgba(163,45,45,.3);
+  border-radius:var(--radius);padding:10px 14px;font-size:13px;
+  margin-bottom:1rem;display:none;
+}
+.spinner{
+  display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.4);
+  border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;
+  vertical-align:middle;margin-right:6px;
+}
 @keyframes spin{to{transform:rotate(360deg)}}
-.hidden{display:none!important}
-.empty{text-align:center;padding:36px 20px;color:var(--hint);font-size:14px}
-.empty-icon{font-size:40px;margin-bottom:12px;opacity:.5}
-
-@media(min-width:768px){body{padding-bottom:20px}.tab-bar{display:none}}
+.divider{text-align:center;color:var(--hint);font-size:12px;margin:1.25rem 0;position:relative}
+.divider::before,.divider::after{content:'';position:absolute;top:50%;width:42%;height:0.5px;background:var(--border)}
+.divider::before{left:0}.divider::after{right:0}
+.role-badges{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:1.25rem}
+.badge{font-size:11px;font-weight:500;padding:4px 10px;border-radius:999px;border:0.5px solid var(--border);color:var(--muted)}
+.version{text-align:center;color:var(--hint);font-size:11px;margin-top:1.5rem}
 </style>
 </head>
 <body>
-
-<nav class="topnav">
-  <div class="topnav-inner">
-    <div class="nav-logo">SM</div>
-    <div class="nav-info">
-      <div class="nav-title" id="nav-title">Store Portal</div>
-      <div class="nav-sub" id="nav-sub">Loading…</div>
-    </div>
-    <div style="display:flex;gap:6px;align-items:center">
-      <div class="sync-pill" id="sync-pill"><span class="sync-dot"></span><span id="sync-label">Live</span></div>
-      <button onclick="openMenu()" style="width:34px;height:34px;border-radius:10px;border:0.5px solid var(--glass-border);background:var(--surface2);color:var(--text);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center">☰</button>
-    </div>
+<div class="card">
+  <div class="logo">
+    <div class="logo-mark">G</div>
+    <h1>Generic ID Manager</h1>
+    <p>Store access lifecycle management</p>
   </div>
-</nav>
 
-<!-- APP TABS -->
-<div class="tab-chips" id="app-tabs" style="margin-top:14px"></div>
+  <div class="error" id="err"></div>
 
-<!-- TAB: OVERVIEW -->
-<div id="tab-overview">
-  <div class="metrics-scroll" id="metrics-row"></div>
-  <div class="section" style="margin-top:16px">
-    <div class="section-title" style="margin-bottom:10px">Open risks</div>
-    <div id="risk-alerts"></div>
+  <div class="field">
+    <label>Email</label>
+    <input type="email" id="email" placeholder="your@email.com" autocomplete="email">
   </div>
-  <div class="section" style="margin-top:4px">
-    <div class="section-hdr">
-      <div class="section-title">Recent activity</div>
-    </div>
-    <div class="gcard" id="audit-list"></div>
+  <div class="field">
+    <label>Password</label>
+    <input type="password" id="password" placeholder="••••••••" autocomplete="current-password">
   </div>
+
+  <button class="btn" id="loginBtn" onclick="doLogin()">Sign in</button>
+
+  <div class="divider">roles</div>
+  <div class="role-badges">
+    <span class="badge">Store Manager</span>
+    <span class="badge">BU Manager</span>
+    <span class="badge">HO Admin</span>
+  </div>
+  <p class="version">v0.1 POC · Generic ID Manager</p>
 </div>
 
-<!-- TAB: APP ASSIGNMENTS (dynamic) -->
-<div id="tab-app" class="hidden">
-  <div class="section" style="margin-top:16px">
-    <div class="section-hdr">
-      <div class="section-title" id="app-tab-title">IDs</div>
-      <button class="btn btn-blue btn-sm" onclick="openGrant()">+ Grant ID</button>
-    </div>
-    <div class="gcard" id="app-assignments-list"></div>
-  </div>
-</div>
-
-<!-- TAB: AUDIT LOG -->
-<div id="tab-audit" class="hidden">
-  <div class="section" style="margin-top:16px">
-    <div class="section-hdr">
-      <div class="section-title">Audit log</div>
-      <button class="btn btn-glass btn-sm" onclick="loadAudit()">↻ Refresh</button>
-    </div>
-    <div class="gcard" id="audit-full-list"></div>
-  </div>
-</div>
-
-<!-- BOTTOM TAB BAR -->
-<div class="tab-bar">
-  <button class="tab-item active" id="tbar-overview" onclick="showMainTab('overview')"><span class="tab-icon">📊</span><span class="tab-label">Overview</span></button>
-  <button class="tab-item" id="tbar-app" onclick="showMainTab('app')"><span class="tab-icon">🔑</span><span class="tab-label">IDs</span></button>
-  <button class="tab-item" id="tbar-audit" onclick="showMainTab('audit');loadAudit()"><span class="tab-icon">📋</span><span class="tab-label">Audit</span></button>
-</div>
-
-<!-- MENU SHEET -->
-<div class="sheet-bg hidden" id="sheet-menu">
-  <div class="sheet" style="max-height:50vh">
-    <div class="sheet-handle"></div>
-    <div style="padding:8px 12px 20px">
-      <button onclick="location.href='bu.html'" style="width:100%;padding:14px 16px;border:none;background:transparent;color:var(--text);font-size:16px;font-weight:500;cursor:pointer;font-family:inherit;text-align:left;border-radius:var(--radius);display:flex;align-items:center;gap:12px"><span style="font-size:20px">🏢</span>BU Dashboard</button>
-      <button onclick="location.href='ho.html'" style="width:100%;padding:14px 16px;border:none;background:transparent;color:var(--text);font-size:16px;font-weight:500;cursor:pointer;font-family:inherit;text-align:left;border-radius:var(--radius);display:flex;align-items:center;gap:12px"><span style="font-size:20px">🌐</span>HO Dashboard</button>
-      <div style="height:0.5px;background:var(--border);margin:4px 0"></div>
-      <button onclick="doSignOut()" style="width:100%;padding:14px 16px;border:none;background:transparent;color:var(--red-dk);font-size:16px;font-weight:500;cursor:pointer;font-family:inherit;text-align:left;border-radius:var(--radius);display:flex;align-items:center;gap:12px"><span style="font-size:20px">🚪</span>Sign out</button>
-    </div>
-  </div>
-</div>
-
-<!-- GRANT ID SHEET -->
-<div class="sheet-bg hidden" id="sheet-grant">
-  <div class="sheet">
-    <div class="sheet-handle"></div>
-    <div class="sheet-header"><span class="sheet-title" id="grant-title">Grant Generic ID</span><button class="sheet-close" onclick="closeSheet('sheet-grant')">✕</button></div>
-    <div class="sheet-body">
-      <div class="pdpa-note">🔒 PDPA: Employee names are fetched from SuccessFactors in real-time and never stored in this system.</div>
-      <div class="two-col">
-        <div class="field"><label>Generic ID</label><input id="g-id" placeholder="POS01" style="font-family:monospace;font-weight:700"></div>
-        <div class="field"><label>App</label><select id="g-app"></select></div>
-      </div>
-      <div class="field">
-        <label>Employee code</label>
-        <div style="display:flex;gap:8px">
-          <input id="g-emp" placeholder="EMP-4200" style="flex:1;font-family:monospace" oninput="onEmpCodeInput()">
-          <button class="btn btn-glass btn-sm" onclick="lookupEmployee()" id="lookup-btn">Look up</button>
-        </div>
-      </div>
-      <div id="emp-preview" class="hidden" style="margin-bottom:16px">
-        <div class="profile-card">
-          <div class="profile-avatar" id="preview-avatar">?</div>
-          <div>
-            <div style="font-size:16px;font-weight:700" id="preview-name">—</div>
-            <div style="font-size:13px;color:var(--muted)" id="preview-title">—</div>
-            <div style="font-size:12px;color:var(--hint);margin-top:3px" id="preview-mobile">—</div>
-          </div>
-        </div>
-      </div>
-      <div class="field">
-        <label>Supervisor employee code</label>
-        <div style="display:flex;gap:8px">
-          <input id="g-sup" placeholder="EMP-4100" style="flex:1;font-family:monospace" oninput="onSupCodeInput()">
-          <button class="btn btn-glass btn-sm" onclick="lookupSupervisor()" id="sup-lookup-btn">Look up</button>
-        </div>
-      </div>
-      <div id="sup-preview" class="hidden" style="margin-bottom:16px">
-        <div style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--surface2);border-radius:var(--radius)">
-          <div style="width:36px;height:36px;border-radius:50%;background:var(--amber-lt);color:var(--amber-dk);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0" id="sup-avatar">?</div>
-          <div><div style="font-size:14px;font-weight:600" id="sup-name">—</div><div style="font-size:12px;color:var(--muted)" id="sup-title">—</div></div>
-        </div>
-      </div>
-      <div class="field"><label>Notes (optional)</label><input id="g-notes" placeholder="Replacing POS01 holder…"></div>
-      <div id="g-err" class="hidden" style="color:var(--red-dk);font-size:13px;margin-bottom:8px"></div>
-    </div>
-    <div class="sheet-footer">
-      <button class="btn btn-glass btn-full" onclick="closeSheet('sheet-grant')">Cancel</button>
-      <button class="btn btn-green btn-full" id="grant-btn" onclick="saveGrant()">Grant access</button>
-    </div>
-  </div>
-</div>
-
-<!-- MANAGE ID SHEET -->
-<div class="sheet-bg hidden" id="sheet-manage">
-  <div class="sheet">
-    <div class="sheet-handle"></div>
-    <div class="sheet-header"><span class="sheet-title" id="manage-title">Manage ID</span><button class="sheet-close" onclick="closeSheet('sheet-manage')">✕</button></div>
-    <div class="sheet-body" id="manage-body"></div>
-    <div class="sheet-footer" id="manage-footer"></div>
-  </div>
-</div>
-
-<script src="employee-cache.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
-// ── CONFIG ──────────────────────────────────────────────────────
-const SUPABASE_URL  = 'https://hnvytilmxoiaqceseooh.supabase.co';
-const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhudnl0aWxteG9pYXFjZXNlb29oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MTc0ODIsImV4cCI6MjA4OTQ5MzQ4Mn0.x7WCLXRZEoorxEIuk5dwHG8EpasBGGB7peBysWUdElw';
-// ────────────────────────────────────────────────────────────────
-
+const SUPABASE_URL = 'https://scakduifuyurgpgiqorh.supabase.co';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNjYWtkdWlmdXl1cmdwZ2lxb3JoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MTM4MjgsImV4cCI6MjA4OTQ4OTgyOH0.T5xDLMSXRvTuZNjq1DyHpC_l5HlPOBv8-ccUCG4nr2k';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
-const APP_COLORS={POS:'#0A84FF',GR:'#30D158',ST:'#FF9F0A',FP:'#FF6B35',SC:'#BF5AF2',default:'#8E8E93'};
 
-let SESSION=null, STORE_ID=null, BU_ID=null;
-let APPS=[], ASSIGNMENTS=[], EMPLOYEES=[];
-let CUR_APP=null, realtimeChannel=null;
+// If already logged in, redirect
+sb.auth.getSession().then(({data:{session}})=>{
+  if(session) redirect(session.user.id);
+});
 
-async function init(){
-  const {data:{session}}=await sb.auth.getSession();
-  if(!session){window.location.href='index.html';return;}
-  SESSION=session;
+function showErr(msg){
+  const e=document.getElementById('err');
+  e.textContent=msg;e.style.display='block';
+}
+function hideErr(){document.getElementById('err').style.display='none';}
 
-  // Init employee cache
-  EMP_CACHE.init(sb, SUPABASE_URL);
+async function doLogin(){
+  hideErr();
+  const email=document.getElementById('email').value.trim();
+  const password=document.getElementById('password').value;
+  if(!email||!password){showErr('Please enter email and password.');return;}
 
-  // Get store context
-  STORE_ID=sessionStorage.getItem('gid_store_id');
-  BU_ID=sessionStorage.getItem('gid_bu_id');
+  const btn=document.getElementById('loginBtn');
+  btn.disabled=true;
+  btn.innerHTML='<span class="spinner"></span>Signing in…';
 
-  if(!STORE_ID){
-    // Get from user_roles
-    const {data:roles}=await sb.from('user_roles').select('store_id,bu_id').eq('user_id',session.user.id).limit(1);
-    if(roles?.[0]){
-      STORE_ID=roles[0].store_id;
-      BU_ID=roles[0].bu_id;
-      sessionStorage.setItem('gid_store_id',STORE_ID);
-      sessionStorage.setItem('gid_bu_id',BU_ID);
-    }
-  }
-
-  if(!STORE_ID){
-    document.getElementById('nav-sub').textContent='No store assigned — contact admin';
+  const {data,error}=await sb.auth.signInWithPassword({email,password});
+  if(error){
+    showErr(error.message);
+    btn.disabled=false;btn.innerHTML='Sign in';
     return;
   }
-
-  // Load store info
-  const {data:store}=await sb.from('stores').select('*').eq('id',STORE_ID).single();
-  document.getElementById('nav-title').textContent=store?.name||'Store Portal';
-  document.getElementById('nav-sub').textContent=`Store Manager · ${session.user.email}`;
-
-  await loadAll();
-  setupRealtime();
+  redirect(data.user.id);
 }
 
-async function loadAll(){
-  setSyncState('syncing');
-  const [appRes,asnRes,empRes]=await Promise.all([
-    sb.from('apps').select('*').eq('bu_id',BU_ID).eq('active',true).order('code'),
-    sb.from('generic_id_assignments').select('*,app:app_id(code,name,pw_rotation_days)').eq('store_id',STORE_ID).order('generic_id'),
-    sb.from('employees').select('id,emp_code,status,supervisor_emp_code,store_id').eq('store_id',STORE_ID)
-  ]);
-  APPS=appRes.data||[];
-  ASSIGNMENTS=asnRes.data||[];
-  EMPLOYEES=empRes.data||[];
-
-  // Batch fetch all PII from SF in one call
-  const allCodes=[...new Set([
-    ...ASSIGNMENTS.map(a=>a.emp_code).filter(Boolean),
-    ...ASSIGNMENTS.map(a=>a.supervisor_emp_code).filter(Boolean),
-    ...EMPLOYEES.map(e=>e.emp_code).filter(Boolean)
-  ])];
-  if(allCodes.length>0) await EMP_CACHE.getBatch(allCodes);
-
-  renderAppTabs();
-  renderAll();
-  setSyncState('ok');
-}
-
-function setupRealtime(){
-  if(realtimeChannel) sb.removeChannel(realtimeChannel);
-  realtimeChannel=sb.channel('store_'+STORE_ID)
-    .on('postgres_changes',{event:'*',schema:'public',table:'generic_id_assignments',filter:`store_id=eq.${STORE_ID}`},()=>loadAll())
-    .on('postgres_changes',{event:'*',schema:'public',table:'employees',filter:`store_id=eq.${STORE_ID}`},()=>loadAll())
-    .subscribe(s=>{
-      if(s==='SUBSCRIBED') setSyncState('ok');
-      else if(s==='CHANNEL_ERROR') setSyncState('error');
-    });
-}
-
-function setSyncState(s){
-  const p=document.getElementById('sync-pill'),l=document.getElementById('sync-label');
-  p.className='sync-pill'+(s==='syncing'?' syncing':s==='error'?' error':'');
-  l.textContent=s==='ok'?'Live':s==='syncing'?'Syncing…':'Offline';
-}
-
-function renderAppTabs(){
-  document.getElementById('app-tabs').innerHTML=
-    `<button class="tab-chip${!CUR_APP?' active':''}" onclick="setApp(null)">Overview</button>`+
-    APPS.map(a=>`<button class="tab-chip${CUR_APP===a.code?' active':''}" onclick="setApp('${a.code}')">
-      <span class="tab-chip-dot" style="background:${APP_COLORS[a.code]||APP_COLORS.default}"></span>${a.name}
-    </button>`).join('')+
-    `<button class="tab-chip${CUR_APP==='audit'?' active':''}" onclick="setApp('audit')">📋 Audit</button>`;
-}
-
-function setApp(code){
-  CUR_APP=code;
-  renderAppTabs();
-  if(code==='audit'){showMainTab('audit');loadAudit();return;}
-  if(code===null){showMainTab('overview');return;}
-  showMainTab('app');
-  renderAppTab(code);
-}
-
-function renderAll(){
-  renderMetrics();
-  renderRisk();
-  renderRecentAudit();
-  if(CUR_APP&&CUR_APP!=='audit') renderAppTab(CUR_APP);
-}
-
-function renderMetrics(){
-  const asn=CUR_APP?ASSIGNMENTS.filter(a=>a.app?.code===CUR_APP):ASSIGNMENTS;
-  const pwDue=asn.filter(a=>a.status==='active'&&isPwOverdue(a)).length;
-  const risk=asn.filter(a=>['at_risk','orphan'].includes(a.status)).length;
-  document.getElementById('metrics-row').innerHTML=[
-    {l:'Total IDs',v:asn.length,c:'blue'},
-    {l:'Active',v:asn.filter(a=>a.status==='active').length,c:'green'},
-    {l:'Disabled',v:asn.filter(a=>a.status==='disabled').length,c:''},
-    {l:'Pw overdue',v:pwDue,c:pwDue?'amber':'green'},
-    {l:'Risk',v:risk,c:risk?'red':'green'},
-  ].map(m=>`<div class="mcard"><div class="mcard-label">${m.l}</div><div class="mcard-value ${m.c}">${m.v}</div></div>`).join('');
-}
-
-function renderAppTab(code){
-  const app=APPS.find(a=>a.code===code);
-  if(!app) return;
-  const asn=ASSIGNMENTS.filter(a=>a.app?.code===code);
-  document.getElementById('app-tab-title').textContent=`${app.name} — ${asn.length} IDs`;
-  const color=APP_COLORS[code]||APP_COLORS.default;
-  document.getElementById('app-assignments-list').innerHTML=!asn.length
-    ?`<div class="empty"><div class="empty-icon">🔑</div>No ${app.name} IDs assigned yet</div>`
-    :asn.map(a=>idRowHtml(a,color)).join('');
-}
-
-function idRowHtml(a,color){
-  const empName=EMP_CACHE.getName(a.emp_code)||a.emp_code||'—';
-  const initials=EMP_CACHE.getInitials(a.emp_code)||'??';
-  const supName=a.supervisor_emp_code?EMP_CACHE.getName(a.supervisor_emp_code):'—';
-  const pwDue=isPwOverdue(a);
-  const statusCls={active:'b-active',disabled:'b-disabled',at_risk:'b-atrisk',orphan:'b-disabled',idle:'b-idle'}[a.status]||'b-neutral';
-  return `<div class="id-row" onclick="openManage('${a.id}')">
-    <div class="id-badge" style="background:${color}22;color:${color}">${a.generic_id.slice(-2)}</div>
-    <div class="id-info">
-      <div class="id-code">${a.generic_id}</div>
-      <div class="id-name">${empName} <span style="color:var(--hint)">(${a.emp_code})</span></div>
-      <div class="id-meta">Supervisor: ${supName}${a.supervisor_emp_code?' ('+a.supervisor_emp_code+')':''}</div>
-    </div>
-    <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
-      <span class="badge ${statusCls}">${a.status.replace('_',' ')}</span>
-      ${pwDue?`<span class="badge b-warn">Pw overdue</span>`:''}
-    </div>
-  </div>`;
-}
-
-function renderRisk(){
-  const items=[];
-  const atRisk=ASSIGNMENTS.filter(a=>a.status==='at_risk');
-  const orphans=ASSIGNMENTS.filter(a=>a.status==='orphan');
-  const pwOver=ASSIGNMENTS.filter(a=>a.status==='active'&&isPwOverdue(a));
-  if(atRisk.length) items.push({type:'danger',icon:'⚠️',title:`${atRisk.length} ID(s) at risk`,desc:'Supervisor resigned. Reassign or disable immediately.',ids:atRisk.map(a=>a.generic_id).join(', ')});
-  if(orphans.length) items.push({type:'danger',icon:'⛔',title:`${orphans.length} orphan session(s)`,desc:'Login detected with no active assignment.',ids:orphans.map(a=>a.generic_id).join(', ')});
-  if(pwOver.length) items.push({type:'warn',icon:'🔑',title:`${pwOver.length} password(s) overdue`,desc:'Rotation required — IDs active but non-compliant.',ids:pwOver.map(a=>a.generic_id).join(', ')});
-  document.getElementById('risk-alerts').innerHTML=items.length
-    ?items.map(i=>`<div class="risk-card ${i.type}"><div class="risk-icon">${i.icon}</div><div><div class="risk-title">${i.title}</div><div class="risk-desc">${i.desc}</div>${i.ids?`<div style="font-size:12px;margin-top:6px">IDs: <strong>${i.ids}</strong></div>`:''}</div></div>`).join('')
-    :`<div class="empty"><div class="empty-icon">✅</div>No open risks</div>`;
-}
-
-async function renderRecentAudit(){
-  const {data:logs}=await sb.from('audit_log').select('*').eq('store_id',STORE_ID).order('created_at',{ascending:false}).limit(5);
-  const el=document.getElementById('audit-list');
-  if(!logs?.length){el.innerHTML='<div class="empty"><div class="empty-icon">📋</div>No activity yet</div>';return;}
-  el.innerHTML=logs.map(l=>auditRowHtml(l)).join('');
-}
-
-async function loadAudit(){
-  const {data:logs}=await sb.from('audit_log').select('*').eq('store_id',STORE_ID).order('created_at',{ascending:false}).limit(50);
-  const el=document.getElementById('audit-full-list');
-  if(!logs?.length){el.innerHTML='<div class="empty"><div class="empty-icon">📋</div>No audit records</div>';return;}
-  el.innerHTML=logs.map(l=>auditRowHtml(l)).join('');
-}
-
-function auditRowHtml(l){
-  const icons={grant:'✅',terminate:'🚫',pw_rotate:'🔑',resign_auto_disable:'⚠️',supervisor_reassigned:'🔄',orphan_detected:'⛔'};
-  const icon=icons[l.event_type]||'📝';
-  const empName=EMP_CACHE.getName(l.emp_code)||l.emp_code||'—';
-  const time=new Date(l.created_at).toLocaleString('th-TH',{dateStyle:'short',timeStyle:'short'});
-  return `<div style="display:flex;align-items:flex-start;gap:12px;padding:12px 16px;border-bottom:0.5px solid var(--border2)">
-    <span style="font-size:18px;flex-shrink:0">${icon}</span>
-    <div style="flex:1;min-width:0">
-      <div style="font-size:13px;font-weight:600">${l.generic_id} · ${l.event_type.replace(/_/g,' ')}</div>
-      <div style="font-size:12px;color:var(--muted)">${empName} (${l.emp_code||'—'}) · ${l.event_by||'system'}</div>
-      <div style="font-size:11px;color:var(--hint);margin-top:2px">${time}</div>
-    </div>
-  </div>`;
-}
-
-// ── GRANT ID ──────────────────────────────────────────────────
-function openGrant(){
-  document.getElementById('g-id').value='';
-  document.getElementById('g-emp').value='';
-  document.getElementById('g-sup').value='';
-  document.getElementById('g-notes').value='';
-  document.getElementById('g-err').classList.add('hidden');
-  document.getElementById('emp-preview').classList.add('hidden');
-  document.getElementById('sup-preview').classList.add('hidden');
-  document.getElementById('g-app').innerHTML=APPS.map(a=>`<option value="${a.id}" data-code="${a.code}">${a.name}</option>`).join('');
-  if(CUR_APP){
-    const app=APPS.find(a=>a.code===CUR_APP);
-    if(app) document.getElementById('g-app').value=app.id;
+async function redirect(userId){
+  // Get role for this user
+  const {data:roles}=await sb.from('user_roles').select('role,store_id').eq('user_id',userId).limit(1);
+  if(!roles||roles.length===0){
+    // First time — go to setup or show message
+    showErr('No role assigned yet. Ask your admin to assign your role in user_roles table.');
+    await sb.auth.signOut();
+    document.getElementById('loginBtn').disabled=false;
+    document.getElementById('loginBtn').innerHTML='Sign in';
+    return;
   }
-  openSheet('sheet-grant');
+  const role=roles[0].role;
+  if(role==='store_manager') window.location.href='store.html';
+  else if(role==='bu_manager') window.location.href='bu.html';
+  else if(role==='ho_admin') window.location.href='ho.html';
+  else window.location.href='store.html';
 }
 
-function onEmpCodeInput(){document.getElementById('emp-preview').classList.add('hidden');}
-function onSupCodeInput(){document.getElementById('sup-preview').classList.add('hidden');}
-
-async function lookupEmployee(){
-  const code=document.getElementById('g-emp').value.trim().toUpperCase();
-  if(!code){alert('Enter employee code first');return;}
-  const btn=document.getElementById('lookup-btn');
-  btn.innerHTML='<span class="spinner-blue" style="width:14px;height:14px;border-width:2px;border-color:var(--blue-lt);border-top-color:var(--blue);border-radius:50%;animation:spin .6s linear infinite;display:inline-block"></span>';
-  const emp=await EMP_CACHE.get(code);
-  btn.textContent='Look up';
-  if(!emp){document.getElementById('g-err').textContent='Employee not found in SuccessFactors.';document.getElementById('g-err').classList.remove('hidden');return;}
-  document.getElementById('g-err').classList.add('hidden');
-  document.getElementById('preview-name').textContent=emp.full_name;
-  document.getElementById('preview-title').textContent=emp.title||'—';
-  document.getElementById('preview-mobile').textContent=emp.mobile||'No mobile on file';
-  const av=document.getElementById('preview-avatar');
-  if(emp.photo_url) av.innerHTML=`<img src="${emp.photo_url}" alt="">`;
-  else av.textContent=emp.full_name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
-  document.getElementById('emp-preview').classList.remove('hidden');
-}
-
-async function lookupSupervisor(){
-  const code=document.getElementById('g-sup').value.trim().toUpperCase();
-  if(!code){alert('Enter supervisor code first');return;}
-  const emp=await EMP_CACHE.get(code);
-  if(!emp){document.getElementById('g-err').textContent='Supervisor not found.';document.getElementById('g-err').classList.remove('hidden');return;}
-  document.getElementById('sup-name').textContent=emp.full_name;
-  document.getElementById('sup-title').textContent=emp.title||'—';
-  document.getElementById('sup-avatar').textContent=emp.full_name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
-  document.getElementById('sup-preview').classList.remove('hidden');
-}
-
-async function saveGrant(){
-  const genericId=document.getElementById('g-id').value.trim().toUpperCase();
-  const empCode=document.getElementById('g-emp').value.trim().toUpperCase();
-  const supCode=document.getElementById('g-sup').value.trim().toUpperCase();
-  const notes=document.getElementById('g-notes').value.trim();
-  const appSelect=document.getElementById('g-app');
-  const appId=appSelect.value;
-  const appCode=appSelect.options[appSelect.selectedIndex]?.dataset?.code;
-  const errEl=document.getElementById('g-err');
-
-  if(!genericId||!empCode||!appId){errEl.textContent='Generic ID, employee code and app required.';errEl.classList.remove('hidden');return;}
-
-  const btn=document.getElementById('grant-btn');
-  btn.disabled=true;btn.innerHTML='<span class="spinner"></span>Granting…';
-
-  const {error}=await sb.from('generic_id_assignments').upsert({
-    store_id:STORE_ID,
-    app_id:appId,
-    generic_id:genericId,
-    emp_code:empCode,
-    supervisor_emp_code:supCode||null,
-    status:'active',
-    granted_at:new Date().toISOString(),
-    granted_by:SESSION.user.email,
-    notes:notes||null,
-    pw_last_rotated:new Date().toISOString(),
-  },{onConflict:'store_id,app_id,generic_id'});
-
-  btn.disabled=false;btn.textContent='Grant access';
-
-  if(error){errEl.textContent=error.message;errEl.classList.remove('hidden');return;}
-
-  // Write audit log
-  await sb.from('audit_log').insert({
-    store_id:STORE_ID,app_id:appId,
-    generic_id:genericId,emp_code:empCode,
-    event_type:'grant',event_by:SESSION.user.email,
-    detail:{supervisor_emp_code:supCode||null,notes:notes||null}
-  });
-
-  closeSheet('sheet-grant');
-  await loadAll();
-}
-
-// ── MANAGE ID ─────────────────────────────────────────────────
-async function openManage(asnId){
-  const a=ASSIGNMENTS.find(x=>x.id===asnId);if(!a)return;
-  const emp=await EMP_CACHE.get(a.emp_code);
-  const sup=a.supervisor_emp_code?await EMP_CACHE.get(a.supervisor_emp_code):null;
-  const color=APP_COLORS[a.app?.code]||APP_COLORS.default;
-  const pwDue=isPwOverdue(a);
-  const statusCls={active:'b-active',disabled:'b-disabled',at_risk:'b-atrisk',orphan:'b-disabled'}[a.status]||'b-neutral';
-  const daysSince=a.pw_last_rotated?Math.floor((Date.now()-new Date(a.pw_last_rotated))/(864e5)):null;
-
-  document.getElementById('manage-title').textContent=a.generic_id;
-  document.getElementById('manage-body').innerHTML=`
-    <div class="pdpa-note">🔒 PDPA: Employee details fetched live from SuccessFactors — not stored here.</div>
-    <div class="profile-card">
-      <div class="profile-avatar" style="background:${color}22;color:${color}">
-        ${emp?.photo_url?`<img src="${emp.photo_url}" alt="">`:(emp?.full_name||a.emp_code).split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase()}
-      </div>
-      <div>
-        <div style="font-size:17px;font-weight:700">${emp?.full_name||a.emp_code}</div>
-        <div style="font-size:13px;color:var(--muted)">${a.emp_code} · ${emp?.title||'—'}</div>
-        <div style="font-size:12px;color:var(--hint);margin-top:3px">${emp?.mobile||'No mobile'}</div>
-      </div>
-    </div>
-    <table style="width:100%;font-size:14px;border-collapse:collapse;margin-bottom:16px">
-      <tr><td style="color:var(--muted);padding:9px 0;width:120px;border-bottom:0.5px solid var(--border2)">Generic ID</td><td style="padding:9px 0;font-family:monospace;font-weight:700;border-bottom:0.5px solid var(--border2)">${a.generic_id}</td></tr>
-      <tr><td style="color:var(--muted);padding:9px 0;border-bottom:0.5px solid var(--border2)">App</td><td style="padding:9px 0;border-bottom:0.5px solid var(--border2)">${a.app?.name||'—'}</td></tr>
-      <tr><td style="color:var(--muted);padding:9px 0;border-bottom:0.5px solid var(--border2)">Status</td><td style="padding:9px 0;border-bottom:0.5px solid var(--border2)"><span class="badge ${statusCls}">${a.status.replace('_',' ')}</span></td></tr>
-      <tr><td style="color:var(--muted);padding:9px 0;border-bottom:0.5px solid var(--border2)">Supervisor</td><td style="padding:9px 0;border-bottom:0.5px solid var(--border2)">${sup?.full_name||'—'} ${a.supervisor_emp_code?`(${a.supervisor_emp_code})`:''}</td></tr>
-      <tr><td style="color:var(--muted);padding:9px 0;border-bottom:0.5px solid var(--border2)">Granted by</td><td style="padding:9px 0;border-bottom:0.5px solid var(--border2)">${a.granted_by||'—'}</td></tr>
-      <tr><td style="color:var(--muted);padding:9px 0;border-bottom:0.5px solid var(--border2)">Granted at</td><td style="padding:9px 0;border-bottom:0.5px solid var(--border2)">${a.granted_at?new Date(a.granted_at).toLocaleDateString():'-'}</td></tr>
-      <tr><td style="color:var(--muted);padding:9px 0">Pw last rotated</td><td style="padding:9px 0">${a.pw_last_rotated?new Date(a.pw_last_rotated).toLocaleDateString():'-'} ${pwDue?`<span class="badge b-warn">${daysSince}d overdue</span>`:''}</td></tr>
-    </table>
-    ${a.notes?`<div style="font-size:13px;color:var(--muted);padding:10px 12px;background:var(--surface2);border-radius:var(--radius);margin-bottom:16px">📝 ${a.notes}</div>`:''}`;
-
-  document.getElementById('manage-footer').innerHTML=`
-    <button class="btn btn-glass btn-full" onclick="closeSheet('sheet-manage')">Close</button>
-    ${a.status==='active'?`
-      <button class="btn btn-blue btn-sm" onclick="markPwRotated('${a.id}')">✓ Pw rotated</button>
-      <button class="btn btn-red btn-sm" onclick="terminateId('${a.id}')">Terminate</button>
-    `:''}
-    ${['at_risk','disabled'].includes(a.status)?`
-      <button class="btn btn-green btn-full" onclick="reactivateId('${a.id}')">Re-activate</button>
-    `:''}`;
-
-  openSheet('sheet-manage');
-}
-
-async function markPwRotated(asnId){
-  const a=ASSIGNMENTS.find(x=>x.id===asnId);if(!a)return;
-  await sb.from('generic_id_assignments').update({pw_last_rotated:new Date().toISOString()}).eq('id',asnId);
-  await sb.from('audit_log').insert({store_id:STORE_ID,app_id:a.app_id,generic_id:a.generic_id,emp_code:a.emp_code,event_type:'pw_rotate',event_by:SESSION.user.email,detail:{}});
-  closeSheet('sheet-manage');await loadAll();
-}
-
-async function terminateId(asnId){
-  if(!confirm('Terminate this generic ID? The employee will lose access.'))return;
-  const a=ASSIGNMENTS.find(x=>x.id===asnId);if(!a)return;
-  const now=new Date().toISOString();
-  await sb.from('generic_id_assignments').update({status:'disabled',disabled_at:now,disabled_reason:'Terminated by store manager'}).eq('id',asnId);
-  await sb.from('audit_log').insert({store_id:STORE_ID,app_id:a.app_id,generic_id:a.generic_id,emp_code:a.emp_code,event_type:'terminate',event_by:SESSION.user.email,detail:{reason:'manual termination'}});
-  closeSheet('sheet-manage');await loadAll();
-}
-
-async function reactivateId(asnId){
-  if(!confirm('Re-activate this ID?'))return;
-  const a=ASSIGNMENTS.find(x=>x.id===asnId);if(!a)return;
-  await sb.from('generic_id_assignments').update({status:'active',disabled_at:null,disabled_reason:null}).eq('id',asnId);
-  await sb.from('audit_log').insert({store_id:STORE_ID,app_id:a.app_id,generic_id:a.generic_id,emp_code:a.emp_code,event_type:'reactivate',event_by:SESSION.user.email,detail:{}});
-  closeSheet('sheet-manage');await loadAll();
-}
-
-function isPwOverdue(a){
-  if(!a.pw_last_rotated)return false;
-  return Math.floor((Date.now()-new Date(a.pw_last_rotated))/(864e5))>=(a.app?.pw_rotation_days||30);
-}
-
-function showMainTab(t){
-  ['overview','app','audit'].forEach(x=>{
-    document.getElementById('tab-'+x)?.classList.toggle('hidden',x!==t);
-    document.getElementById('tbar-'+x)?.classList.toggle('active',x===t);
-  });
-}
-
-function openSheet(id){document.getElementById(id).classList.remove('hidden')}
-function closeSheet(id){document.getElementById(id).classList.add('hidden')}
-function openMenu(){openSheet('sheet-menu')}
-async function doSignOut(){EMP_CACHE.clear();await sb.auth.signOut();sessionStorage.clear();window.location.href='index.html'}
-
-document.querySelectorAll('.sheet-bg').forEach(bg=>bg.addEventListener('click',e=>{if(e.target===bg)bg.classList.add('hidden')}));
-init();
+// Enter key support
+document.addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
 </script>
 </body>
 </html>
