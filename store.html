@@ -440,10 +440,10 @@ function showMain(){
 
 async function loadAll(){
   setSyncState('syncing');
-
-  // First ensure we have BU_ID from the store
+  try {
+  // Step 1: fetch store AND resolve BU_ID before apps query
   const {data:storeData}=await sb.from('stores').select('bu_id,name,region').eq('id',STORE_ID).single();
-  if(!BU_ID&&storeData?.bu_id){
+  if(storeData?.bu_id && storeData.bu_id!==BU_ID){
     BU_ID=storeData.bu_id;
     sessionStorage.setItem('gid_bu_id',BU_ID);
   }
@@ -452,7 +452,9 @@ async function loadAll(){
   document.getElementById('store-sub').textContent=`${storeData?.region||'Bangkok'} · Last synced ${syncTime}`;
   document.getElementById('audit-store-name').textContent=storeData?.name||'Store Portal';
 
-  // Now fetch all data in parallel with correct BU_ID
+  if(!BU_ID){console.warn('loadAll: BU_ID null — cannot load apps');setSyncState('ok');return;}
+
+  // Step 2: fetch apps + assignments + employees (BU_ID guaranteed)
   const [appRes,asnRes,empRes]=await Promise.all([
     sb.from('apps').select('*').eq('bu_id',BU_ID).eq('active',true).order('code'),
     sb.from('generic_id_assignments').select('*').eq('store_id',STORE_ID),
@@ -469,13 +471,15 @@ async function loadAll(){
   // Populate grant modal app select
   document.getElementById('g-app').innerHTML=APPS.map(a=>`<option value="${a.id}" data-code="${a.code}">${a.name}</option>`).join('');
 
-  // Render immediately with codes
+  // Render immediately with emp codes (names come after PII fetch)
   renderAll();
-  setSyncState('ok');
 
-  // Fetch PII then re-render
+  // Fetch PII then re-render table with names
   const codes=[...new Set([...ASSIGNMENTS.map(a=>a.emp_code),...ASSIGNMENTS.map(a=>a.supervisor_emp_code)].filter(Boolean))];
-  if(codes.length){await EMP_CACHE.getBatch(codes);renderTable();}
+  if(codes.length) await EMP_CACHE.getBatch(codes);
+  renderTable();
+  } catch(e){ console.error('loadAll error:',e); }
+  finally { setSyncState('ok'); }
 }
 
 function setupRT(){
@@ -697,6 +701,12 @@ async function openManage(asnId){
   };
 
   document.getElementById('manage-title').textContent=`${a.generic_id} — ${a.app?.name||''}`;
+
+  // Load secondary shared users for this assignment
+  const {data:sharedUsersData}=await sb.from('generic_id_shared_users').select('*').eq('assignment_id',a.id).order('added_at');
+  const secondaryUsers=sharedUsersData||[];
+  const secCodes=secondaryUsers.map(u=>u.emp_code).filter(Boolean);
+  if(secCodes.length) await EMP_CACHE.getBatch(secCodes);
   document.getElementById('manage-body').innerHTML=`
     <div class="pdpa-note">🔒 PDPA: Employee details fetched live from SuccessFactors — not stored here.</div>
     <div class="emp-preview" style="margin-bottom:20px">
@@ -743,7 +753,31 @@ async function openManage(asnId){
       </div>
       <div id="reassign-err" class="hidden" style="color:var(--red);font-size:12px;margin-top:4px"></div>
     </div>`:''}
-    <div id="manage-success" class="hidden"></div>`;
+    <div style="margin-top:18px">
+      <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">👥 Users of this ID</div>
+      <div style="background:var(--bg);border-radius:var(--radius);overflow:hidden;border:1px solid var(--border2)" id="users-list-block">
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;${secondaryUsers.length?'border-bottom:1px solid var(--border2)':''}">
+          <div class="emp-avatar" style="width:30px;height:30px;background:${color}22;color:${color};font-size:10px;flex-shrink:0">${EMP_CACHE.getInitials(a.emp_code)||'?'}</div>
+          <div style="flex:1"><div style="font-size:13px;font-weight:600">${EMP_CACHE.getName(a.emp_code)||a.emp_code||'—'}</div><div style="font-size:11px;color:var(--muted)">${a.emp_code||'—'}</div></div>
+          <span style="font-size:11px;padding:2px 8px;border-radius:999px;background:#DBEAFE;color:var(--blue);font-weight:700">PRIMARY</span>
+        </div>
+        ${secondaryUsers.map((u,i)=>`
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;${i<secondaryUsers.length-1?'border-bottom:1px solid var(--border2)':''}">
+          <div class="emp-avatar" style="width:30px;height:30px;background:#F3F4F6;color:var(--muted);font-size:10px;flex-shrink:0">${EMP_CACHE.getInitials(u.emp_code)||'?'}</div>
+          <div style="flex:1"><div style="font-size:13px;font-weight:500">${EMP_CACHE.getName(u.emp_code)||u.emp_code}</div><div style="font-size:11px;color:var(--muted)">${u.emp_code}</div></div>
+          ${a.status==='active'?`<button style="font-size:11px;padding:3px 8px;border-radius:var(--radius);border:1px solid var(--border);background:var(--white);cursor:pointer;font-family:inherit;color:var(--blue);white-space:nowrap" onclick="makeUserPrimary('${a.id}','${u.emp_code}','${a.emp_code}')">Make primary</button>
+          <button style="font-size:11px;padding:3px 8px;border-radius:var(--radius);border:1px solid #FECACA;background:var(--red-lt);cursor:pointer;font-family:inherit;color:var(--red);margin-left:4px" onclick="removeSharedUser('${a.id}','${u.id}')">✕</button>`:''}
+        </div>`).join('')}
+      </div>
+      ${a.status==='active'?`
+      <div style="margin-top:8px;display:flex;gap:6px">
+        <input id="add-shared-emp" placeholder="Add employee code (EMP-XXXX)…" style="flex:1;padding:8px 10px;border-radius:var(--radius);border:1px solid var(--border);font-family:monospace;font-size:13px;text-transform:uppercase" oninput="this.value=this.value.toUpperCase()">
+        <button class="btn btn-outline" style="font-size:12px;padding:7px 12px;white-space:nowrap" onclick="addSharedUser('${a.id}')">+ Add user</button>
+      </div>
+      <div id="shared-user-err" style="font-size:12px;color:var(--red);margin-top:4px;display:none"></div>
+      <div style="font-size:11px;color:var(--hint);margin-top:6px;line-height:1.5">Secondary users share this ID but the <strong>Primary</strong> is accountable for pw rotation and at-risk alerts.</div>`:''}
+    </div>
+    <div id="manage-success" class="hidden"></div>\`;
 
   // Footer buttons based on status
   let footerHtml=`<button class="btn btn-outline" onclick="closeModal('modal-manage')">Close</button>`;
@@ -826,6 +860,49 @@ async function disableAtRisk(id){
   document.getElementById('reassign-section').classList.add('hidden');
   document.getElementById('manage-footer').innerHTML=`<button class="btn btn-outline" onclick="closeModal('modal-manage')">Close</button>`;
   await loadAll();
+}
+
+// ── SHARED USERS ────────────────────────────────────────────────
+async function addSharedUser(asnId){
+  const code=(document.getElementById('add-shared-emp')?.value||'').trim().toUpperCase();
+  const errEl=document.getElementById('shared-user-err');
+  errEl.style.display='none';
+  if(!code){errEl.textContent='Enter an employee code.';errEl.style.display='block';return;}
+  const a=ASSIGNMENTS.find(x=>x.id===asnId);
+  if(a?.emp_code===code){errEl.textContent='This employee is already the primary user.';errEl.style.display='block';return;}
+  // Check not already secondary
+  const {data:existing}=await sb.from('generic_id_shared_users').select('id').eq('assignment_id',asnId).eq('emp_code',code).maybeSingle();
+  if(existing){errEl.textContent='This employee is already added.';errEl.style.display='block';return;}
+  const emp=await EMP_CACHE.get(code);
+  if(!emp){errEl.textContent=`Employee ${code} not found.`;errEl.style.display='block';return;}
+  const {error}=await sb.from('generic_id_shared_users').insert({assignment_id:asnId,emp_code:code,added_by:SESSION.user.email});
+  if(error){errEl.textContent=error.message;errEl.style.display='block';return;}
+  await sb.from('audit_log').insert({store_id:STORE_ID,app_id:a.app_id,generic_id:a.generic_id,emp_code:code,event_type:'shared_user_add',event_by:SESSION.user.email,detail:{added_to_primary:a.emp_code}});
+  // Refresh modal in place
+  openManage(asnId);
+}
+
+async function removeSharedUser(asnId,rowId){
+  if(!confirm('Remove this secondary user?'))return;
+  const a=ASSIGNMENTS.find(x=>x.id===asnId);
+  const {data:row}=await sb.from('generic_id_shared_users').select('emp_code').eq('id',rowId).maybeSingle();
+  await sb.from('generic_id_shared_users').delete().eq('id',rowId);
+  if(a&&row) await sb.from('audit_log').insert({store_id:STORE_ID,app_id:a.app_id,generic_id:a.generic_id,emp_code:row.emp_code,event_type:'shared_user_remove',event_by:SESSION.user.email,detail:{}});
+  openManage(asnId);
+}
+
+async function makeUserPrimary(asnId,newPrimary,oldPrimary){
+  if(!confirm(`Transfer primary ownership to ${newPrimary}? They become accountable for this ID.`))return;
+  const a=ASSIGNMENTS.find(x=>x.id===asnId);
+  // Swap: new primary goes to emp_code, old primary becomes secondary
+  const {error}=await sb.from('generic_id_assignments').update({emp_code:newPrimary,granted_by:SESSION.user.email}).eq('id',asnId);
+  if(error){alert('Error: '+error.message);return;}
+  // Remove new primary from secondary table, add old primary as secondary
+  await sb.from('generic_id_shared_users').delete().eq('assignment_id',asnId).eq('emp_code',newPrimary);
+  await sb.from('generic_id_shared_users').upsert({assignment_id:asnId,emp_code:oldPrimary,added_by:SESSION.user.email},{onConflict:'assignment_id,emp_code'});
+  await sb.from('audit_log').insert({store_id:STORE_ID,app_id:a.app_id,generic_id:a.generic_id,emp_code:newPrimary,event_type:'primary_transfer',event_by:SESSION.user.email,detail:{from:oldPrimary,to:newPrimary}});
+  await loadAll();
+  openManage(asnId);
 }
 
 async function markPwRotated(id){
