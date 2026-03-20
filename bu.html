@@ -460,6 +460,7 @@ body{min-height:100vh;background:var(--bg);color:var(--text);font-family:-apple-
   </div>
 </div>
 
+<script src="employee-cache.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script>
 // ── CONFIG ──────────────────────────────────────────────────────
@@ -496,7 +497,8 @@ async function init(){
     sessionStorage.setItem('gid_role',CURRENT_ROLE);
   }
 
-  document.getElementById('nav-sub').textContent=`${CURRENT_ROLE?.replace(/_/g,' ')} · ${session.user.email}`;
+  // Init employee cache — PDPA compliant PII fetching
+  EMP_CACHE.init(sb, SUPABASE_URL);
 
   // Load all BUs for switcher — also use this to verify actual role from DB
   const {data:allRoles}=await sb.from('user_roles').select('bu_id,role,business_units(id,name,code)').eq('user_id',session.user.id);
@@ -535,6 +537,7 @@ async function onBuSwitch(){
 
 async function loadAll(){
   setSyncState('syncing');
+  console.log('loadAll: BU_ID=', BU_ID, 'CURRENT_ROLE=', CURRENT_ROLE);
   const bu=ALL_BUS.find(b=>b.id===BU_ID);
   document.getElementById('nav-title').textContent=bu?.name||sessionStorage.getItem('gid_bu_name')||'BU Dashboard';
 
@@ -545,11 +548,12 @@ async function loadAll(){
 
   const [appRes,empRes,asnRes]=await Promise.all([
     sb.from('apps').select('*').eq('bu_id',BU_ID).eq('active',true).order('code'),
-    sb.from('employees').select('*').eq('bu_id',BU_ID).order('full_name'),
+    sb.from('employees').select('id,emp_code,status,store_id,supervisor_emp_code,bu_id,resigned_at,effective_date,source').eq('bu_id',BU_ID).order('emp_code'),
     storeIds.length
-      ? sb.from('generic_id_assignments').select('*,app:app_id(code,name,pw_rotation_days),employee:employee_id(emp_code,full_name,status),supervisor:supervisor_id(emp_code,full_name,status)').in('store_id',storeIds)
+      ? sb.from('generic_id_assignments').select('*,app:app_id(code,name,pw_rotation_days)').in('store_id',storeIds)
       : {data:[]}
   ]);
+  if(empRes.error) console.error('Employees query error:',empRes.error);
   APPS=appRes.data||[];
   EMPLOYEES=empRes.data||[];
   ASSIGNMENTS=asnRes.data||[];
@@ -562,8 +566,24 @@ async function loadAll(){
   // Populate store select in employee form
   document.getElementById('u-store').innerHTML=STORES.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
 
+  // Render immediately with emp_code as fallback — page is usable right away
   renderAll();
   setSyncState('ok');
+
+  // Then fetch PII from SF and re-render with real names (non-fatal if not deployed)
+  try {
+    const allCodes=[...new Set([
+      ...EMPLOYEES.map(e=>e.emp_code),
+      ...ASSIGNMENTS.map(a=>a.emp_code).filter(Boolean),
+      ...ASSIGNMENTS.map(a=>a.supervisor_emp_code).filter(Boolean)
+    ].filter(Boolean))];
+    if(allCodes.length>0){
+      await EMP_CACHE.getBatch(allCodes);
+      renderAll(); // re-render with real names from SF
+    }
+  } catch(e) {
+    console.warn('EMP_CACHE fetch failed (non-fatal):', e);
+  }
 }
 
 async function loadUsers(){
@@ -679,18 +699,24 @@ function renderEmployees(){
   const q=(document.getElementById('emp-search').value||'').toLowerCase();
   let emps=EMPLOYEES;
   if(CUR_EMP_FILTER!=='all') emps=emps.filter(e=>e.status===CUR_EMP_FILTER);
-  if(q) emps=emps.filter(e=>e.full_name.toLowerCase().includes(q)||e.emp_code.toLowerCase().includes(q)||(e.mobile||'').includes(q));
+  if(q) emps=emps.filter(e=>{
+    const name=(EMP_CACHE.getName(e.emp_code)||'').toLowerCase();
+    const mob=(EMP_CACHE.getMobile(e.emp_code)||'');
+    return name.includes(q)||e.emp_code.toLowerCase().includes(q)||mob.includes(q);
+  });
   const storeMap={};STORES.forEach(s=>storeMap[s.id]=s.name);
   const el=document.getElementById('employees-list');
   if(!emps.length){el.innerHTML='<div class="empty"><div class="empty-icon">👤</div>No employees found</div>';return;}
   const cls={active:'b-active',resigned:'b-disabled',suspended:'b-warn',transferred:'b-neutral'};
   el.innerHTML=emps.map(e=>{
-    const init=e.full_name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    const fullName=EMP_CACHE.getName(e.emp_code)||e.emp_code;
+    const mobile=EMP_CACHE.getMobile(e.emp_code)||'no mobile';
+    const init=EMP_CACHE.getInitials(e.emp_code)||e.emp_code.slice(-2);
     return `<div class="list-row" onclick="openEmpDetail('${e.id}')">
       <div class="list-avatar" style="${e.status==='resigned'?'background:var(--red-lt);color:var(--red-dk)':''}">${init}</div>
       <div class="list-info">
-        <div class="list-name">${e.full_name}</div>
-        <div class="list-sub">${e.emp_code} · ${storeMap[e.store_id]||'—'} · ${e.mobile||'no mobile'}</div>
+        <div class="list-name">${fullName}</div>
+        <div class="list-sub">${e.emp_code} · ${storeMap[e.store_id]||'—'} · ${mobile}</div>
       </div>
       <span class="badge ${cls[e.status]||'b-neutral'}">${e.status}</span>
     </div>`;
@@ -801,23 +827,25 @@ function openStoreDetail(storeId){
 // ── EMPLOYEE DETAIL ───────────────────────────────────────────────
 function openEmpDetail(empId){
   const e=EMPLOYEES.find(x=>x.id===empId);if(!e)return;
-  const init=e.full_name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  const fullName=EMP_CACHE.getName(e.emp_code)||e.emp_code;
+  const mobile=EMP_CACHE.getMobile(e.emp_code)||'—';
+  const init=EMP_CACHE.getInitials(e.emp_code)||e.emp_code.slice(-2);
   const storeName=STORES.find(s=>s.id===e.store_id)?.name||'—';
-  const empAsn=ASSIGNMENTS.filter(a=>a.employee_id===e.id);
+  const empAsn=ASSIGNMENTS.filter(a=>a.emp_code===e.emp_code);
   const cls={active:'b-active',resigned:'b-disabled',suspended:'b-warn',transferred:'b-neutral'};
-  document.getElementById('emp-sheet-title').textContent=e.full_name;
+  document.getElementById('emp-sheet-title').textContent=fullName;
   document.getElementById('emp-sheet-body').innerHTML=`
     <div style="display:flex;align-items:center;gap:14px;margin-bottom:20px;padding:16px;background:var(--surface2);border-radius:var(--radius-lg)">
-      ${e.photo_url?`<img src="${e.photo_url}" style="width:64px;height:64px;border-radius:50%;object-fit:cover;flex-shrink:0">`
-        :`<div style="width:64px;height:64px;border-radius:50%;background:var(--blue-lt);color:var(--blue-dk);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;flex-shrink:0">${init}</div>`}
-      <div><div style="font-size:18px;font-weight:700">${e.full_name}</div>
+      <div style="width:64px;height:64px;border-radius:50%;background:var(--blue-lt);color:var(--blue-dk);display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800;flex-shrink:0">${init}</div>
+      <div><div style="font-size:18px;font-weight:700">${fullName}</div>
         <div style="font-size:13px;color:var(--muted);margin-top:2px">${e.emp_code}</div>
         <div style="margin-top:6px"><span class="badge ${cls[e.status]||'b-neutral'}">${e.status}</span></div>
       </div>
     </div>
+    <div style="font-size:11px;color:var(--hint);padding:8px 12px;background:var(--surface2);border-radius:8px;margin-bottom:12px;border-left:3px solid var(--blue)">🔒 PDPA: Name and mobile fetched live from SuccessFactors</div>
     <table style="width:100%;font-size:14px;border-collapse:collapse">
       <tr><td style="color:var(--muted);padding:8px 0;width:110px">Store</td><td>${storeName}</td></tr>
-      <tr><td style="color:var(--muted);padding:8px 0;border-top:0.5px solid var(--border2)">Mobile</td><td>${e.mobile||'—'}</td></tr>
+      <tr><td style="color:var(--muted);padding:8px 0;border-top:0.5px solid var(--border2)">Mobile</td><td>${mobile}</td></tr>
       <tr><td style="color:var(--muted);padding:8px 0;border-top:0.5px solid var(--border2)">Supervisor</td><td>${e.supervisor_emp_code||'—'}</td></tr>
       ${e.resigned_at?`<tr><td style="color:var(--muted);padding:8px 0;border-top:0.5px solid var(--border2)">Resigned</td><td style="color:var(--red-dk)">${new Date(e.resigned_at).toLocaleDateString()}</td></tr>`:''}
     </table>
@@ -851,14 +879,13 @@ function openAddEmployee(){
   document.getElementById('emp-sheet-body').innerHTML=`
     <div class="two-col">
       <div class="field"><label>Employee code</label><input id="e-code" placeholder="EMP-5001"></div>
-      <div class="field"><label>Mobile</label><input id="e-mobile" placeholder="+66 81…" type="tel"></div>
-    </div>
-    <div class="field"><label>Full name</label><input id="e-name" placeholder="First Last"></div>
-    <div class="two-col">
-      <div class="field"><label>Store</label><select id="e-store">${STORES.map(s=>`<option value="${s.id}">${s.name}</option>`).join('')}</select></div>
       <div class="field"><label>Status</label><select id="e-status"><option value="active">Active</option><option value="resigned">Resigned</option><option value="suspended">Suspended</option><option value="transferred">Transferred</option></select></div>
     </div>
-    <div class="field"><label>Supervisor EMP code</label><input id="e-sup" placeholder="EMP-4200"></div>
+    <div class="two-col">
+      <div class="field"><label>Store</label><select id="e-store">${STORES.map(s=>`<option value="${s.id}">${s.name}</option>`).join('')}</select></div>
+      <div class="field"><label>Supervisor EMP code</label><input id="e-sup" placeholder="EMP-4200"></div>
+    </div>
+    <div style="font-size:11px;color:var(--hint);padding:8px 12px;background:var(--surface2);border-radius:8px;margin-bottom:8px;border-left:3px solid var(--blue)">🔒 PDPA: Name and contact details are stored in SuccessFactors only. Only employee code is stored here.</div>
     <div id="e-err" class="hidden" style="color:var(--red-dk);font-size:13px;margin-top:-8px;margin-bottom:8px"></div>`;
   document.getElementById('emp-sheet-footer').innerHTML=`
     <button class="btn btn-glass btn-full" onclick="closeSheet('sheet-employee')">Cancel</button>
@@ -868,15 +895,16 @@ function openAddEmployee(){
 
 async function saveEmployee(){
   const code=document.getElementById('e-code').value.trim().toUpperCase();
-  const name=document.getElementById('e-name').value.trim();
-  const mobile=document.getElementById('e-mobile').value.trim();
   const storeId=document.getElementById('e-store').value;
   const status=document.getElementById('e-status').value;
   const sup=document.getElementById('e-sup').value.trim().toUpperCase();
   const errEl=document.getElementById('e-err');
-  if(!code||!name){errEl.textContent='Employee code and name required.';errEl.classList.remove('hidden');return;}
+  if(!code){errEl.textContent='Employee code required.';errEl.classList.remove('hidden');return;}
   const btn=document.getElementById('e-save-btn');btn.disabled=true;btn.innerHTML='<span class="spinner"></span>';
-  const {error}=await sb.from('employees').insert({emp_code:code,bu_id:BU_ID,store_id:storeId||null,full_name:name,mobile:mobile||null,supervisor_emp_code:sup||null,status,source:'manual'});
+  const {error}=await sb.from('employees').insert({
+    emp_code:code,bu_id:BU_ID,store_id:storeId||null,
+    supervisor_emp_code:sup||null,status,source:'manual'
+  });
   btn.disabled=false;btn.textContent='Save employee';
   if(error){errEl.textContent=error.message;errEl.classList.remove('hidden');return;}
   closeSheet('sheet-employee');await loadAll();
@@ -1046,7 +1074,7 @@ function openSheet(id){document.getElementById(id).classList.remove('hidden')}
 function closeSheet(id){document.getElementById(id).classList.add('hidden')}
 function openMenu(){openSheet('sheet-menu')}
 function switchBU(){sessionStorage.removeItem('gid_bu_id');window.location.href='index.html'}
-async function doSignOut(){await sb.auth.signOut();sessionStorage.clear();window.location.href='index.html'}
+async function doSignOut(){EMP_CACHE.clear();await sb.auth.signOut();sessionStorage.clear();window.location.href='index.html'}
 
 function showTab(t){
   const tabs=['overview','stores','employees','apps','users','risk'];
