@@ -550,7 +550,7 @@ function rowHtml(a){
     at_risk:`<span class="badge badge-atrisk">⚠ At risk</span>`,
     idle:`<span class="badge badge-idle">Idle</span>`,
     orphan:`<span class="badge" style="background:#FEF2F2;color:#DC2626">⛔ Orphan</span>`
-  }[a.status]||`<span class="badge badge-idle">${a.status}</span>`;
+  }[a.status]||'<span class="badge badge-idle">'+(typeof a.status!=='undefined'?a.status:'')+('</span>');
 
   const actionBtn=a.status==='active'
     ?`<button class="action-btn" onclick="openManage('${a.id}')">View ↗</button>`
