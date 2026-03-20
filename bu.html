@@ -381,7 +381,7 @@ function renderAllIDs(){
       a.status==='active'?`<span class="badge badge-green">● Active</span>`:
       a.status==='disabled'?`<span class="badge badge-gray">Disabled</span>`:
       a.status==='idle'?`<span class="badge badge-amber">Idle</span>`:
-      `<span class="badge badge-red">${a.status}</span>`;
+      '<span class="badge badge-red">'+(typeof a.status!=='undefined'?a.status:'')+('</span>');
     return `<tr class="clickable" onclick="openManageDrawer('${a.id}')">
       <td><span class="mono" style="font-weight:600">
         <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${appColor};margin-right:5px;vertical-align:middle"></span>${a.generic_id}
@@ -438,8 +438,8 @@ function renderByStore(){
       <td class="text-muted">${s.region||'—'}</td>
       <td style="font-weight:600">${CUR_METRIC?filteredCount:fullCount}</td>
       <td style="color:var(--green);font-weight:600">${active}</td>
-      <td>${pwDue?`<span class="badge badge-amber">${pwDue}</span>`:`<span class="text-hint">0</span>`}</td>
-      <td>${risk?`<span class="badge badge-red">${risk}</span>`:`<span class="text-hint">0</span>`}</td>
+      <td>${pwDue?'<span class="badge badge-amber">'+(typeof pwDue!=='undefined'?pwDue:'')+('</span>'):'<span class="text-hint">0</span>'}</td>
+      <td>${risk?'<span class="badge badge-red">'+(typeof risk!=='undefined'?risk:'')+('</span>'):'<span class="text-hint">0</span>'}</td>
       <td><div class="risk-wrap">
         <div class="risk-bar"><div class="risk-fill" style="width:${score}%;background:${scoreColor}"></div></div>
         <span class="risk-num" style="color:${scoreColor}">${score}</span>
@@ -473,8 +473,8 @@ function renderByApp(){
       <td class="text-muted">${storeCount}</td>
       <td style="font-weight:600">${asn.length}</td>
       <td style="color:var(--green);font-weight:600">${active}</td>
-      <td>${pwDue?`<span class="badge badge-amber">${pwDue}</span>`:`<span class="text-hint">0</span>`}</td>
-      <td>${risk?`<span class="badge badge-red">${risk}</span>`:`<span class="text-hint">0</span>`}</td>
+      <td>${pwDue?'<span class="badge badge-amber">'+(typeof pwDue!=='undefined'?pwDue:'')+('</span>'):'<span class="text-hint">0</span>'}</td>
+      <td>${risk?'<span class="badge badge-red">'+(typeof risk!=='undefined'?risk:'')+('</span>'):'<span class="text-hint">0</span>'}</td>
       <td class="text-hint">→</td>
     </tr>`;
   }).join('');
@@ -503,7 +503,7 @@ function renderPeople(){
       <td><span class="badge badge-${e.status==='active'?'green':'gray'}">${e.status}</span></td>
       <td>${asn.length
         ?asn.map(a=>`<span class="badge badge-blue mono" style="margin-right:3px">${a.generic_id}</span>`).join('')
-        :(allAsn.length?`<span class="text-hint">${allAsn.length} ID${allAsn.length>1?'s':''} (filtered)</span>`:`<span class="text-hint">—</span>`)
+        :(allAsn.length?`<span class="text-hint">${allAsn.length} ID${allAsn.length>1?'s':''} (filtered)</span>`:'<span class="text-hint">—</span>')
       }</td></tr>`;
   }).join(''):`<tr><td colspan="5">
     <div class="empty-state"><div class="empty-icon">👤</div><div class="empty-text">No employees found</div></div></td></tr>`;
