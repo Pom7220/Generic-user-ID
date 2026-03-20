@@ -189,8 +189,8 @@ tr:hover td{background:#FAFAFA}
       </div>
     </div>
     <div class="header-actions">
+      <div id="store-strip" style="display:flex;gap:4px;align-items:center;flex-wrap:nowrap;overflow-x:auto;max-width:420px"></div>
       <div class="sync-badge" id="sync-badge"><span class="sync-dot"></span><span id="sync-label">Live</span></div>
-      <button class="btn btn-outline" onclick="changeStore()">Change store</button>
       <button class="btn btn-primary" onclick="openGrant()">+ Grant access</button>
     </div>
   </div>
@@ -329,7 +329,7 @@ const APP_COLORS={POS:'#2563EB',GR:'#16A34A',ST:'#D97706',FP:'#DC2626',SC:'#7C3A
 
 let SESSION=null,STORE_ID=null,BU_ID=null;
 let APPS=[],ASSIGNMENTS=[],EMPLOYEES=[];
-let CUR_APP=null,CUR_FILTER=null,RT=null;
+let CUR_APP=null,CUR_FILTER=null,RT=null,ALL_STORES=[];
 
 async function init(){
   let {data:{session}}=await sb.auth.getSession();
@@ -347,15 +347,18 @@ async function init(){
     if(roles?.[0]?.store_id){STORE_ID=roles[0].store_id;BU_ID=roles[0].bu_id;}
   }
 
+  // Always load all stores for the store strip switcher
+  const {data:allStoresData}=await sb.from('stores').select('id,code,name,bu_id,region,business_units(name)').eq('active',true).order('code');
+  ALL_STORES=allStoresData||[];
+
   if(!STORE_ID){
-    // Show picker
-    const {data:stores}=await sb.from('stores').select('*,business_units(name)').eq('active',true).order('code');
-    showPicker(stores||[]);
+    showPicker(ALL_STORES);
     return;
   }
 
   showMain();
   await loadAll();
+  renderStoreStrip();
   setupRT();
 }
 
@@ -382,9 +385,34 @@ function selectStore(id,name,buId){
   location.reload();
 }
 
-function changeStore(){
-  sessionStorage.removeItem('gid_store_id');
-  location.reload();
+function renderStoreStrip(){
+  const strip=document.getElementById('store-strip');
+  if(!strip||!ALL_STORES.length)return;
+  const CHIP_COLORS=['#2563EB','#16A34A','#D97706','#DC2626','#7C3AED','#0891B2','#BE185D','#059669'];
+  strip.innerHTML=ALL_STORES.map((s,i)=>{
+    const isCur=s.id===STORE_ID;
+    const color=CHIP_COLORS[i%CHIP_COLORS.length];
+    return `<button onclick="selectStore('${s.id}','${s.name}','${s.bu_id}')"
+      title="${s.name}"
+      style="
+        display:flex;align-items:center;gap:5px;
+        padding:4px 8px 4px 4px;
+        border-radius:999px;
+        border:${isCur?'2px solid '+color:'1px solid #E8E8E3'};
+        background:${isCur?color+'18':'#fff'};
+        cursor:pointer;font-family:inherit;font-size:12px;font-weight:600;
+        color:${isCur?color:'#6B6B6B'};
+        white-space:nowrap;transition:all .15s;flex-shrink:0
+      ">
+      <span style="
+        width:20px;height:20px;border-radius:50%;
+        background:${color};color:#fff;
+        display:flex;align-items:center;justify-content:center;
+        font-size:9px;font-weight:800;flex-shrink:0
+      ">${s.code.slice(0,2)}</span>
+      ${s.code}
+    </button>`;
+  }).join('');
 }
 
 function showMain(){
@@ -403,7 +431,8 @@ async function loadAll(){
     sessionStorage.setItem('gid_bu_id',BU_ID);
   }
   document.getElementById('store-name').textContent=storeData?.name||'Store Portal';
-  document.getElementById('store-sub').textContent=`${storeData?.region||''} · POS ID management`;
+  const syncTime=new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('store-sub').textContent=`${storeData?.region||'Bangkok'} · Last synced ${syncTime}`;
   document.getElementById('audit-store-name').textContent=storeData?.name||'Store Portal';
 
   // Now fetch all data in parallel with correct BU_ID

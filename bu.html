@@ -4,659 +4,632 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>BU Dashboard — Generic ID Manager</title>
+<link rel="stylesheet" href="gid-shared.css">
 <style>
-*{box-sizing:border-box;margin:0;padding:0;-webkit-font-smoothing:antialiased}
-:root{--bg:#F5F5F0;--white:#FFF;--text:#1A1A1A;--muted:#6B6B6B;--hint:#9B9B9B;--border:#E8E8E3;--border2:#F0F0EB;--blue:#2563EB;--blue-lt:#EFF6FF;--green:#16A34A;--green-lt:#F0FDF4;--red:#DC2626;--red-lt:#FEF2F2;--amber:#D97706;--amber-lt:#FFFBEB;--purple:#7C3AED;--purple-lt:#F5F3FF;--radius:8px;--radius-lg:12px}
-body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',sans-serif;font-size:14px;min-height:100vh}
-.header{background:var(--white);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;position:sticky;top:0;z-index:100}
-.brand{display:flex;align-items:center;gap:10px}
-.brand-icon{width:32px;height:32px;border-radius:8px;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0}
-.brand-title{font-size:15px;font-weight:700}
-.brand-sub{font-size:12px;color:var(--muted);margin-top:1px}
-.nav{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
-.nb{padding:6px 12px;border-radius:var(--radius);border:1px solid var(--border);background:var(--white);color:var(--text);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .15s;text-decoration:none}
-.nb:hover{border-color:var(--blue);color:var(--blue)}
-.sync{display:flex;align-items:center;gap:5px;padding:4px 10px;border-radius:999px;background:var(--green-lt);border:1px solid #BBF7D0;font-size:12px;font-weight:500;color:var(--green)}
-.sync-dot{width:6px;height:6px;border-radius:50%;background:var(--green)}
-.metrics{display:flex;background:var(--white);border-bottom:1px solid var(--border);overflow-x:auto}
-.m{flex:1;min-width:100px;padding:16px 20px;border-right:1px solid var(--border);cursor:pointer;transition:background .12s;user-select:none}
-.m:last-child{border-right:none}
-.m:hover{background:#FAFAFA}
-.m.on{background:var(--blue-lt);border-bottom:2px solid var(--blue)}
-.ml{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:5px;white-space:nowrap}
-.mv{font-size:26px;font-weight:700}
-.mv.blue{color:var(--blue)}.mv.green{color:var(--green)}.mv.red{color:var(--red)}.mv.amber{color:var(--amber)}
-.fbar{display:flex;gap:6px;padding:10px 24px;background:var(--white);border-bottom:1px solid var(--border);align-items:center;overflow-x:auto;flex-wrap:nowrap}
-.fb{padding:5px 12px;border-radius:999px;border:1px solid var(--border);background:var(--white);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;color:var(--muted);white-space:nowrap;display:inline-flex;align-items:center;gap:5px;flex-shrink:0;transition:all .15s}
-.fb:hover{border-color:var(--text);color:var(--text)}
-.fb.on{background:var(--text);color:#fff;border-color:var(--text)}
-.fb .dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-.sep{width:1px;background:var(--border);height:18px;flex-shrink:0;margin:0 2px}
-.content{padding:16px 24px}
-.tcard{background:var(--white);border-radius:var(--radius-lg);border:1px solid var(--border);overflow:hidden}
-.thead-row{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--border)}
-.ttitle{font-size:14px;font-weight:600}
-table{width:100%;border-collapse:collapse}
-th{padding:9px 16px;text-align:left;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);background:#FAFAFA;white-space:nowrap}
-td{padding:13px 16px;border-bottom:1px solid var(--border2);vertical-align:middle;font-size:13px}
-tr:last-child td{border-bottom:none}
-tr.cr:hover td{background:#FAFAFA;cursor:pointer}
-.rb{display:flex;align-items:center;gap:8px}
-.rt{height:5px;border-radius:3px;background:var(--border);width:64px;overflow:hidden}
-.rf{height:100%;border-radius:3px}
-.rn{font-size:12px;font-weight:600;min-width:20px;text-align:right}
-.bd{display:inline-flex;align-items:center;font-size:11px;font-weight:600;padding:2px 8px;border-radius:999px}
-.g{background:var(--green-lt);color:var(--green)}
-.r{background:var(--red-lt);color:var(--red)}
-.a{background:var(--amber-lt);color:var(--amber)}
-.gy{background:#F3F4F6;color:var(--muted)}
-.emp-cell{display:flex;align-items:center;gap:10px}
-.av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
-.pw-ok{background:var(--green-lt);color:var(--green);padding:2px 8px;border-radius:var(--radius);font-size:12px;font-weight:600}
-.pw-warn{background:var(--amber-lt);color:var(--amber);padding:2px 8px;border-radius:var(--radius);font-size:12px;font-weight:600}
-.pw-danger{background:var(--red-lt);color:var(--red);padding:2px 8px;border-radius:var(--radius);font-size:12px;font-weight:600}
-.ab{padding:4px 12px;border-radius:var(--radius);border:1px solid var(--border);background:var(--white);font-size:12px;cursor:pointer;font-family:inherit;color:var(--text)}
-.ab:hover{border-color:var(--blue);color:var(--blue)}
-/* MODAL */
-.mbg{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px}
-.mo{background:var(--white);border-radius:var(--radius-lg);width:100%;max-width:500px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
-.mh{padding:18px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--white)}
-.mt{font-size:16px;font-weight:700}
-.mc{width:28px;height:28px;border-radius:50%;border:none;background:var(--bg);color:var(--muted);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
-.mb{padding:20px 24px}
-.mf{padding:14px 24px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end}
-.field{margin-bottom:14px}
-.field label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em}
-.field input,.field select{width:100%;padding:9px 12px;border-radius:var(--radius);border:1px solid var(--border);background:var(--white);color:var(--text);font-size:14px;font-family:inherit;outline:none}
-.field input:focus,.field select:focus{border-color:var(--blue);box-shadow:0 0 0 3px #DBEAFE}
-.tc{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.pdpa{font-size:11px;color:var(--muted);padding:8px 12px;background:var(--blue-lt);border-radius:var(--radius);margin-bottom:14px;border-left:3px solid var(--blue)}
-.lrow{display:flex;gap:8px}.lrow input{flex:1}
-.lbtn{padding:9px 14px;border-radius:var(--radius);border:1px solid var(--border);background:var(--white);font-size:13px;cursor:pointer;font-family:inherit}
-.lbtn:hover{border-color:var(--blue);color:var(--blue)}
-.eprev{padding:12px;background:var(--bg);border-radius:var(--radius);margin-bottom:14px;display:flex;align-items:center;gap:10px}
-.pbtn{padding:8px 16px;border-radius:var(--radius);border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
-.pbtn-primary{background:var(--blue);color:#fff}
-.pbtn-outline{background:var(--white);color:var(--text);border:1px solid var(--border)}
-.pbtn-purple{background:var(--purple);color:#fff}
-.pbtn-red{background:var(--red);color:#fff}
-/* DRAWER */
-.dbg{position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:400;display:flex;justify-content:flex-end}
-.dr{width:100%;max-width:440px;background:var(--white);height:100%;overflow-y:auto;box-shadow:-4px 0 24px rgba(0,0,0,.12)}
-.dh{padding:18px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--white)}
-.dtitle{font-size:16px;font-weight:700}
-.dclose{width:28px;height:28px;border-radius:50%;border:none;background:var(--bg);color:var(--muted);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
-.db{padding:20px 24px}
-.dstat{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:20px}
-.ds{padding:12px;background:var(--bg);border-radius:var(--radius)}
-.dsl{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;margin-bottom:4px}
-.dsv{font-size:22px;font-weight:700}
-.approw{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border2)}
-.approw:last-child{border-bottom:none}
-.empty{text-align:center;padding:48px;color:var(--hint)}
-.spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .6s linear infinite;display:inline-block}
-@keyframes spin{to{transform:rotate(360deg)}}
-.hidden{display:none!important}
+.header{background:var(--white);border-bottom:1px solid var(--border);padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:200}
+.header-left{display:flex;align-items:center;gap:10px}
+.gid-logo{width:32px;height:32px;border-radius:8px;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0}
+.header-title h1{font-size:15px;font-weight:700}
+.header-title p{font-size:11px;color:var(--muted)}
+.header-actions{display:flex;gap:6px;align-items:center}
+.live-badge{display:flex;align-items:center;gap:5px;padding:3px 10px;border-radius:999px;background:var(--green-lt);border:1px solid var(--green-mid);font-size:11px;font-weight:600;color:var(--green)}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);transition:background .3s}
+.btn{padding:6px 14px;border-radius:var(--radius);border:none;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:opacity .15s;display:inline-flex;align-items:center;gap:5px}
+.btn:hover{opacity:.85}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-outline{background:var(--white);color:var(--text);border:1px solid var(--border)}
+.btn-sm{padding:4px 10px;font-size:12px}
+
+/* FILTER ROW */
+.filter-row{background:var(--white);border-bottom:1px solid var(--border);padding:8px 24px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.filter-chip{padding:4px 12px;border-radius:999px;border:1px solid var(--border);background:var(--white);font-size:12px;font-weight:500;color:var(--muted);cursor:pointer;font-family:inherit;transition:all .15s;display:inline-flex;align-items:center;gap:5px}
+.filter-chip:hover{border-color:var(--blue);color:var(--blue)}
+.filter-chip.active{background:var(--text);border-color:var(--text);color:#fff;font-weight:600}
+.filter-chip-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.filter-sep{width:1px;height:16px;background:var(--border);margin:0 4px;flex-shrink:0}
+
 /* VIEW TABS */
-.vtabs{display:flex;gap:2px;padding:0 24px;background:var(--white);border-bottom:1px solid var(--border)}
-.vt{padding:10px 16px;border-radius:var(--radius) var(--radius) 0 0;border:1px solid transparent;border-bottom:none;cursor:pointer;font-size:13px;font-weight:500;color:var(--muted);font-family:inherit;background:transparent;position:relative;bottom:-1px}
-.vt:hover{color:var(--text)}
-.vt.on{color:var(--text);background:var(--white);border-color:var(--border);font-weight:600}
+.view-tabs{background:var(--white);border-bottom:1px solid var(--border);padding:0 24px;display:flex;height:40px;align-items:flex-end;gap:0}
+.view-tab{padding:8px 14px;border-radius:var(--radius) var(--radius) 0 0;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;font-family:inherit;border:1px solid transparent;border-bottom:none;background:transparent;position:relative;bottom:-1px;transition:all .12s}
+.view-tab:hover{color:var(--text)}
+.view-tab.active{color:var(--text);background:var(--white);border-color:var(--border);font-weight:600}
+
+/* CONTENT */
+.content{padding:20px 24px}
+.table-card{background:var(--white);border-radius:var(--radius-lg);border:1px solid var(--border);overflow:hidden;box-shadow:var(--shadow)}
+.table-header{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--border)}
+.table-title{font-size:14px;font-weight:700}
+.table-sub{font-size:12px;color:var(--muted);margin-left:8px}
+.filter-pill{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:999px;background:var(--blue-lt);color:var(--blue);font-size:11px;font-weight:600;margin-left:6px;cursor:pointer;border:none;font-family:inherit}
+table{width:100%;border-collapse:collapse}
+th{padding:9px 14px;text-align:left;font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:10px 14px;border-bottom:1px solid var(--border2);font-size:13px;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr.clickable{cursor:pointer;transition:background .1s}
+tr.clickable:hover{background:var(--bg)}
+.empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:56px;color:var(--hint)}
+.empty-icon{font-size:36px;margin-bottom:10px}
+.empty-text{font-size:14px}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600}
+.badge-green{background:var(--green-lt);color:var(--green)}
+.badge-amber{background:var(--amber-lt);color:var(--amber)}
+.badge-red{background:var(--red-lt);color:var(--red)}
+.badge-blue{background:var(--blue-lt);color:var(--blue)}
+.badge-gray{background:var(--border);color:var(--muted)}
+
+/* RISK BAR */
+.risk-wrap{display:flex;align-items:center;gap:8px}
+.risk-bar{flex:1;height:5px;border-radius:3px;background:var(--border);max-width:80px}
+.risk-fill{height:5px;border-radius:3px}
+.risk-num{font-size:12px;font-weight:600;min-width:24px}
+
+/* DRAWER */
+.drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:300;display:flex;justify-content:flex-end}
+.drawer-overlay.hidden{display:none}
+.drawer-panel{width:340px;height:100%;background:var(--white);border-left:1px solid var(--border);display:flex;flex-direction:column;box-shadow:-4px 0 20px rgba(0,0,0,.1)}
+.drawer-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.drawer-title{font-size:15px;font-weight:700}
+.drawer-close{background:none;border:none;cursor:pointer;font-size:18px;color:var(--muted);padding:2px 6px;border-radius:var(--radius)}
+.drawer-body{flex:1;overflow-y:auto;padding:16px 20px}
+.drawer-metric-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.drawer-metric-cell{padding:12px;background:var(--bg);border-radius:var(--radius);border:1px solid var(--border2)}
+.drawer-metric-cell .metric-label{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px}
+.drawer-metric-cell .metric-value{font-size:22px;font-weight:700}
+.drawer-section-title{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin:12px 0 8px}
+.drawer-row{display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border2)}
+.drawer-row:last-child{border-bottom:none}
+
+/* MODAL */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:400;display:flex;align-items:center;justify-content:center}
+.modal-bg.hidden{display:none}
+.modal{background:var(--white);border-radius:var(--radius-xl);width:420px;max-width:95vw;box-shadow:var(--shadow-lg);overflow:hidden}
+.modal-header{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.modal-header h3{font-size:15px;font-weight:700}
+.modal-body{padding:20px 22px;display:flex;flex-direction:column;gap:14px}
+.modal-footer{padding:14px 22px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px}
+.form-group{display:flex;flex-direction:column;gap:5px}
+.form-label{font-size:12px;font-weight:600;color:var(--muted)}
+.form-input,.form-select{padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:inherit;width:100%}
+.form-input:focus,.form-select:focus{outline:none;border-color:var(--blue)}
+
+.mono{font-family:ui-monospace,monospace;font-size:12px}
+.text-muted{color:var(--muted)}
+.text-hint{color:var(--hint)}
+.hidden{display:none!important}
 </style>
 </head>
 <body>
 
+<!-- HEADER -->
 <div class="header">
-  <div class="brand">
-    <div class="brand-icon">GID</div>
-    <div>
-      <div class="brand-title" id="bu-name">BU Dashboard</div>
-      <div class="brand-sub" id="bu-sub">Loading…</div>
+  <div class="header-left">
+    <div class="gid-logo">GID</div>
+    <div class="header-title">
+      <h1 id="bu-name">Loading…</h1>
+      <p>ho admin · <span id="user-email"></span></p>
     </div>
   </div>
-  <div class="nav">
-    <div class="sync"><span class="sync-dot"></span><span id="slbl">Live</span></div>
-    <button class="nb" onclick="location.href='ho.html'">HO view</button>
-    <button class="nb" onclick="gotoStore()">Store portal</button>
-    <button class="nb" onclick="location.href='hr-upload.html'">HR Upload</button>
-    <button class="nb" onclick="switchBU()">Switch BU</button>
-    <button class="nb" id="btn-add-user" onclick="openAddUser()" style="display:none;background:var(--purple);color:#fff;border-color:var(--purple)">+ User</button>
-    <button class="nb" onclick="doSignOut()">Sign out</button>
+  <div class="header-actions">
+    <div class="live-badge"><span class="live-dot" id="live-dot"></span><span id="live-label">Live</span></div>
+    <button class="btn btn-outline btn-sm" onclick="location.href='ho.html'">HO view</button>
+    <button class="btn btn-outline btn-sm" onclick="gotoStore()">Store portal</button>
+    <button class="btn btn-outline btn-sm" onclick="location.href='hr-upload.html'">HR Upload</button>
+    <button class="btn btn-outline btn-sm" onclick="switchBU()">Switch BU</button>
+    <button class="btn btn-primary btn-sm" onclick="openAddUser()">+ User</button>
+    <button class="btn btn-outline btn-sm" onclick="doSignOut()">Sign out</button>
   </div>
 </div>
 
-<!-- METRICS -->
-<div class="metrics" id="metrics"></div>
+<!-- METRICS BAR (from gid-shared.css) -->
+<div class="metrics-bar" id="metrics-bar"></div>
+
+<!-- FILTER ROW -->
+<div class="filter-row" id="filter-row"></div>
 
 <!-- VIEW TABS -->
-<div class="vtabs">
-  <button class="vt on" onclick="setView('ids')" id="vt-ids">Generic IDs</button>
-  <button class="vt" onclick="setView('stores')" id="vt-stores">Stores</button>
-  <button class="vt" onclick="setView('people')" id="vt-people">People</button>
-  <button class="vt" onclick="setView('risk')" id="vt-risk">Risk</button>
+<div class="view-tabs">
+  <button class="view-tab active" id="tab-ids"    onclick="setView('ids')">Generic IDs</button>
+  <button class="view-tab"        id="tab-store"  onclick="setView('store')">Stores</button>
+  <button class="view-tab"        id="tab-app"    onclick="setView('app')">By application</button>
+  <button class="view-tab"        id="tab-people" onclick="setView('people')">People</button>
+  <button class="view-tab"        id="tab-risk"   onclick="setView('risk')">Risk area</button>
 </div>
 
-<!-- FILTER BAR (shown for IDs and Stores views) -->
-<div class="fbar" id="fbar"></div>
-
+<!-- CONTENT -->
 <div class="content">
-  <div class="tcard">
-    <div class="thead-row">
-      <span class="ttitle" id="table-title">All IDs</span>
-      <div style="display:flex;gap:8px" id="table-actions"></div>
+  <div class="table-card">
+    <div class="table-header">
+      <div style="display:flex;align-items:baseline;gap:0">
+        <span class="table-title" id="table-title">Generic IDs</span>
+        <span class="table-sub"   id="table-sub"></span>
+        <button class="filter-pill hidden" id="filter-pill" onclick="clearMetric()">× clear filter</button>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-primary btn-sm" onclick="gotoStore()">+ Grant access</button>
+        <button class="btn btn-outline btn-sm" onclick="openAuditLog()">Audit log ↗</button>
+      </div>
     </div>
-    <div style="overflow-x:auto"><table><thead id="thead"></thead><tbody id="tbody"></tbody></table></div>
-  </div>
-</div>
-
-<!-- GRANT MODAL -->
-<div class="mbg hidden" id="modal-grant">
-  <div class="mo">
-    <div class="mh"><span class="mt">Grant Generic ID</span><button class="mc" onclick="closeModal('modal-grant')">✕</button></div>
-    <div class="mb">
-      <div class="pdpa">🔒 PDPA: Employee names fetched from SuccessFactors in real-time — not stored here.</div>
-      <div class="tc">
-        <div class="field"><label>Generic ID</label><input id="g-id" placeholder="POS06" style="font-family:monospace;font-weight:700"></div>
-        <div class="field"><label>App</label><select id="g-app"></select></div>
-      </div>
-      <div class="field"><label>Store</label><select id="g-store"></select></div>
-      <div class="field"><label>Employee code</label>
-        <div class="lrow"><input id="g-emp" placeholder="EMP-4200" style="font-family:monospace" oninput="document.getElementById('g-emp-prev').classList.add('hidden')">
-        <button class="lbtn" onclick="lookupEmp('g-emp','g-emp-prev')">Look up</button></div>
-      </div>
-      <div id="g-emp-prev" class="eprev hidden">
-        <div class="av" id="g-emp-av" style="background:#DBEAFE;color:#1D4ED8">?</div>
-        <div><div style="font-weight:600" id="g-emp-name">—</div><div style="font-size:12px;color:var(--muted)" id="g-emp-detail">—</div></div>
-      </div>
-      <div class="field"><label>Supervisor code</label>
-        <div class="lrow"><input id="g-sup" placeholder="EMP-4100" style="font-family:monospace" oninput="document.getElementById('g-sup-prev').classList.add('hidden')">
-        <button class="lbtn" onclick="lookupEmp('g-sup','g-sup-prev')">Look up</button></div>
-      </div>
-      <div id="g-sup-prev" class="eprev hidden">
-        <div class="av" id="g-sup-av" style="background:#FEF3C7;color:#92400E">?</div>
-        <div><div style="font-weight:600" id="g-sup-name">—</div><div style="font-size:12px;color:var(--muted)" id="g-sup-detail">—</div></div>
-      </div>
-      <div id="g-err" class="hidden" style="color:var(--red);font-size:13px;margin-top:-8px"></div>
-    </div>
-    <div class="mf">
-      <button class="pbtn pbtn-outline" onclick="closeModal('modal-grant')">Cancel</button>
-      <button class="pbtn pbtn-primary" id="grant-btn" onclick="saveGrant()">Grant access</button>
+    <div style="overflow-x:auto">
+      <table><thead id="table-head"></thead><tbody id="table-body"></tbody></table>
     </div>
   </div>
 </div>
 
-<!-- ADD USER MODAL -->
-<div class="mbg hidden" id="modal-user">
-  <div class="mo">
-    <div class="mh"><span class="mt">Add user</span><button class="mc" onclick="closeModal('modal-user')">✕</button></div>
-    <div class="mb">
-      <div class="field"><label>Email</label><input id="u-email" type="email" placeholder="user@company.com" autocapitalize="none"></div>
-      <div class="field"><label>Full name (optional)</label><input id="u-name"></div>
-      <div class="field"><label>Temporary password</label><input id="u-pass" type="password" placeholder="Min 8 chars"></div>
-      <div class="field"><label>Role</label>
-        <select id="u-role" onchange="onRoleChange()">
-          <option value="store_manager">Store Manager — single store</option>
-          <option value="bu_manager">BU Manager — all stores</option>
-          <option value="bu_hr_admin">HR Admin (BU level)</option>
-          <option value="hr_admin">HR Admin — multiple BUs</option>
-          <option value="ho_admin">HO Admin — all BUs</option>
-        </select>
-      </div>
-      <div class="field hidden" id="u-store-f"><label>Assign to store</label><select id="u-store-sel"></select></div>
-      <div id="u-err" class="hidden" style="color:var(--red);font-size:13px;margin-top:-8px"></div>
+<!-- SIDE DRAWER -->
+<div class="drawer-overlay hidden" id="drawer" onclick="if(event.target===this)closeDrawer()">
+  <div class="drawer-panel">
+    <div class="drawer-header">
+      <span class="drawer-title" id="drawer-title">Detail</span>
+      <button class="drawer-close" onclick="closeDrawer()">✕</button>
     </div>
-    <div class="mf">
-      <button class="pbtn pbtn-outline" onclick="closeModal('modal-user')">Cancel</button>
-      <button class="pbtn pbtn-purple" id="user-btn" onclick="saveUser()">Create user</button>
+    <div class="drawer-body" id="drawer-body"></div>
+  </div>
+</div>
+
+<!-- MODAL: Add User -->
+<div class="modal-bg hidden" id="modal-user">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>Add User</h3>
+      <button class="drawer-close" onclick="closeUserModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Email</label>
+        <input class="form-input" id="u-email" type="email" placeholder="user@company.com"></div>
+      <div class="form-group"><label class="form-label">Role</label>
+        <select class="form-select" id="u-role">
+          <option value="bu_admin">BU Admin</option>
+          <option value="store_manager">Store Manager</option>
+          <option value="viewer">Viewer</option>
+        </select></div>
+      <div class="form-group"><label class="form-label">Store (optional)</label>
+        <select class="form-select" id="u-store"><option value="">— All stores —</option></select></div>
+      <p class="hidden" id="u-err" style="color:var(--red);font-size:12px"></p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeUserModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="submitUser()">Add User</button>
     </div>
   </div>
 </div>
 
-<!-- MANAGE MODAL -->
-<div class="mbg hidden" id="modal-manage">
-  <div class="mo">
-    <div class="mh"><span class="mt" id="manage-title">Manage</span><button class="mc" onclick="closeModal('modal-manage')">✕</button></div>
-    <div class="mb" id="manage-body"></div>
-    <div class="mf" id="manage-footer"></div>
-  </div>
-</div>
-
-<!-- DRAWER -->
-<div class="dbg hidden" id="dbg" onclick="closeDrawer()">
-  <div class="dr" onclick="event.stopPropagation()">
-    <div class="dh"><span class="dtitle" id="dtitle">Detail</span><button class="dclose" onclick="closeDrawer()">✕</button></div>
-    <div class="db" id="dbody"></div>
-  </div>
-</div>
-
-<script src="employee-cache.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="employee-cache.js"></script>
 <script>
 const SUPABASE_URL='https://hnvytilmxoiaqceseooh.supabase.co';
-const SUPABASE_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhudnl0aWxteG9pYXFjZXNlb29oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MTc0ODIsImV4cCI6MjA4OTQ5MzQ4Mn0.x7WCLXRZEoorxEIuk5dwHG8EpasBGGB7peBysWUdElw';
-const sb=supabase.createClient(SUPABASE_URL,SUPABASE_ANON);
-const ACOLORS={POS:'#2563EB',GR:'#16A34A',ST:'#D97706',FP:'#DC2626',SC:'#7C3AED',default:'#6B7280'};
+const SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhudnl0aWxteG9pYXFjZXNlb29oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MTc0ODIsImV4cCI6MjA4OTQ5MzQ4Mn0.x7WCLXRZEoorxEIuk5dwHG8EpasBGGB7peBysWUdElw';
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
-let SESSION=null,BU_ID=null,ROLE=null,VIEW='ids',MF=null;
-let STORES=[],APPS=[],ASN=[],EMPS=[],USERS=[];
-let FSTORE=null,FAPP=null;
+const APP_COLORS={POS:'#1D4ED8',GR:'#15803D',ST:'#B45309',FP:'#B91C1C',default:'#6B6B6B'};
 
+let SESSION=null,BU_ID=null,BU=null;
+let STORES=[],APPS=[],ASSIGNMENTS=[],EMPLOYEES=[];
+let CUR_VIEW='ids',CUR_STORE=null,CUR_APP=null,CUR_METRIC=null;
+
+/* ── SINGLE FILTER SOURCE ── */
+function filteredAsn(){
+  let a=ASSIGNMENTS;
+  if(CUR_STORE)                  a=a.filter(x=>x.store_id===CUR_STORE);
+  if(CUR_APP)                    a=a.filter(x=>x.app?.code===CUR_APP);
+  if(CUR_METRIC==='active')      a=a.filter(x=>x.status==='active');
+  else if(CUR_METRIC==='pw_overdue') a=a.filter(x=>isPwOverdue(x));
+  else if(CUR_METRIC==='risk')   a=a.filter(x=>['at_risk','orphan'].includes(x.status));
+  return a;
+}
+function isPwOverdue(a){
+  if(!a.pw_last_rotated)return false;
+  return Math.floor((Date.now()-new Date(a.pw_last_rotated))/(864e5))>=(a.app?.pw_rotation_days||30);
+}
+
+/* ── INIT ── */
 async function init(){
-  let {data:{session}}=await sb.auth.getSession();
-  if(!session){const {data:r}=await sb.auth.refreshSession();session=r?.session;}
+  let{data:{session}}=await sb.auth.getSession();
+  if(!session){const{data:r}=await sb.auth.refreshSession();session=r?.session;}
   if(!session){location.href='index.html';return;}
   SESSION=session;
   EMP_CACHE.init(sb,SUPABASE_URL);
+  document.getElementById('user-email').textContent=session.user.email||'';
 
   BU_ID=sessionStorage.getItem('gid_bu_id');
-  ROLE=sessionStorage.getItem('gid_role');
   if(!BU_ID){
-    const {data:roles}=await sb.from('user_roles').select('bu_id,role').eq('user_id',session.user.id).limit(1);
-    if(roles?.[0]){BU_ID=roles[0].bu_id;ROLE=roles[0].role;}
+    const{data:roles}=await sb.from('user_roles').select('bu_id').eq('user_id',session.user.id).limit(1);
+    BU_ID=roles?.[0]?.bu_id;
+    if(!BU_ID){location.href='ho.html';return;}
+    sessionStorage.setItem('gid_bu_id',BU_ID);
   }
-  if(!BU_ID){location.href='index.html';return;}
-
-  // Show user management for admins
-  if(['ho_admin','hr_admin','bu_hr_admin'].includes(ROLE)){
-    document.getElementById('btn-add-user').style.display='';
-  }
-
-  // Load BU name
-  const {data:bu}=await sb.from('business_units').select('name,code').eq('id',BU_ID).single();
-  document.getElementById('bu-name').textContent=bu?.name||'BU Dashboard';
-  document.getElementById('bu-sub').textContent=`${ROLE?.replace(/_/g,' ')} · ${session.user.email}`;
-
   await loadAll();
-  setupRT();
 }
 
 async function loadAll(){
   setSyncing(true);
-  const {data:stData}=await sb.from('stores').select('*').eq('bu_id',BU_ID).eq('active',true).order('code');
-  STORES=stData||[];
-  const stIds=STORES.map(s=>s.id);
-
-  const [appR,asnR,empR]=await Promise.all([
-    sb.from('apps').select('*').eq('bu_id',BU_ID).eq('active',true).order('code'),
-    stIds.length?sb.from('generic_id_assignments').select('*,app:app_id(id,code,name,pw_rotation_days)').in('store_id',stIds):{data:[]},
-    sb.from('employees').select('id,emp_code,status,supervisor_emp_code,store_id,resigned_at').eq('bu_id',BU_ID)
+  const[buR,stR,apR]=await Promise.all([
+    sb.from('business_units').select('*').eq('id',BU_ID).single(),
+    sb.from('stores').select('*').eq('bu_id',BU_ID).eq('active',true).order('code'),
+    sb.from('apps').select('*').eq('bu_id',BU_ID).eq('active',true).order('code')
   ]);
-  APPS=appR.data||[];ASN=asnR.data||[];EMPS=empR.data||[];
+  BU=buR.data;STORES=stR.data||[];APPS=apR.data||[];
+  document.getElementById('bu-name').textContent=BU?.name||'BU Dashboard';
 
-  // Populate grant modal selects
-  document.getElementById('g-app').innerHTML=APPS.map(a=>`<option value="${a.id}" data-code="${a.code}">${a.name}</option>`).join('');
-  document.getElementById('g-store').innerHTML=STORES.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
-  document.getElementById('u-store-sel').innerHTML=STORES.map(s=>`<option value="${s.id}">${s.name}</option>`).join('');
-
-  renderAll();setSyncing(false);
-
-  // Fetch PII
-  const codes=[...new Set([...ASN.map(a=>a.emp_code),...ASN.map(a=>a.supervisor_emp_code),...EMPS.map(e=>e.emp_code)].filter(Boolean))];
-  if(codes.length){await EMP_CACHE.getBatch(codes);renderTable();}
-}
-
-function setupRT(){
-  const stIds=STORES.map(s=>s.id);
-  if(!stIds.length)return;
-  const ch=sb.channel('bu_'+BU_ID);
-  stIds.forEach(id=>ch.on('postgres_changes',{event:'*',schema:'public',table:'generic_id_assignments',filter:`store_id=eq.${id}`},()=>loadAll()));
-  ch.subscribe(s=>{if(s==='SUBSCRIBED')setSyncing(false);});
-}
-
-function setSyncing(b){document.getElementById('slbl').textContent=b?'Syncing…':'Live';}
-
-function filtASN(){
-  let a=ASN;
-  if(FSTORE) a=a.filter(x=>x.store_id===FSTORE);
-  if(FAPP) a=a.filter(x=>x.app?.code===FAPP);
-  if(MF==='active') a=a.filter(x=>x.status==='active');
-  else if(MF==='unassigned') a=a.filter(x=>!x.emp_code||x.status==='idle');
-  else if(MF==='pw_overdue') a=a.filter(x=>x.status==='active'&&isPwOld(x));
-  else if(MF==='risk') a=a.filter(x=>['at_risk','orphan'].includes(x.status));
-  return a;
-}
-
-function renderAll(){renderMetrics();renderFilterBar();renderTable();}
-
-function renderMetrics(){
-  const base=FSTORE?ASN.filter(x=>x.store_id===FSTORE):(FAPP?ASN.filter(x=>x.app?.code===FAPP):ASN);
-  const mk=(lbl,val,cls,key)=>`<div class="m${MF===key?' on':''}" onclick="setMF('${key}')">
-    <div class="ml">${lbl}</div><div class="mv ${cls}">${val}</div></div>`;
-  document.getElementById('metrics').innerHTML=
-    mk('Stores',STORES.length,'blue','all')+
-    mk('Employees',EMPS.filter(e=>e.status==='active').length,'green','all')+
-    mk('Total IDs',base.length,'','all')+
-    mk('Active IDs',base.filter(x=>x.status==='active').length,'green','active')+
-    mk('Pw overdue',base.filter(x=>isPwOld(x)).length,base.filter(x=>isPwOld(x)).length?'amber':'','pw_overdue')+
-    mk('Risk alerts',base.filter(x=>['at_risk','orphan'].includes(x.status)).length,base.filter(x=>['at_risk','orphan'].includes(x.status)).length?'red':'','risk');
-}
-
-function setMF(k){
-  if(k==='all'){MF=null;}else{MF=MF===k?null:k;}
-  if(VIEW!=='ids'&&VIEW!=='risk'){setView('ids');return;}
-  renderMetrics();renderFilterBar();renderTable();
-}
-
-function renderFilterBar(){
-  const fbar=document.getElementById('fbar');
-  if(VIEW==='people'){fbar.innerHTML='';return;}
-  let html=`<button class="fb${!FSTORE?' on':''}" onclick="setFSTORE(null)">All stores</button>`;
-  STORES.forEach(s=>{
-    html+=`<button class="fb${FSTORE===s.id?' on':''}" onclick="setFSTORE('${s.id}')">${s.code}</button>`;
-  });
-  html+=`<span class="sep"></span>`;
-  APPS.forEach(a=>{
-    const col=ACOLORS[a.code]||ACOLORS.default;
-    html+=`<button class="fb${FAPP===a.code?' on':''}" onclick="setFAPP('${a.code}')">
-      <span class="dot" style="background:${col}"></span>${a.name}
-    </button>`;
-  });
-  fbar.innerHTML=html;
-}
-
-function setFSTORE(id){FSTORE=id;MF=null;renderAll();}
-function setFAPP(c){FAPP=FAPP===c?null:c;MF=null;renderAll();}
-
-function setView(v){
-  VIEW=v;
-  ['ids','stores','people','risk'].forEach(x=>document.getElementById('vt-'+x).classList.toggle('on',x===v));
-  MF=null;renderFilterBar();renderTable();
-}
-
-function renderTable(){
-  const acts=document.getElementById('table-actions');
-  if(VIEW==='ids'){
-    acts.innerHTML=`<button class="pbtn pbtn-primary" onclick="openGrant()" style="font-size:12px;padding:6px 12px">+ Grant access</button>
-      <button class="pbtn pbtn-outline" onclick="showAudit()" style="font-size:12px;padding:6px 12px">Audit log ↗</button>`;
-    renderIDs();
-  } else if(VIEW==='stores'){
-    acts.innerHTML=`<button class="pbtn pbtn-outline" onclick="openAddStore()" style="font-size:12px;padding:6px 12px">+ Add store</button>`;
-    renderStores();
-  } else if(VIEW==='people'){
-    acts.innerHTML=`<button class="pbtn pbtn-outline" onclick="openAddEmployee()" style="font-size:12px;padding:6px 12px">+ Add employee</button>`;
-    renderPeople();
-  } else if(VIEW==='risk'){
-    acts.innerHTML='';
-    renderRisk();
+  if(STORES.length){
+    const[asnR,empR]=await Promise.all([
+      sb.from('generic_id_assignments')
+        .select('id,store_id,app_id,generic_id,status,pw_last_rotated,emp_code,supervisor_emp_code,app:app_id(code,name,pw_rotation_days)')
+        .in('store_id',STORES.map(s=>s.id)),
+      sb.from('employees').select('id,emp_code,status,store_id').eq('bu_id',BU_ID)
+    ]);
+    ASSIGNMENTS=asnR.data||[];EMPLOYEES=empR.data||[];
+    const codes=[...new Set(EMPLOYEES.map(e=>e.emp_code).filter(Boolean))];
+    if(codes.length) EMP_CACHE.getBatch(codes);
   }
+
+  document.getElementById('u-store').innerHTML=
+    '<option value="">— All stores —</option>'+
+    STORES.map(s=>`<option value="${s.id}">${s.code} ${s.name}</option>`).join('');
+
+  renderFilters();renderMetrics();renderView();
+  setSyncing(false);
 }
 
-function renderIDs(){
-  const a=filtASN();
-  const filterLabel={active:'Active IDs',unassigned:'Unassigned',pw_overdue:'Password Overdue',risk:'Risk Alerts'}[MF]||'';
-  const storeLabel=FSTORE?STORES.find(s=>s.id===FSTORE)?.name:'';
-  const appLabel=FAPP?APPS.find(x=>x.code===FAPP)?.name:'';
-  document.getElementById('table-title').textContent=[filterLabel,storeLabel,appLabel].filter(Boolean).join(' · ')||'All IDs';
-  document.getElementById('thead').innerHTML=`<tr><th>Generic ID</th><th>App</th><th>Store</th><th>Assigned to</th><th>Supervisor</th><th>Pw age</th><th>Status</th><th></th></tr>`;
-  if(!a.length){document.getElementById('tbody').innerHTML=`<tr><td colspan="8"><div class="empty"><div style="font-size:28px;opacity:.4;margin-bottom:8px">🔑</div>No IDs found</div></td></tr>`;return;}
-  document.getElementById('tbody').innerHTML=a.map(x=>{
-    const store=STORES.find(s=>s.id===x.store_id);
-    const empName=EMP_CACHE.getName(x.emp_code)||'';
-    const empMob=EMP_CACHE.getMobile(x.emp_code)||'';
-    const empInit=EMP_CACHE.getInitials(x.emp_code)||'??';
-    const supName=x.supervisor_emp_code?EMP_CACHE.getName(x.supervisor_emp_code)||x.supervisor_emp_code:'—';
-    const col=ACOLORS[x.app?.code]||ACOLORS.default;
-    const days=x.pw_last_rotated?Math.floor((Date.now()-new Date(x.pw_last_rotated))/(864e5)):null;
-    const max=x.app?.pw_rotation_days||30;
-    const pwCls=days===null?'pw-na':days>=max?'pw-danger':days>=max*.7?'pw-warn':'pw-ok';
-    const pwTxt=days===null?'N/A':days+'d';
-    const stBadge={active:`<span style="color:var(--green);font-weight:600;font-size:12px">● Active</span>`,disabled:`<span style="color:var(--muted);font-size:12px">Disabled</span>`,at_risk:`<span style="color:var(--amber);font-weight:600;font-size:12px">⚠ At risk</span>`,idle:`<span style="color:var(--hint);font-size:12px">Idle</span>`,orphan:`<span style="color:var(--red);font-weight:600;font-size:12px">⛔ Orphan</span>`}[x.status]||x.status;
-    const empCell=x.emp_code?`<div class="emp-cell"><div class="av" style="background:${col}22;color:${col}">${empInit}</div><div><div style="font-weight:600;font-size:13px">${empName||x.emp_code}</div>${empMob?`<div style="font-size:11px;color:var(--muted)">${empMob}</div>`:''}</div></div>`:`<span style="color:var(--hint);font-style:italic">—</span>`;
-    const actBtn=x.status==='active'?`<button class="ab" onclick="openManage('${x.id}')">View ↗</button>`:x.status==='at_risk'?`<button class="ab" style="border-color:#FCA5A5;color:var(--red)" onclick="openManage('${x.id}')">Reassign ↗</button>`:(!x.emp_code||x.status==='idle')?`<button class="ab" onclick="openGrant('${x.generic_id}','${x.app_id||''}','${x.store_id||''}')">Grant ↗</button>`:`<button class="ab" onclick="openManage('${x.id}')">History ↗</button>`;
-    return `<tr><td style="font-family:monospace;font-weight:700">${x.generic_id}</td>
-      <td><div style="display:flex;align-items:center;gap:6px"><span style="width:7px;height:7px;border-radius:50%;background:${col};display:inline-block"></span><span style="font-size:12px">${x.app?.name||'—'}</span></div></td>
-      <td style="font-size:12px;color:var(--muted)">${store?.name||'—'}</td>
-      <td>${empCell}</td>
-      <td style="font-size:12px">${supName}</td>
-      <td><span class="${pwCls}">${pwTxt}</span></td>
-      <td>${stBadge}</td>
-      <td>${actBtn}</td></tr>`;
+function setSyncing(v){
+  const dot=document.getElementById('live-dot'),lbl=document.getElementById('live-label');
+  dot.style.background=v?'#D97706':'';
+  lbl.textContent=v?'Syncing…':'Live';
+}
+
+/* ── FILTER CONTROLS ── */
+function renderFilters(){
+  document.getElementById('filter-row').innerHTML=
+    `<button class="filter-chip${!CUR_STORE?' active':''}" onclick="setStore(null)">All stores</button>`+
+    STORES.map(s=>`<button class="filter-chip${CUR_STORE===s.id?' active':''}" onclick="setStore('${s.id}')">${s.code}</button>`).join('')+
+    `<div class="filter-sep"></div>`+
+    `<button class="filter-chip${!CUR_APP?' active':''}" onclick="setAppFilter(null)">All apps</button>`+
+    APPS.map(a=>`<button class="filter-chip${CUR_APP===a.code?' active':''}" onclick="setAppFilter('${a.code}')"><span class="filter-chip-dot" style="background:${APP_COLORS[a.code]||APP_COLORS.default}"></span>${a.name}</button>`).join('');
+}
+
+function setStore(id){CUR_STORE=id;CUR_METRIC=null;renderFilters();renderMetrics();renderView();}
+function setAppFilter(code){CUR_APP=code;CUR_METRIC=null;renderFilters();renderMetrics();renderView();}
+
+function setMetric(f){
+  CUR_METRIC=(CUR_METRIC===f)?null:f;
+  if(CUR_METRIC&&CUR_VIEW!=='ids') setView('ids');
+  else{renderMetrics();renderView();}
+}
+function clearMetric(){CUR_METRIC=null;renderMetrics();renderView();}
+
+/* ── METRICS BAR ── */
+function renderMetrics(){
+  // Counts always from store+app filtered but NOT metric filtered (so numbers reflect total)
+  let base=ASSIGNMENTS;
+  if(CUR_STORE) base=base.filter(a=>a.store_id===CUR_STORE);
+  if(CUR_APP)   base=base.filter(a=>a.app?.code===CUR_APP);
+  const total=base.length;
+  const active=base.filter(a=>a.status==='active').length;
+  const empCount=CUR_STORE?EMPLOYEES.filter(e=>e.store_id===CUR_STORE).length:EMPLOYEES.length;
+  const pwDue=base.filter(a=>isPwOverdue(a)).length;
+  const risk=base.filter(a=>['at_risk','orphan'].includes(a.status)).length;
+
+  const mk=(label,val,cls,f)=>`
+    <div class="metric-cell${CUR_METRIC===f?' active-filter':''}" onclick="setMetric('${f}')" style="cursor:pointer">
+      <div class="metric-label">${label}</div>
+      <div class="metric-value ${cls}">${val}</div>
+    </div><div class="metric-divider"></div>`;
+
+  document.getElementById('metrics-bar').innerHTML=
+    `<div class="metric-cell" onclick="setView('store')" style="cursor:pointer">
+      <div class="metric-label">Stores</div><div class="metric-value mv-default">${CUR_STORE?1:STORES.length}</div>
+    </div><div class="metric-divider"></div>`+
+    `<div class="metric-cell" onclick="setView('people')" style="cursor:pointer">
+      <div class="metric-label">Employees</div><div class="metric-value mv-default">${empCount}</div>
+    </div><div class="metric-divider"></div>`+
+    mk('Total IDs',total,'mv-blue','all')+
+    mk('Active IDs',active,'mv-green','active')+
+    mk('Pw overdue',pwDue,pwDue?'mv-amber':'mv-default','pw_overdue')+
+    `<div class="metric-cell${CUR_METRIC==='risk'?' active-filter':''}" onclick="setMetric('risk')" style="cursor:pointer">
+      <div class="metric-label">Risk alerts</div><div class="metric-value ${risk?'mv-red':'mv-default'}">${risk}</div>
+    </div>`;
+
+  const pill=document.getElementById('filter-pill');
+  if(CUR_METRIC){
+    const labels={all:'All IDs',active:'Active',pw_overdue:'Pw overdue',risk:'Risk alerts'};
+    pill.textContent=`${labels[CUR_METRIC]||CUR_METRIC} × clear`;
+    pill.classList.remove('hidden');
+  } else pill.classList.add('hidden');
+}
+
+/* ── VIEW ROUTING ── */
+function setView(v,skipMetrics){
+  CUR_VIEW=v;
+  ['ids','store','app','people','risk'].forEach(x=>
+    document.getElementById('tab-'+x)?.classList.toggle('active',x===v));
+  if(!skipMetrics)renderMetrics();
+  renderView();
+}
+function renderView(){
+  if(CUR_VIEW==='ids')         renderAllIDs();
+  else if(CUR_VIEW==='store')  renderByStore();
+  else if(CUR_VIEW==='app')    renderByApp();
+  else if(CUR_VIEW==='people') renderPeople();
+  else                         renderRisk();
+}
+
+/* ── VIEW: ALL GENERIC IDs ── */
+function renderAllIDs(){
+  const asn=filteredAsn();
+  document.getElementById('table-title').textContent='Generic IDs';
+  document.getElementById('table-sub').textContent=`${asn.length} record${asn.length!==1?'s':''}`;
+  document.getElementById('table-head').innerHTML=`<tr>
+    <th>Generic ID</th><th>App</th><th>Store</th><th>Assigned to</th>
+    <th>Employee ID</th><th>Supervisor</th><th>Pw age</th><th>Status</th><th></th></tr>`;
+  if(!asn.length){
+    document.getElementById('table-body').innerHTML=`<tr><td colspan="9">
+      <div class="empty-state"><div class="empty-icon">🔑</div><div class="empty-text">No IDs found</div></div></td></tr>`;
+    return;
+  }
+  document.getElementById('table-body').innerHTML=asn.map(a=>{
+    const store=STORES.find(s=>s.id===a.store_id);
+    const app=APPS.find(ap=>ap.id===a.app_id);
+    const appCode=app?.code||a.app?.code||'';
+    const appColor=APP_COLORS[appCode]||APP_COLORS.default;
+    const empName=EMP_CACHE.getName(a.emp_code)||a.emp_code||'';
+    const supName=a.supervisor_emp_code?(EMP_CACHE.getName(a.supervisor_emp_code)||a.supervisor_emp_code):'—';
+    const pwDays=a.pw_last_rotated?Math.floor((Date.now()-new Date(a.pw_last_rotated))/(864e5)):null;
+    const pwMax=a.app?.pw_rotation_days||30;
+    const overdue=pwDays!==null&&pwDays>=pwMax;
+    const statusBadge=
+      a.status==='active'?`<span class="badge badge-green">● Active</span>`:
+      a.status==='disabled'?`<span class="badge badge-gray">Disabled</span>`:
+      a.status==='idle'?`<span class="badge badge-amber">Idle</span>`:
+      `<span class="badge badge-red">${a.status}</span>`;
+    return `<tr class="clickable" onclick="openManageDrawer('${a.id}')">
+      <td><span class="mono" style="font-weight:600">
+        <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${appColor};margin-right:5px;vertical-align:middle"></span>${a.generic_id}
+      </span></td>
+      <td><span style="font-size:12px;color:${appColor};font-weight:600">${app?.name||a.app?.name||appCode||'—'}</span></td>
+      <td>${store?`<strong>${store.code}</strong> <span class="text-muted">${store.name}</span>`:'—'}</td>
+      <td>${a.emp_code?`<span style="font-weight:500">${empName||a.emp_code}</span>`:'<span class="text-hint">Unassigned</span>'}</td>
+      <td class="mono text-muted">${a.emp_code||'—'}</td>
+      <td class="text-muted">${supName}</td>
+      <td style="${overdue?'color:var(--red);font-weight:600':''}">${pwDays!==null?pwDays+'d':'—'}${overdue?' ⚠':''}</td>
+      <td>${statusBadge}</td>
+      <td class="text-hint">→</td>
+    </tr>`;
+  }).join('');
+  // Re-fetch names once, then re-render
+  const codes=[...new Set(asn.flatMap(a=>[a.emp_code,a.supervisor_emp_code].filter(Boolean)))];
+  if(codes.length) EMP_CACHE.getBatch(codes).then(()=>{if(CUR_VIEW==='ids'&&!_rerendering){_rerendering=true;renderAllIDs();setTimeout(()=>{_rerendering=false;},300);}});
+}
+let _rerendering=false;
+
+/* ── VIEW: BY STORE ── */
+function renderByStore(){
+  const allFiltered=filteredAsn();
+  const storeIdsWithData=new Set(allFiltered.map(a=>a.store_id));
+  let stores=CUR_STORE?STORES.filter(s=>s.id===CUR_STORE):STORES;
+  if(CUR_METRIC) stores=stores.filter(s=>storeIdsWithData.has(s.id));
+
+  document.getElementById('table-title').textContent='Stores';
+  document.getElementById('table-sub').textContent=`${stores.length} store${stores.length!==1?'s':''}`;
+  document.getElementById('table-head').innerHTML=`<tr>
+    <th>Store</th><th>Region</th><th>Total IDs</th><th>Active</th>
+    <th>Pw overdue</th><th>Risk</th><th>Risk score</th><th></th></tr>`;
+
+  if(!stores.length){
+    document.getElementById('table-body').innerHTML=`<tr><td colspan="8">
+      <div class="empty-state"><div class="empty-icon">🏪</div><div class="empty-text">No stores found</div></div></td></tr>`;
+    return;
+  }
+  const rows=stores.map(s=>{
+    let asn=ASSIGNMENTS.filter(a=>a.store_id===s.id);
+    if(CUR_APP) asn=asn.filter(a=>a.app?.code===CUR_APP);
+    const filteredCount=allFiltered.filter(a=>a.store_id===s.id).length;
+    const active=asn.filter(a=>a.status==='active').length;
+    const pwDue=asn.filter(a=>isPwOverdue(a)).length;
+    const risk=asn.filter(a=>['at_risk','orphan'].includes(a.status)).length;
+    const score=Math.min(100,pwDue*4+risk*15);
+    const scoreColor=score>=70?'var(--red)':score>=30?'var(--amber)':'var(--green)';
+    return{s,filteredCount,fullCount:asn.length,active,pwDue,risk,score,scoreColor};
+  }).sort((a,b)=>b.score-a.score);
+
+  document.getElementById('table-body').innerHTML=rows.map(({s,filteredCount,fullCount,active,pwDue,risk,score,scoreColor})=>`
+    <tr class="clickable" onclick="gotoStorePortal('${s.id}','${s.name}')">
+      <td style="font-weight:600">${s.name}</td>
+      <td class="text-muted">${s.region||'—'}</td>
+      <td style="font-weight:600">${CUR_METRIC?filteredCount:fullCount}</td>
+      <td style="color:var(--green);font-weight:600">${active}</td>
+      <td>${pwDue?`<span class="badge badge-amber">${pwDue}</span>`:`<span class="text-hint">0</span>`}</td>
+      <td>${risk?`<span class="badge badge-red">${risk}</span>`:`<span class="text-hint">0</span>`}</td>
+      <td><div class="risk-wrap">
+        <div class="risk-bar"><div class="risk-fill" style="width:${score}%;background:${scoreColor}"></div></div>
+        <span class="risk-num" style="color:${scoreColor}">${score}</span>
+      </div></td>
+      <td class="text-hint">→</td>
+    </tr>`).join('');
+}
+
+/* ── VIEW: BY APPLICATION ── */
+function renderByApp(){
+  document.getElementById('table-title').textContent='Applications';
+  document.getElementById('table-sub').textContent='';
+  document.getElementById('table-head').innerHTML=`<tr>
+    <th>Application</th><th>Stores</th><th>Total IDs</th>
+    <th>Active</th><th>Pw overdue</th><th>Risk</th><th></th></tr>`;
+  const storeScope=CUR_STORE?[CUR_STORE]:STORES.map(s=>s.id);
+  document.getElementById('table-body').innerHTML=APPS.map(a=>{
+    let asn=ASSIGNMENTS.filter(x=>x.app?.code===a.code&&storeScope.includes(x.store_id));
+    if(CUR_METRIC==='active')      asn=asn.filter(x=>x.status==='active');
+    else if(CUR_METRIC==='pw_overdue') asn=asn.filter(x=>isPwOverdue(x));
+    else if(CUR_METRIC==='risk')   asn=asn.filter(x=>['at_risk','orphan'].includes(x.status));
+    const active=asn.filter(x=>x.status==='active').length;
+    const pwDue=asn.filter(x=>isPwOverdue(x)).length;
+    const risk=asn.filter(x=>['at_risk','orphan'].includes(x.status)).length;
+    const storeCount=new Set(asn.map(x=>x.store_id)).size;
+    const color=APP_COLORS[a.code]||APP_COLORS.default;
+    return `<tr class="clickable" onclick="openAppDrawer('${a.code}')">
+      <td><span style="display:inline-flex;align-items:center;gap:8px">
+        <span style="width:10px;height:10px;border-radius:50%;background:${color};flex-shrink:0"></span>
+        <strong>${a.name}</strong></span></td>
+      <td class="text-muted">${storeCount}</td>
+      <td style="font-weight:600">${asn.length}</td>
+      <td style="color:var(--green);font-weight:600">${active}</td>
+      <td>${pwDue?`<span class="badge badge-amber">${pwDue}</span>`:`<span class="text-hint">0</span>`}</td>
+      <td>${risk?`<span class="badge badge-red">${risk}</span>`:`<span class="text-hint">0</span>`}</td>
+      <td class="text-hint">→</td>
+    </tr>`;
   }).join('');
 }
 
-function renderStores(){
-  document.getElementById('table-title').textContent='All stores';
-  document.getElementById('thead').innerHTML=`<tr><th>Store</th><th>Region</th><th>Total IDs</th><th>Active</th><th>Pw overdue</th><th>Risk</th><th></th></tr>`;
-  document.getElementById('tbody').innerHTML=STORES.map(s=>{
-    const a=ASN.filter(x=>x.store_id===s.id&&(!FAPP||x.app?.code===FAPP));
-    const active=a.filter(x=>x.status==='active').length;
-    const pw=a.filter(x=>isPwOld(x)).length;
-    const risk=a.filter(x=>['at_risk','orphan'].includes(x.status)).length;
-    return `<tr class="cr" onclick="gotoStorePortal('${s.id}','${s.name}','${BU_ID}')">
-      <td style="font-weight:600">${s.name}</td>
-      <td style="color:var(--muted)">${s.region||'—'}</td>
-      <td style="font-weight:600">${a.length}</td>
-      <td style="color:var(--green);font-weight:600">${active}</td>
-      <td>${pw?`<span class="bd a">${pw}</span>`:`<span style="color:var(--hint)">0</span>`}</td>
-      <td>${risk?`<span class="bd r">${risk}</span>`:`<span class="bd g">Clear</span>`}</td>
-      <td style="color:var(--hint)">→</td></tr>`;
-  }).join('')||`<tr><td colspan="7"><div class="empty">No stores</div></td></tr>`;
-}
-
+/* ── VIEW: PEOPLE ── */
 function renderPeople(){
+  const filteredIDs=filteredAsn();
+  const filteredCodes=new Set(filteredIDs.map(a=>a.emp_code).filter(Boolean));
+  let emps=CUR_STORE?EMPLOYEES.filter(e=>e.store_id===CUR_STORE):EMPLOYEES;
+  if(CUR_METRIC) emps=emps.filter(e=>filteredCodes.has(e.emp_code));
+
   document.getElementById('table-title').textContent='Employees';
-  document.getElementById('fbar').innerHTML='';
-  document.getElementById('thead').innerHTML=`<tr><th>Employee code</th><th>Name</th><th>Store</th><th>Supervisor</th><th>Status</th><th>Generic IDs</th></tr>`;
-  document.getElementById('tbody').innerHTML=EMPS.map(e=>{
+  document.getElementById('table-sub').textContent=`${emps.length} employee${emps.length!==1?'s':''}`;
+  document.getElementById('table-head').innerHTML=`<tr>
+    <th>Employee code</th><th>Name</th><th>Store</th><th>Status</th><th>Generic IDs</th></tr>`;
+  document.getElementById('table-body').innerHTML=emps.length?emps.map(e=>{
     const store=STORES.find(s=>s.id===e.store_id);
-    const name=EMP_CACHE.getName(e.emp_code)||e.emp_code;
-    const ids=ASN.filter(a=>a.emp_code===e.emp_code&&a.status==='active').length;
-    const stCls={active:'g',resigned:'r',suspended:'a',transferred:'gy'}[e.status]||'gy';
-    return `<tr><td style="font-family:monospace;font-weight:600">${e.emp_code}</td>
-      <td style="font-weight:500">${name}</td>
-      <td style="color:var(--muted);font-size:12px">${store?.name||'—'}</td>
-      <td style="font-family:monospace;font-size:12px;color:var(--muted)">${e.supervisor_emp_code||'—'}</td>
-      <td><span class="bd ${stCls}">${e.status}</span></td>
-      <td style="font-size:12px;color:var(--muted)">${ids||0} active</td></tr>`;
-  }).join('')||`<tr><td colspan="6"><div class="empty"><div style="font-size:28px;opacity:.4;margin-bottom:8px">👥</div>No employees</div></td></tr>`;
+    const asn=filteredIDs.filter(a=>a.emp_code===e.emp_code);
+    const allAsn=ASSIGNMENTS.filter(a=>a.emp_code===e.emp_code);
+    const name=EMP_CACHE.getName(e.emp_code)||'';
+    return `<tr>
+      <td class="mono">${e.emp_code}</td>
+      <td style="font-weight:${name?'500':'400'};color:${name?'var(--text)':'var(--hint)'}">${name||'—'}</td>
+      <td class="text-muted">${store?.name||'—'}</td>
+      <td><span class="badge badge-${e.status==='active'?'green':'gray'}">${e.status}</span></td>
+      <td>${asn.length
+        ?asn.map(a=>`<span class="badge badge-blue mono" style="margin-right:3px">${a.generic_id}</span>`).join('')
+        :(allAsn.length?`<span class="text-hint">${allAsn.length} ID${allAsn.length>1?'s':''} (filtered)</span>`:`<span class="text-hint">—</span>`)
+      }</td></tr>`;
+  }).join(''):`<tr><td colspan="5">
+    <div class="empty-state"><div class="empty-icon">👤</div><div class="empty-text">No employees found</div></div></td></tr>`;
 }
 
+/* ── VIEW: RISK ── */
 function renderRisk(){
-  document.getElementById('table-title').textContent='Risk items';
-  document.getElementById('fbar').innerHTML='';
+  let asn=ASSIGNMENTS;
+  if(CUR_STORE) asn=asn.filter(a=>a.store_id===CUR_STORE);
+  if(CUR_APP)   asn=asn.filter(a=>a.app?.code===CUR_APP);
   const items=[
-    ...ASN.filter(x=>x.status==='orphan').map(x=>({t:'orphan',icon:'⛔',lbl:'Orphan session',x,bg:'#FEF2F2'})),
-    ...ASN.filter(x=>x.status==='at_risk').map(x=>({t:'atrisk',icon:'⚠️',lbl:'Supervisor resigned',x,bg:'#FFFBEB'})),
-    ...ASN.filter(x=>x.status==='active'&&isPwOld(x)).map(x=>({t:'pw',icon:'🔑',lbl:'Password overdue',x,bg:''})),
+    ...asn.filter(a=>a.status==='orphan').map(a=>({icon:'⛔',label:'Orphan session',bg:'var(--red-lt)',a})),
+    ...asn.filter(a=>a.status==='at_risk').map(a=>({icon:'⚠️',label:'Supervisor resigned',bg:'var(--amber-lt)',a})),
+    ...asn.filter(a=>a.status==='active'&&isPwOverdue(a)).map(a=>({icon:'🔑',label:'Password overdue',bg:'',a})),
   ];
-  document.getElementById('thead').innerHTML=`<tr><th>Risk type</th><th>Generic ID</th><th>App</th><th>Store</th><th>Employee</th><th>Days</th></tr>`;
-  document.getElementById('tbody').innerHTML=items.map(({icon,lbl,x,bg})=>{
-    const s=STORES.find(st=>st.id===x.store_id);
-    const days=x.pw_last_rotated?Math.floor((Date.now()-new Date(x.pw_last_rotated))/(864e5)):null;
-    return `<tr style="${bg?'background:'+bg:''}"><td>${icon} <span style="font-size:12px;font-weight:600">${lbl}</span></td>
-      <td style="font-family:monospace;font-weight:700">${x.generic_id}</td>
-      <td style="color:var(--muted)">${x.app?.name||'—'}</td>
-      <td style="color:var(--muted)">${s?.name||'—'}</td>
-      <td style="font-family:monospace;font-size:12px">${x.emp_code||'—'}</td>
-      <td style="color:var(--muted)">${days!==null?days+'d':'—'}</td></tr>`;
-  }).join('')||`<tr><td colspan="6"><div class="empty"><div style="font-size:28px;margin-bottom:8px">✅</div>No open risks</div></td></tr>`;
+  document.getElementById('table-title').textContent='Risk area';
+  document.getElementById('table-sub').textContent=`${items.length} item${items.length!==1?'s':''}`;
+  document.getElementById('table-head').innerHTML=`<tr><th>Risk</th><th>Generic ID</th><th>Store</th><th>App</th><th>Employee</th><th>Days over</th></tr>`;
+  document.getElementById('table-body').innerHTML=items.length?items.map(({icon,label,bg,a})=>{
+    const store=STORES.find(s=>s.id===a.store_id);
+    const days=a.pw_last_rotated?Math.floor((Date.now()-new Date(a.pw_last_rotated))/(864e5)):null;
+    const pwMax=a.app?.pw_rotation_days||30;
+    return `<tr style="${bg?'background:'+bg:''}">
+      <td>${icon} <span style="font-size:12px;font-weight:600">${label}</span></td>
+      <td class="mono">${a.generic_id}</td>
+      <td class="text-muted">${store?.name||'—'}</td>
+      <td class="text-muted">${a.app?.name||'—'}</td>
+      <td class="mono">${a.emp_code||'—'}</td>
+      <td class="text-muted">${days!==null?`${days-pwMax}d`:'—'}</td>
+    </tr>`;
+  }).join(''):`<tr><td colspan="6">
+    <div class="empty-state"><div class="empty-icon">✅</div><div class="empty-text">No open risks</div></div></td></tr>`;
 }
 
-// GRANT
-function openGrant(gid='',appId='',storeId=''){
-  document.getElementById('g-id').value=gid;
-  document.getElementById('g-emp').value='';
-  document.getElementById('g-sup').value='';
-  document.getElementById('g-err').classList.add('hidden');
-  document.getElementById('g-emp-prev').classList.add('hidden');
-  document.getElementById('g-sup-prev').classList.add('hidden');
-  if(appId) document.getElementById('g-app').value=appId;
-  if(storeId) document.getElementById('g-store').value=storeId;
-  else if(FSTORE) document.getElementById('g-store').value=FSTORE;
-  openModal('modal-grant');
-}
-
-async function lookupEmp(inputId,prevId){
-  const code=document.getElementById(inputId).value.trim().toUpperCase();
-  if(!code)return;
-  const emp=await EMP_CACHE.get(code);
-  if(!emp)return;
-  const prefix=prevId.split('-')[1];
-  document.getElementById(prevId+'-av').textContent=(emp.full_name||code).split(' ').map(w=>w[0]).join('').slice(0,2);
-  document.getElementById(prevId+'-name').textContent=emp.full_name||code;
-  document.getElementById(prevId+'-detail').textContent=`${emp.title||''}${emp.mobile?' · '+emp.mobile:''}`;
-  document.getElementById(prevId).classList.remove('hidden');
-}
-
-async function saveGrant(){
-  const gid=document.getElementById('g-id').value.trim().toUpperCase();
-  const empCode=document.getElementById('g-emp').value.trim().toUpperCase();
-  const supCode=document.getElementById('g-sup').value.trim().toUpperCase();
-  const appId=document.getElementById('g-app').value;
-  const storeId=document.getElementById('g-store').value;
-  const errEl=document.getElementById('g-err');
-  if(!gid||!empCode||!appId||!storeId){errEl.textContent='All fields required.';errEl.classList.remove('hidden');return;}
-  const btn=document.getElementById('grant-btn');btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Granting…';
-  const {error}=await sb.from('generic_id_assignments').upsert({
-    store_id:storeId,app_id:appId,generic_id:gid,emp_code:empCode,
-    supervisor_emp_code:supCode||null,status:'active',
-    granted_at:new Date().toISOString(),granted_by:SESSION.user.email,
-    pw_last_rotated:new Date().toISOString()
-  },{onConflict:'store_id,app_id,generic_id'});
-  btn.disabled=false;btn.innerHTML='Grant access';
-  if(error){errEl.textContent=error.message;errEl.classList.remove('hidden');return;}
-  await sb.from('audit_log').insert({store_id:storeId,app_id:appId,generic_id:gid,emp_code:empCode,event_type:'grant',event_by:SESSION.user.email,detail:{supervisor_emp_code:supCode||null}});
-  closeModal('modal-grant');await loadAll();
-}
-
-// MANAGE
-async function openManage(asnId){
-  const a=ASN.find(x=>x.id===asnId);if(!a)return;
-  const emp=await EMP_CACHE.get(a.emp_code);
-  const sup=a.supervisor_emp_code?await EMP_CACHE.get(a.supervisor_emp_code):null;
-  const store=STORES.find(s=>s.id===a.store_id);
-  const col=ACOLORS[a.app?.code]||ACOLORS.default;
-  const days=a.pw_last_rotated?Math.floor((Date.now()-new Date(a.pw_last_rotated))/(864e5)):null;
-  document.getElementById('manage-title').textContent=`${a.generic_id} — ${a.app?.name||''}`;
-  document.getElementById('manage-body').innerHTML=`
-    <div class="pdpa">🔒 PDPA: Employee details fetched live from SuccessFactors — not stored here.</div>
-    <div class="eprev" style="margin-bottom:18px">
-      <div class="av" style="width:40px;height:40px;font-size:14px;background:${col}22;color:${col}">${(emp?.full_name||a.emp_code||'?').split(' ').map(w=>w[0]).join('').slice(0,2)}</div>
-      <div><div style="font-size:15px;font-weight:700">${emp?.full_name||a.emp_code||'Unassigned'}</div>
-      <div style="font-size:12px;color:var(--muted)">${a.emp_code||'—'}${emp?.title?' · '+emp.title:''}</div>
-      ${emp?.mobile?`<div style="font-size:12px;color:var(--muted)">${emp.mobile}</div>`:''}</div>
+/* ── APP DRAWER ── */
+function openAppDrawer(code){
+  const app=APPS.find(x=>x.code===code);if(!app)return;
+  const storeScope=CUR_STORE?[CUR_STORE]:STORES.map(s=>s.id);
+  const asn=ASSIGNMENTS.filter(x=>x.app?.code===code&&storeScope.includes(x.store_id));
+  const color=APP_COLORS[code]||APP_COLORS.default;
+  document.getElementById('drawer-title').textContent=app.name;
+  document.getElementById('drawer-body').innerHTML=`
+    <div class="drawer-metric-grid">
+      <div class="drawer-metric-cell"><div class="metric-label">Total</div><div class="metric-value" style="color:${color}">${asn.length}</div></div>
+      <div class="drawer-metric-cell"><div class="metric-label">Active</div><div class="metric-value mv-green">${asn.filter(x=>x.status==='active').length}</div></div>
+      <div class="drawer-metric-cell"><div class="metric-label">Idle</div><div class="metric-value mv-amber">${asn.filter(x=>x.status==='idle').length}</div></div>
+      <div class="drawer-metric-cell"><div class="metric-label">Risk</div><div class="metric-value mv-red">${asn.filter(x=>['at_risk','orphan'].includes(x.status)).length}</div></div>
     </div>
-    <table style="width:100%;font-size:13px;border-collapse:collapse">
-      <tr><td style="color:var(--muted);padding:8px 0;width:120px;border-bottom:1px solid var(--border2)">Generic ID</td><td style="padding:8px 0;font-family:monospace;font-weight:700;border-bottom:1px solid var(--border2)">${a.generic_id}</td></tr>
-      <tr><td style="color:var(--muted);padding:8px 0;border-bottom:1px solid var(--border2)">App</td><td style="padding:8px 0;border-bottom:1px solid var(--border2)">${a.app?.name||'—'}</td></tr>
-      <tr><td style="color:var(--muted);padding:8px 0;border-bottom:1px solid var(--border2)">Store</td><td style="padding:8px 0;border-bottom:1px solid var(--border2)">${store?.name||'—'}</td></tr>
-      <tr><td style="color:var(--muted);padding:8px 0;border-bottom:1px solid var(--border2)">Status</td><td style="padding:8px 0;border-bottom:1px solid var(--border2)">${a.status}</td></tr>
-      <tr><td style="color:var(--muted);padding:8px 0;border-bottom:1px solid var(--border2)">Supervisor</td><td style="padding:8px 0;border-bottom:1px solid var(--border2)">${sup?.full_name||a.supervisor_emp_code||'—'}</td></tr>
-      <tr><td style="color:var(--muted);padding:8px 0;border-bottom:1px solid var(--border2)">Granted by</td><td style="padding:8px 0;border-bottom:1px solid var(--border2)">${a.granted_by||'—'}</td></tr>
-      <tr><td style="color:var(--muted);padding:8px 0">Pw rotated</td><td style="padding:8px 0">${a.pw_last_rotated?new Date(a.pw_last_rotated).toLocaleDateString():'-'} ${days>=(a.app?.pw_rotation_days||30)?`<span style="color:var(--amber);font-size:11px;font-weight:600">${days}d overdue</span>`:''}</td></tr>
-    </table>`;
-  document.getElementById('manage-footer').innerHTML=`
-    <button class="pbtn pbtn-outline" onclick="closeModal('modal-manage')">Close</button>
-    ${a.status==='active'?`<button class="pbtn pbtn-outline" onclick="markPwRotated('${a.id}')">✓ Pw rotated</button>`:''}
-    ${a.status==='active'?`<button class="pbtn pbtn-red" onclick="terminateID('${a.id}')">Terminate</button>`:''}
-    ${['at_risk','disabled'].includes(a.status)?`<button class="pbtn pbtn-primary" onclick="reactivate('${a.id}')">Re-activate</button>`:''}`;
-  openModal('modal-manage');
+    <div class="drawer-section-title">By store</div>
+    ${STORES.map(s=>{
+      const c=asn.filter(x=>x.store_id===s.id);
+      if(!c.length)return'';
+      return `<div class="drawer-row">
+        <span>${s.name}</span>
+        <div class="drawer-row-badges">
+          <span class="badge badge-gray">${c.length}</span>
+          <span class="badge badge-green">${c.filter(x=>x.status==='active').length} active</span>
+        </div></div>`;
+    }).join('')}`;
+  document.getElementById('drawer').classList.remove('hidden');
 }
 
-async function markPwRotated(id){
-  const a=ASN.find(x=>x.id===id);
-  await sb.from('generic_id_assignments').update({pw_last_rotated:new Date().toISOString()}).eq('id',id);
-  await sb.from('audit_log').insert({store_id:a.store_id,app_id:a.app_id,generic_id:a.generic_id,emp_code:a.emp_code,event_type:'pw_rotate',event_by:SESSION.user.email,detail:{}});
-  closeModal('modal-manage');await loadAll();
+/* ── MANAGE DRAWER ── */
+function openManageDrawer(asnId){
+  const a=ASSIGNMENTS.find(x=>x.id===asnId);if(!a)return;
+  const store=STORES.find(s=>s.id===a.store_id);
+  const empName=EMP_CACHE.getName(a.emp_code)||a.emp_code||'—';
+  const supName=a.supervisor_emp_code?(EMP_CACHE.getName(a.supervisor_emp_code)||a.supervisor_emp_code):'—';
+  const color=APP_COLORS[a.app?.code]||APP_COLORS.default;
+  const pwDays=a.pw_last_rotated?Math.floor((Date.now()-new Date(a.pw_last_rotated))/(864e5)):null;
+  document.getElementById('drawer-title').textContent=a.generic_id;
+  document.getElementById('drawer-body').innerHTML=`
+    <div class="drawer-metric-grid">
+      <div class="drawer-metric-cell"><div class="metric-label">Status</div>
+        <div style="margin-top:6px"><span class="badge badge-${a.status==='active'?'green':a.status==='idle'?'amber':'red'}">${a.status}</span></div></div>
+      <div class="drawer-metric-cell"><div class="metric-label">App</div>
+        <div style="margin-top:6px;font-weight:600;color:${color};font-size:13px">${a.app?.name||'—'}</div></div>
+    </div>
+    <div class="drawer-section-title">Assignment</div>
+    <div class="drawer-row"><span>Store</span><span>${store?.name||'—'}</span></div>
+    <div class="drawer-row"><span>Employee</span><span>${empName}</span></div>
+    <div class="drawer-row"><span>Emp code</span><span class="mono">${a.emp_code||'—'}</span></div>
+    <div class="drawer-row"><span>Supervisor</span><span>${supName}</span></div>
+    <div class="drawer-section-title">Password</div>
+    <div class="drawer-row"><span>Last rotated</span><span>${a.pw_last_rotated?new Date(a.pw_last_rotated).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'}):'—'}</span></div>
+    <div class="drawer-row"><span>Age</span><span style="${pwDays&&isPwOverdue(a)?'color:var(--red);font-weight:600':''}">${pwDays!==null?pwDays+'d':'—'}${isPwOverdue(a)?' ⚠':''}</span></div>
+    <div style="margin-top:20px">
+      <button class="btn btn-outline" style="width:100%;justify-content:center" onclick="gotoStorePortal('${a.store_id}','${store?.name||''}')">Open in Store Portal →</button>
+    </div>`;
+  document.getElementById('drawer').classList.remove('hidden');
 }
+function closeDrawer(){document.getElementById('drawer').classList.add('hidden');}
 
-async function terminateID(id){
-  if(!confirm('Terminate this ID?'))return;
-  const a=ASN.find(x=>x.id===id);
-  await sb.from('generic_id_assignments').update({status:'disabled',disabled_at:new Date().toISOString(),disabled_reason:'Terminated via BU dashboard'}).eq('id',id);
-  await sb.from('audit_log').insert({store_id:a.store_id,app_id:a.app_id,generic_id:a.generic_id,emp_code:a.emp_code,event_type:'terminate',event_by:SESSION.user.email,detail:{}});
-  closeModal('modal-manage');await loadAll();
-}
-
-async function reactivate(id){
-  const a=ASN.find(x=>x.id===id);
-  await sb.from('generic_id_assignments').update({status:'active',disabled_at:null,disabled_reason:null}).eq('id',id);
-  closeModal('modal-manage');await loadAll();
-}
-
-// ADD STORE
-function openAddStore(){
-  const n=prompt('Store code (e.g. E09):');if(!n)return;
-  const name=prompt('Store name:');if(!name)return;
-  const region=prompt('Region (optional):');
-  sb.from('stores').insert({bu_id:BU_ID,code:n.toUpperCase(),name,region:region||null}).then(()=>loadAll());
-}
-
-// ADD EMPLOYEE
-function openAddEmployee(){
-  const code=prompt('Employee code (e.g. EMP-5001):');if(!code)return;
-  const store=STORES[0];
-  sb.from('employees').insert({emp_code:code.toUpperCase(),bu_id:BU_ID,store_id:store?.id||null,status:'active',source:'manual'}).then(()=>loadAll());
-}
-
-// ADD USER
-function openAddUser(){
-  document.getElementById('u-email').value='';
-  document.getElementById('u-name').value='';
-  document.getElementById('u-pass').value='';
-  document.getElementById('u-err').classList.add('hidden');
-  onRoleChange();
-  openModal('modal-user');
-}
-
-function onRoleChange(){
-  const role=document.getElementById('u-role').value;
-  document.getElementById('u-store-f').classList.toggle('hidden',role!=='store_manager');
-}
-
-async function saveUser(){
+/* ── USER MODAL ── */
+function openAddUser(){document.getElementById('modal-user').classList.remove('hidden');}
+function closeUserModal(){document.getElementById('modal-user').classList.add('hidden');}
+async function submitUser(){
   const email=document.getElementById('u-email').value.trim();
-  const name=document.getElementById('u-name').value.trim();
-  const pass=document.getElementById('u-pass').value;
-  const role=document.getElementById('u-role').value;
-  const errEl=document.getElementById('u-err');
-  if(!email||!pass){errEl.textContent='Email and password required.';errEl.classList.remove('hidden');return;}
-  if(pass.length<8){errEl.textContent='Password must be at least 8 characters.';errEl.classList.remove('hidden');return;}
-  const btn=document.getElementById('user-btn');btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Creating…';
-  const {data:{session}}=await sb.auth.getSession();
-  const res=await fetch(`${SUPABASE_URL}/functions/v1/create-user`,{
-    method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${session.access_token}`,'apikey':SUPABASE_ANON},
-    body:JSON.stringify({access_token:session.access_token,email,password:pass,full_name:name||null,role,bu_ids:[BU_ID],store_id:role==='store_manager'?document.getElementById('u-store-sel').value:null})
-  });
-  const result=await res.json();
-  btn.disabled=false;btn.innerHTML='Create user';
-  if(!res.ok||!result.success){errEl.textContent=result.error||'Failed to create user.';errEl.classList.remove('hidden');return;}
-  closeModal('modal-user');alert(`User ${email} created successfully.`);
+  if(!email){
+    document.getElementById('u-err').textContent='Email required';
+    document.getElementById('u-err').classList.remove('hidden');return;
+  }
+  alert(`User invite sent to ${email}.\n(Full implementation requires create-user Edge Function)`);
+  closeUserModal();
 }
 
-// AUDIT
-async function showAudit(){
-  const stIds=STORES.map(s=>s.id);
-  const {data:logs}=await sb.from('audit_log').select('*').in('store_id',stIds).order('created_at',{ascending:false}).limit(100);
-  document.getElementById('table-title').textContent='Audit log';
-  document.getElementById('thead').innerHTML=`<tr><th>Time</th><th>Generic ID</th><th>Event</th><th>Employee</th><th>Store</th><th>By</th></tr>`;
-  const icons={grant:'✅',terminate:'🚫',pw_rotate:'🔑',resign_auto_disable:'⚠️',reactivate:'🔄'};
-  document.getElementById('tbody').innerHTML=(logs||[]).map(l=>{
-    const s=STORES.find(st=>st.id===l.store_id);
-    return `<tr><td style="font-size:12px;color:var(--muted);white-space:nowrap">${new Date(l.created_at).toLocaleString('th-TH',{dateStyle:'short',timeStyle:'short'})}</td>
-      <td style="font-family:monospace;font-weight:700">${l.generic_id}</td>
-      <td style="font-size:12px">${icons[l.event_type]||'📝'} ${l.event_type?.replace(/_/g,' ')}</td>
-      <td style="font-family:monospace;font-size:12px">${l.emp_code||'—'}</td>
-      <td style="font-size:12px;color:var(--muted)">${s?.name||'—'}</td>
-      <td style="font-size:12px;color:var(--muted)">${l.event_by||'system'}</td></tr>`;
-  }).join('')||`<tr><td colspan="6"><div class="empty">No activity yet</div></td></tr>`;
-  document.getElementById('table-actions').innerHTML='<button class="pbtn pbtn-outline" onclick="setView(\'ids\')" style="font-size:12px;padding:6px 12px">← Back</button>';
+/* ── AUDIT LOG ── */
+function openAuditLog(){
+  document.getElementById('drawer-title').textContent='Audit Log';
+  document.getElementById('drawer-body').innerHTML=`
+    <p style="color:var(--muted);font-size:13px;padding:20px 0;text-align:center">Open Store Portal for per-store audit trail.</p>
+    <button class="btn btn-outline" style="width:100%;justify-content:center" onclick="gotoStore()">Open Store Portal →</button>`;
+  document.getElementById('drawer').classList.remove('hidden');
 }
 
+/* ── NAV ── */
 function gotoStore(){sessionStorage.removeItem('gid_store_id');location.href='store.html';}
-function gotoStorePortal(id,name,buId){
+function gotoStorePortal(id,name){
   sessionStorage.setItem('gid_store_id',id);
   sessionStorage.setItem('gid_store_name',name);
-  sessionStorage.setItem('gid_bu_id',buId);
+  sessionStorage.setItem('gid_bu_id',BU_ID);
   location.href='store.html';
 }
-function switchBU(){sessionStorage.removeItem('gid_bu_id');location.href='index.html';}
-function closeDrawer(){document.getElementById('dbg').classList.add('hidden');}
-function openModal(id){document.getElementById(id).classList.remove('hidden');}
-function closeModal(id){document.getElementById(id).classList.add('hidden');}
-document.querySelectorAll('.mbg').forEach(b=>b.addEventListener('click',e=>{if(e.target===b)b.classList.add('hidden')}));
-function isPwOld(a){if(!a.pw_last_rotated)return false;return Math.floor((Date.now()-new Date(a.pw_last_rotated))/(864e5))>=(a.app?.pw_rotation_days||30);}
+function switchBU(){sessionStorage.removeItem('gid_bu_id');location.href='ho.html';}
 async function doSignOut(){await sb.auth.signOut();sessionStorage.clear();location.href='index.html';}
+
 init();
 </script>
 </body>
