@@ -588,6 +588,9 @@ document.querySelectorAll('.modal-bg').forEach(b=>b.addEventListener('click',e=>
 
 // Init store row visibility
 onRoleChange();
+// Hash routing: admin.html#users or admin.html#stores opens that tab
+const _hash = location.hash.replace('#','');
+if(['bu','stores','users'].includes(_hash)) showSection(_hash);
 init();
 </script>
 </body>

@@ -116,8 +116,9 @@ tr.clickable:hover{background:var(--bg)}
     <button class="btn btn-outline btn-sm" onclick="location.href='ho.html'">HO view</button>
     <button class="btn btn-outline btn-sm" onclick="gotoStore()">Store portal</button>
     <button class="btn btn-outline btn-sm" onclick="location.href='hr-upload.html'">HR Upload</button>
+    <button class="btn btn-outline btn-sm" onclick="location.href='admin.html'">⚙ Admin</button>
     <button class="btn btn-outline btn-sm" onclick="switchBU()">Switch BU</button>
-    <button class="btn btn-primary btn-sm" onclick="openAddUser()">+ User</button>
+    <button class="btn btn-primary btn-sm" onclick="location.href='admin.html#users'">+ User</button>
     <button class="btn btn-outline btn-sm" onclick="doSignOut()">Sign out</button>
   </div>
 </div>
@@ -169,31 +170,7 @@ tr.clickable:hover{background:var(--bg)}
 </div>
 
 <!-- MODAL: Add User -->
-<div class="modal-bg hidden" id="modal-user">
-  <div class="modal">
-    <div class="modal-header">
-      <h3>Add User</h3>
-      <button class="drawer-close" onclick="closeUserModal()">✕</button>
-    </div>
-    <div class="modal-body">
-      <div class="form-group"><label class="form-label">Email</label>
-        <input class="form-input" id="u-email" type="email" placeholder="user@company.com"></div>
-      <div class="form-group"><label class="form-label">Role</label>
-        <select class="form-select" id="u-role">
-          <option value="bu_admin">BU Admin</option>
-          <option value="store_manager">Store Manager</option>
-          <option value="viewer">Viewer</option>
-        </select></div>
-      <div class="form-group"><label class="form-label">Store (optional)</label>
-        <select class="form-select" id="u-store"><option value="">— All stores —</option></select></div>
-      <p class="hidden" id="u-err" style="color:var(--red);font-size:12px"></p>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-outline" onclick="closeUserModal()">Cancel</button>
-      <button class="btn btn-primary" onclick="submitUser()">Add User</button>
-    </div>
-  </div>
-</div>
+<!-- User management moved to admin.html -->
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="employee-cache.js"></script>
@@ -204,7 +181,7 @@ const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
 const APP_COLORS={POS:'#1D4ED8',GR:'#15803D',ST:'#B45309',FP:'#B91C1C',default:'#6B6B6B'};
 
-let SESSION=null,BU_ID=null,BU=null;
+let SESSION=null,BU_ID=null,BU=null,MY_BUS=[];
 let STORES=[],APPS=[],ASSIGNMENTS=[],EMPLOYEES=[];
 let CUR_VIEW='ids',CUR_STORE=null,CUR_APP=null,CUR_METRIC=null;
 
@@ -233,10 +210,16 @@ async function init(){
   document.getElementById('user-email').textContent=session.user.email||'';
 
   BU_ID=sessionStorage.getItem('gid_bu_id');
+  // Always load user's granted BU list (for Switch BU picker)
+  const{data:myRoles}=await sb.from('user_roles')
+    .select('bu_id,role,business_units(id,code,name)')
+    .eq('user_id',session.user.id);
+  MY_BUS=(myRoles||[]).map(r=>r.business_units).filter(Boolean);
+
   if(!BU_ID){
-    const{data:roles}=await sb.from('user_roles').select('bu_id').eq('user_id',session.user.id).limit(1);
-    BU_ID=roles?.[0]?.bu_id;
-    if(!BU_ID){location.href='ho.html';return;}
+    if(MY_BUS.length===1){BU_ID=MY_BUS[0].id;}
+    else if(MY_BUS.length>1){showBUPicker();return;}
+    else{location.href='index.html';return;}
     sessionStorage.setItem('gid_bu_id',BU_ID);
   }
   await loadAll();
@@ -608,17 +591,7 @@ function openManageDrawer(asnId){
 function closeDrawer(){document.getElementById('drawer').classList.add('hidden');}
 
 /* ── USER MODAL ── */
-function openAddUser(){document.getElementById('modal-user').classList.remove('hidden');}
-function closeUserModal(){document.getElementById('modal-user').classList.add('hidden');}
-async function submitUser(){
-  const email=document.getElementById('u-email').value.trim();
-  if(!email){
-    document.getElementById('u-err').textContent='Email required';
-    document.getElementById('u-err').classList.remove('hidden');return;
-  }
-  alert(`User invite sent to ${email}.\n(Full implementation requires create-user Edge Function)`);
-  closeUserModal();
-}
+// User management handled via admin.html
 
 /* ── AUDIT LOG ── */
 function openAuditLog(){
@@ -637,7 +610,65 @@ function gotoStorePortal(id,name){
   sessionStorage.setItem('gid_bu_id',BU_ID);
   location.href='store.html';
 }
-function switchBU(){sessionStorage.removeItem('gid_bu_id');location.href='ho.html';}
+function switchBU(){
+  if(MY_BUS.length<=1){sessionStorage.removeItem('gid_bu_id');location.href='ho.html';return;}
+  const opts=MY_BUS.map(b=>`<option value="${b.id}||${b.name}">${b.code} · ${b.name}</option>`).join('');
+  const modal=document.createElement('div');
+  modal.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:999;display:flex;align-items:center;justify-content:center';
+  modal.innerHTML=`
+    <div style="background:#fff;border-radius:12px;padding:24px;width:380px;box-shadow:0 8px 32px rgba(0,0,0,.2)">
+      <div style="font-size:15px;font-weight:700;margin-bottom:6px">Switch Business Unit</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:14px">Select a BU you have access to</div>
+      <select id="_sw_bu" style="width:100%;padding:10px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;margin-bottom:14px">
+        <option value="">— Choose a BU —</option>${opts}
+      </select>
+      <div style="display:flex;gap:8px">
+        <button onclick="this.closest('div[style*=fixed]').remove()" style="flex:1;padding:9px;border:1px solid var(--border);border-radius:8px;background:#fff;cursor:pointer;font-family:inherit;font-size:13px">Cancel</button>
+        <button onclick="
+          const v=document.getElementById('_sw_bu').value;
+          if(!v)return;
+          const[id,name]=v.split('||');
+          sessionStorage.setItem('gid_bu_id',id);
+          sessionStorage.setItem('gid_bu_name',name);
+          location.reload();
+        " style="flex:1;padding:9px;background:var(--blue);color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:inherit;font-size:13px;font-weight:600">Switch →</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+function showBUPicker(){
+  // Show picker when no BU selected and user has multiple
+  const opts=MY_BUS.map((b,i)=>{
+    const colors=['#1D4ED8','#15803D','#B45309','#B91C1C','#6D28D9','#0E7490','#BE185D'];
+    const c=colors[i%colors.length];
+    return `<div onclick="
+      sessionStorage.setItem('gid_bu_id','${b.id}');
+      sessionStorage.setItem('gid_bu_name','${b.name}');
+      location.reload();
+    " style="display:flex;align-items:center;gap:12px;padding:14px 20px;cursor:pointer;border-bottom:1px solid #F0F0EB;transition:background .1s" onmouseover="this.style.background='#F7F7F5'" onmouseout="this.style.background=''">
+      <div style="width:40px;height:40px;border-radius:10px;background:${c};color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;flex-shrink:0">${b.code.slice(0,2)}</div>
+      <div>
+        <div style="font-weight:600;font-size:14px">${b.name}</div>
+        <div style="font-size:12px;color:#6B6B6B">${b.code}</div>
+      </div>
+      <span style="margin-left:auto;color:#AAAAAA">›</span>
+    </div>`;
+  }).join('');
+  document.body.innerHTML=`
+    <div style="min-height:100vh;background:#F7F7F5;display:flex;align-items:center;justify-content:center">
+      <div style="background:#fff;border-radius:14px;width:400px;box-shadow:0 4px 20px rgba(0,0,0,.1);overflow:hidden">
+        <div style="padding:20px 24px;border-bottom:1px solid #F0F0EB">
+          <div style="font-size:18px;font-weight:700">Select Business Unit</div>
+          <div style="font-size:13px;color:#6B6B6B;margin-top:4px">Choose which BU dashboard to open</div>
+        </div>
+        ${opts}
+        <div style="padding:14px 20px">
+          <button onclick="location.href='ho.html'" style="width:100%;padding:9px;border:1px solid #E5E5E0;border-radius:8px;background:#fff;cursor:pointer;font-family:inherit;font-size:13px;color:#6B6B6B">← Back to HO Overview</button>
+        </div>
+      </div>
+    </div>`;
+}
 async function doSignOut(){await sb.auth.signOut();sessionStorage.clear();location.href='index.html';}
 
 init();

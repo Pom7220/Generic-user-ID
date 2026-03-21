@@ -25,6 +25,7 @@
     <div class="live-pill" id="live-pill"><span class="live-dot"></span><span id="live-label">Live</span></div>
     <button class="btn btn-sm" onclick="gotoBU()">BU view</button>
     <button class="btn btn-sm" onclick="gotoStore()">Stores</button>
+    <button class="btn btn-sm" onclick="location.href='admin.html'">⚙ Admin</button>
     <button class="btn btn-sm" onclick="doSignOut()">Sign out</button>
   </div>
 </div>
@@ -273,26 +274,34 @@ function renderByStore(){
 function renderByApp(){
   const appCodes=[...new Set(APPS.map(a=>a.code))];
   const stores=filteredStores();
+  const storeIds=stores.map(s=>s.id);
+  // filteredAsn() already applies BU + APP + METRIC filters
+  const filtered=filteredAsn();
   document.getElementById('table-title').textContent='Applications';
-  document.getElementById('table-sub').textContent='';
+  document.getElementById('table-sub').textContent=CUR_METRIC?`Filtered: ${{active:'Active',idle:'Unassigned',pw_overdue:'Pw overdue',orphan:'Orphan',at_risk:'At risk'}[CUR_METRIC]||CUR_METRIC}`:'';
   document.getElementById('table-head').innerHTML=`<tr>
     <th>Application</th><th>BUs</th><th>Stores</th>
-    <th>Total IDs</th><th>Active</th>
+    <th>${CUR_METRIC?'Matching IDs':'Total IDs'}</th><th>Active</th>
     <th>Pw overdue</th><th>Risk alerts</th><th></th></tr>`;
   document.getElementById('table-body').innerHTML=appCodes.map(code=>{
-    const asn=ASSIGNMENTS.filter(a=>a.app?.code===code&&stores.map(s=>s.id).includes(a.store_id));
-    const active=asn.filter(a=>a.status==='active').length;
-    const pwDue=asn.filter(a=>a.status==='active'&&isPwOverdue(a)).length;
-    const risk=asn.filter(a=>['at_risk','orphan'].includes(a.status)).length;
-    const storeCount=[...new Set(asn.map(a=>a.store_id))].length;
-    const buCount=[...new Set(stores.filter(s=>asn.some(a=>a.store_id===s.id)).map(s=>s.bu_id))].length;
+    // For counts: use full unfiltered-by-metric data (to show real totals in context)
+    const fullAsn=ASSIGNMENTS.filter(a=>a.app?.code===code&&storeIds.includes(a.store_id));
+    // For filtered count column: use filteredAsn
+    const filtAsn=filtered.filter(a=>a.app?.code===code);
+    const active=fullAsn.filter(a=>a.status==='active').length;
+    const pwDue=fullAsn.filter(a=>isPwOverdue(a)).length;
+    const risk=fullAsn.filter(a=>['at_risk','orphan'].includes(a.status)).length;
+    const storeCount=[...new Set(filtAsn.map(a=>a.store_id))].length;
+    const buCount=[...new Set(stores.filter(s=>filtAsn.some(a=>a.store_id===s.id)).map(s=>s.bu_id))].length;
     const color=APP_COLORS[code]||APP_COLORS.default;
     const name=APPS.find(a=>a.code===code)?.name||code;
+    const displayCount=CUR_METRIC?filtAsn.length:fullAsn.length;
+    if(CUR_METRIC&&filtAsn.length===0) return ''; // hide apps with 0 matching
     return `<tr class="clickable" onclick="openAppDrawer('${code}')">
       <td><span style="display:inline-flex;align-items:center;gap:8px"><span style="width:8px;height:8px;border-radius:50%;background:${color};display:inline-block"></span><strong>${name}</strong></span></td>
       <td class="text-muted">${buCount}</td>
       <td class="text-muted">${storeCount}</td>
-      <td style="font-weight:600">${asn.length}</td>
+      <td style="font-weight:600;color:${CUR_METRIC?'var(--blue)':'inherit'}">${displayCount}</td>
       <td style="color:var(--green);font-weight:600">${active}</td>
       <td>${pwDue?'<span class="badge badge-amber">'+pwDue+'</span>':'<span class="text-hint">0</span>'}</td>
       <td>${risk?'<span class="badge badge-red">'+risk+'</span>':'<span class="text-hint">0</span>'}</td>
